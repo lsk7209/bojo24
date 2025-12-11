@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button, Card } from "@components/ui";
+import { Button } from "@components/ui";
 
 export default function HomePage() {
   return (
@@ -24,55 +24,12 @@ export default function HomePage() {
                 지금 지원금 찾기
               </Button>
             </Link>
-            <Link href="#features">
-              <Button variant="ghost" className="rounded-full px-6 py-3 text-base">
-                기능 더보기
-              </Button>
-            </Link>
           </div>
         </div>
 
         {/* Decorative background element */}
         <div className="absolute top-0 right-0 -mr-20 -mt-20 h-[400px] w-[400px] rounded-full bg-gradient-to-br from-blue-100/40 to-indigo-50/40 blur-3xl" />
       </header>
-
-      {/* Feature Grids */}
-      <section
-        id="features"
-        className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
-        aria-label="주요 기능"
-      >
-        {[
-          {
-            title: "실시간 동기화",
-            desc: "공공데이터포털 API와 실시간 연동되어 가장 최신의 정책 정보를 놓치지 않습니다.",
-            icon: "⚡️"
-          },
-          {
-            title: "AI 스마트 요약",
-            desc: "복잡한 공공용어를 Google Gemini가 초등학생도 이해하기 쉽게 3줄로 요약합니다.",
-            icon: "🤖"
-          },
-          {
-            title: "맞춤형 FAQ",
-            desc: "수혜 자격, 신청 방법 등 사용자가 가장 궁금해할 질문을 미리 생성하여 답변합니다.",
-            icon: "💡"
-          },
-          {
-            title: "검색 최적화(SEO)",
-            desc: "구글, 네이버 등 검색 엔진이 정보를 잘 수집할 수 있도록 완벽한 구조화 데이터를 제공합니다.",
-            icon: "🔍"
-          }
-        ].map((feature, i) => (
-          <Card key={i} className="h-full hover:shadow-md transition-shadow">
-            <div className="text-3xl mb-4">{feature.icon}</div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">{feature.title}</h3>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              {feature.desc}
-            </p>
-          </Card>
-        ))}
-      </section>
 
       {/* Category Quick Links */}
       <section

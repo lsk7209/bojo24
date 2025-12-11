@@ -16,16 +16,27 @@ type BlogPost = {
     excerpt: string;
     tags: string[];
     created_at: string;
+    benefit_id: string | null;
 };
 
 const fetchPosts = async () => {
-    const supabase = getAnonClient();
-    const { data } = await supabase
-        .from("posts")
-        .select("id, title, slug, excerpt, tags, created_at")
-        .order("created_at", { ascending: false })
-        .limit(20);
-    return (data as BlogPost[]) ?? [];
+    try {
+        const supabase = getAnonClient();
+        const { data, error } = await supabase
+            .from("posts")
+            .select("id, title, slug, excerpt, tags, created_at")
+            .order("created_at", { ascending: false })
+            .limit(20);
+
+        if (error) {
+            console.error("Error fetching posts:", error);
+            return [];
+        }
+        return (data as BlogPost[]) ?? [];
+    } catch (e) {
+        console.error("Unexpected error in fetchPosts:", e);
+        return [];
+    }
 };
 
 export default async function BlogListPage() {

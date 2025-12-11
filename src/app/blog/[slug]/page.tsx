@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { AdPlaceholder } from "@components/ad-placeholder";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 
 type PageParams = {
     params: { slug: string };
@@ -74,8 +76,8 @@ export default async function BlogPostPage({ params }: PageParams) {
 
                 <div className="h-px w-full bg-slate-200 my-8" />
 
-                {/* React Markdown 렌더링 */}
-                <ReactMarkdown>
+                {/* React Markdown 렌더링 (remark-breaks 적용) */}
+                <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
                     {post.content}
                 </ReactMarkdown>
             </article>
