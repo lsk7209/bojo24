@@ -23,18 +23,24 @@ export default function BenefitLoading() {
       {/* AI 요약 스켈레톤 */}
       <div className="space-y-4">
         <div className="h-6 w-32 bg-slate-200 rounded animate-pulse" />
-        <Card className="bg-blue-50/50 border-blue-100 h-32 animate-pulse" />
+        <Card className="bg-blue-50/50 border-blue-100 h-32 animate-pulse">
+          <span />
+        </Card>
       </div>
 
       {/* 그리드 스켈레톤 */}
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="space-y-3">
           <div className="h-6 w-24 bg-slate-200 rounded animate-pulse" />
-          <Card className="h-40 bg-slate-50 animate-pulse" />
+          <Card className="h-40 bg-slate-50 animate-pulse">
+            <span />
+          </Card>
         </div>
         <div className="space-y-3">
           <div className="h-6 w-24 bg-slate-200 rounded animate-pulse" />
-          <Card className="h-40 bg-slate-50 animate-pulse" />
+          <Card className="h-40 bg-slate-50 animate-pulse">
+            <span />
+          </Card>
         </div>
       </div>
     </main>
