@@ -11,7 +11,9 @@ export default function Loading() {
             </div>
 
             {/* 검색 바 스켈레톤 */}
-            <Card className="h-32 bg-white animate-pulse" />
+            <Card className="h-32 bg-white animate-pulse">
+                <div />
+            </Card>
 
             {/* 리스트 스켈레톤 */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-4">
