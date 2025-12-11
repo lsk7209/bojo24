@@ -2,6 +2,7 @@ import { AdPlaceholder } from "@components/ad-placeholder";
 import { FloatingActionButton } from "@components/fab-button";
 import { buildFaqJsonLd } from "./schema";
 import { getServiceClient } from "@lib/supabaseClient";
+import { formatDescription } from "@lib/formattext";
 import { Badge, Card } from "@components/ui";
 import type { BenefitRecord } from "@/types/benefit";
 import type { Metadata } from "next";
@@ -141,11 +142,11 @@ export default async function BenefitDetailPage({ params }: PageParams) {
             <div className="space-y-4 text-sm text-slate-700">
               <div>
                 <strong className="block text-slate-900 mb-1">대상 요건</strong>
-                {detail.detail?.["지원대상"] || detail.list?.["지원대상"] || "상세 정보 없음"}
+                {formatDescription(detail.detail?.["지원대상"] || detail.list?.["지원대상"] || "상세 정보 없음")}
               </div>
               <div>
                 <strong className="block text-slate-900 mb-1">선정 기준</strong>
-                {detail.detail?.["선정기준"] || detail.list?.["선정기준"] || "상세 정보 없음"}
+                {formatDescription(detail.detail?.["선정기준"] || detail.list?.["선정기준"] || "상세 정보 없음")}
               </div>
             </div>
           </Card>
@@ -157,7 +158,7 @@ export default async function BenefitDetailPage({ params }: PageParams) {
           </h3>
           <Card className="h-full bg-slate-50/50">
             <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-              {detail.detail?.["지원내용"] || detail.list?.["지원내용"] || "상세 정보 없음"}
+              {formatDescription(detail.detail?.["지원내용"] || detail.list?.["지원내용"] || "상세 정보 없음")}
             </div>
           </Card>
         </section>
@@ -171,7 +172,7 @@ export default async function BenefitDetailPage({ params }: PageParams) {
         <SectionHeader title="신청 방법" />
         <Card>
           <div className="text-slate-800 leading-relaxed whitespace-pre-wrap mb-6">
-            {detail.detail?.["신청방법"] || detail.list?.["신청방법"] || "상세 정보 없음"}
+            {formatDescription(detail.detail?.["신청방법"] || detail.list?.["신청방법"] || "상세 정보 없음")}
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 border-t border-slate-100 pt-6">

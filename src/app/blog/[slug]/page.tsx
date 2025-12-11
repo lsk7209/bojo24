@@ -4,6 +4,7 @@ import { Badge, Card, Button } from "@components/ui";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { AdPlaceholder } from "@components/ad-placeholder";
+import ReactMarkdown from "react-markdown";
 
 type PageParams = {
     params: { slug: string };
@@ -52,7 +53,7 @@ export default async function BlogPostPage({ params }: PageParams) {
                 <span className="line-clamp-1">{post.title}</span>
             </nav>
 
-            <article className="prose prose-slate max-w-none">
+            <article className="prose prose-slate prose-lg max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-700 prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-img:rounded-xl prose-strong:text-slate-900 prose-li:text-slate-700">
                 <header className="mb-8 not-prose">
                     <div className="flex flex-wrap gap-2 mb-4">
                         {post.tags?.map((tag) => (
@@ -73,18 +74,10 @@ export default async function BlogPostPage({ params }: PageParams) {
 
                 <div className="h-px w-full bg-slate-200 my-8" />
 
-                {/* 본문 콘텐츠 (Markdown 스타일 흉내) */}
-                <div className="whitespace-pre-line text-lg leading-relaxed text-slate-800 space-y-4">
-                    {post.content.split('\n').map((line, i) => {
-                        if (line.startsWith('## ')) {
-                            return <h2 key={i} className="text-2xl font-bold text-slate-900 mt-10 mb-4">{line.replace('## ', '')}</h2>
-                        }
-                        if (line.startsWith('- ')) {
-                            return <li key={i} className="ml-4 list-disc marker:text-blue-500">{line.replace('- ', '')}</li>
-                        }
-                        return <p key={i}>{line}</p>
-                    })}
-                </div>
+                {/* React Markdown 렌더링 */}
+                <ReactMarkdown>
+                    {post.content}
+                </ReactMarkdown>
             </article>
 
             {/* 중간 광고 */}
