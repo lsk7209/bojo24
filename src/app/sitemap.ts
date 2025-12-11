@@ -1,7 +1,7 @@
 import { getAnonClient } from "@lib/supabaseClient";
 import { MetadataRoute } from "next";
 
-const BASE_URL = "https://bojo24.vercel.app"; // 실제 배포 도메인
+const BASE_URL = "https://bojo24.kr";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const supabase = getAnonClient();

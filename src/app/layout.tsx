@@ -11,12 +11,12 @@ const notoSansKr = Noto_Sans_KR({
   display: "swap",
 });
 
-const siteName = "보조금 파인더";
+const siteName = "보조금24";
 const siteDescription =
   "행정안전부 보조금24 정보를 AI로 요약하고 쉽게 찾을 수 있는 플랫폼";
 
 const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://bojo24.vercel.app";
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://bojo24.kr";
 
 export const metadata: Metadata = {
   title: {
@@ -34,7 +34,10 @@ export const metadata: Metadata = {
     type: "website",
   },
   verification: {
-    google: "f08c47fec0942fa0", // ads.txt에 있는 값과 유사한 검증 코드가 있다면 여기에 기입 (일단 보류)
+    google: "wsoEFYnqrAkhjBrkV4Q9iWCOzfZBySwWZZhRVQbI04M",
+    other: {
+      "naver-site-verification": "2e4e153be51c48838641e6e87c005fa0a8663b3d",
+    },
   }
 };
 
