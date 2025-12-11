@@ -95,12 +95,14 @@ export default async function BlogPostPage({ params }: PageParams) {
                             p: ({ node, ...props }) => (
                                 <p className="mb-6 whitespace-pre-line" {...props} />
                             ),
-                            // Blockquote: 꿀팁/강조 박스 스타일
-                            blockquote: ({ node, ...props }) => (
+                            // Blockquote: 꿀팁/강조 박스 스타일 (타입 에러 수정됨)
+                            blockquote: ({ node, children, ...props }) => (
                                 <div className="bg-blue-50 border-l-4 border-blue-500 p-5 my-8 rounded-r-xl text-slate-700 shadow-sm">
                                     <div className="flex gap-3">
                                         <span className="text-2xl">💡</span>
-                                        <div className="flex-1 italic" {...props} />
+                                        <div className="flex-1 italic">
+                                            {children}
+                                        </div>
                                     </div>
                                 </div>
                             ),
