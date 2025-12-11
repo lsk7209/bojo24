@@ -1,47 +1,80 @@
-import React from "react";
+import { ComponentProps, ReactNode } from "react";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
-type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "ghost" | "outline";
-};
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
-export const Button = ({ variant = "primary", className, ...props }: ButtonProps) => {
-  let variantClass = "btn-primary";
-  if (variant === "ghost") variantClass = "btn-ghost";
-  if (variant === "outline") variantClass = "border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm";
-
-  return (
-    <button
-      {...props}
-      className={`btn ${variantClass} ${className || ""}`}
-    />
-  );
-};
-
+// ---- Badge Component ----
 type BadgeProps = {
-  children: React.ReactNode;
-  tone?: "primary" | "muted" | "success" | "warning";
+  children: ReactNode;
+  tone?: "primary" | "muted" | "accent";
+  className?: string; // className prop 추가
 };
 
-export const Badge = ({ children, tone = "primary" }: BadgeProps) => {
-  let styleClass = "bg-blue-50 text-blue-700 ring-blue-700/10";
-  if (tone === "muted") styleClass = "bg-slate-100 text-slate-600 ring-slate-500/10";
-  if (tone === "success") styleClass = "bg-green-50 text-green-700 ring-green-600/10";
-  if (tone === "warning") styleClass = "bg-yellow-50 text-yellow-800 ring-yellow-600/20";
+export function Badge({ children, tone = "primary", className }: BadgeProps) {
+  const baseStyles =
+    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
+
+  const toneStyles = {
+    primary: "border-transparent bg-blue-100 text-blue-800 hover:bg-blue-200",
+    muted: "border-transparent bg-slate-100 text-slate-800 hover:bg-slate-200",
+    accent: "border-transparent bg-red-100 text-red-800 hover:bg-red-200",
+  };
 
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${styleClass}`}
-    >
+    <span className={cn(baseStyles, toneStyles[tone], className)}>
       {children}
     </span>
   );
+}
+
+// ---- Button Component ----
+type ButtonProps = ComponentProps<"button"> & {
+  variant?: "primary" | "ghost" | "outline";
+  size?: "sm" | "md" | "lg"; // size prop 추가
 };
 
-type CardProps = {
-  children: React.ReactNode;
-  className?: string;
-};
+export function Button({
+  className,
+  variant = "primary",
+  size = "md",
+  ...props
+}: ButtonProps) {
+  const baseStyles = "inline-flex items-center justify-center rounded-xl font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:pointer-events-none disabled:opacity-50";
 
-export const Card = ({ children, className }: CardProps) => (
-  <div className={`card ${className || ""}`}>{children}</div>
-);
+  const variants = {
+    primary: "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 shadow-sm shadow-blue-200",
+    ghost: "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+    outline: "border border-slate-200 bg-white hover:bg-slate-50 text-slate-900",
+  };
+
+  const sizes = {
+    sm: "h-8 px-3 text-xs",
+    md: "h-10 px-4 py-2 text-sm",
+    lg: "h-12 px-8 text-base",
+  };
+
+  return (
+    <button
+      className={cn(baseStyles, variants[variant], sizes[size], className)}
+      {...props}
+    />
+  );
+}
+
+// ---- Card Component ----
+type CardProps = ComponentProps<"div">;
+
+export function Card({ className, ...props }: CardProps) {
+  return (
+    <div
+      className={cn(
+        "rounded-2xl border border-slate-200 bg-white p-6 shadow-sm",
+        className
+      )}
+      {...props}
+    />
+  );
+}
