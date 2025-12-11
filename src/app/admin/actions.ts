@@ -5,6 +5,9 @@ import type { BenefitRecord } from "@/types/benefit";
 import { revalidatePath } from "next/cache";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+// Vercel Serverless Function 설정 (최대 60초)
+export const maxDuration = 60;
+
 // Gemini API 설정
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
