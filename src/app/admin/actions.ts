@@ -3,111 +3,75 @@
 import { getServiceClient } from "@lib/supabaseClient";
 import type { BenefitRecord } from "@/types/benefit";
 import { revalidatePath } from "next/cache";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const TITLE_TEMPLATES = [
-    "🚨 2025년 {region} {name} 긴급 점검! 혹시 나도 대상자?",
-    "{name} 신청 마감 임박? ⏳ {region} 거주자라면 필독!",
-    "💰 월급 외 수입 만들기: {region} {name} 100% 활용법",
-    "복잡한 서류는 가라! {name} 쉽고 빠르게 신청하는 꿀팁 ({region})",
-    "놓치면 0원, 알면 목돈! {name} 핵심 요약 정리 📝"
-];
+// Gemini API 설정
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 const generateSlug = (title: string, id: string) => {
     return `${id.substring(0, 8)}-blog-post-${Date.now().toString(36)}`;
 };
 
-const generatePostContent = (benefit: BenefitRecord) => {
-    const region = benefit.governing_org || "정부24";
+// AI에게 글쓰기 요청
+async function generatePostByAI(benefit: BenefitRecord) {
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+    // 데이터 전처리
     const detail = benefit.detail_json as any;
-    const clean = (t: string) => (t || "별도 공고 참조").replace(/○/g, "").replace(/-/g, "").trim();
+    const info = `
+    - 정책명: ${benefit.name}
+    - 소관기관: ${benefit.governing_org}
+    - 지원대상: ${JSON.stringify(detail.detail?.["지원대상"] || detail.list?.["지원대상"])}
+    - 지원내용: ${JSON.stringify(detail.detail?.["지원내용"] || detail.list?.["지원내용"])}
+    - 신청방법: ${JSON.stringify(detail.detail?.["신청방법"] || detail.list?.["신청방법"])}
+    - 문의처: ${JSON.stringify(detail.detail?.["문의처"] || detail.list?.["전화문의"])}
+    `;
 
-    const target = clean(detail.detail?.["지원대상"] || detail.list?.["지원대상"]);
-    const content = clean(detail.detail?.["지원내용"] || detail.list?.["지원내용"]);
-    const apply = clean(detail.detail?.["신청방법"] || detail.list?.["신청방법"]);
-    const contact = clean(detail.detail?.["문의처"] || detail.list?.["전화문의"]);
-    const type = benefit.category || "생활/복지";
+    const prompt = `
+    당신은 대한민국 최고의 정책 분석 에디터입니다.
+    아래 정부 보조금 데이터를 바탕으로, 시민들이 이해하기 쉽고 매력적인 블로그 포스트를 마크다운(Markdown) 형식으로 작성해주세요.
 
-    // Emoji Picker
-    const emojis = ["✨", "💡", "🔥", "📢", "💰", "🎁"];
-    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+    [작성 가이드]
+    1. **톤앤매너**: 친절하고 전문적이며, 독자의 관심을 끄는 구어체를 사용하세요. ("~해요", "~알아볼까요?")
+    2. **구조**:
+       - **인트로**: 독자의 호기심을 자극하는 질문으로 시작하고, 3줄 요약 박스(> 인용문)를 포함하세요.
+       - **본문 1 (대상)**: "누가 받을 수 있나요?" - 체크리스트 형식(- 불릿)으로 작성.
+       - **본문 2 (혜택)**: "어떤 혜택인가요?" - 핵심 내용을 강조.
+       - **본문 3 (신청)**: "어떻게 신청하나요?" - 단계별(1. 2. 3.)로 명확하게.
+       - **아웃트로**: 희망적인 메시지와 함께 마무리.
+    3. **디자인 요소**:
+       - 적절한 이모지(✨, 💰, 📢 등)를 사용하여 시각적 재미를 더하세요.
+       - 중요한 단어는 **굵게** 표시하세요.
+       - 팁이 있다면 > 인용문으로 "💡 에디터 꿀팁"을 추가하세요.
 
-    // 1. 후킹 (Hook) & 요약 카드
-    const intro = `
-**"혹시 이 혜택, 나만 모르고 있었나?"** 😲
+    [데이터]
+    ${info}
 
-안녕하세요, 스마트한 혜택 알리미 **보조금 파인더**입니다.
-오늘은 **${region}** 주민이라면 반드시 알아야 할 **${benefit.name}**에 대해 파헤쳐 보겠습니다.
+    [출력 형식]
+    제목과 본문을 포함한 마크다운 (제목은 # 없이 첫 줄에 작성)
+    `;
 
-바쁜 여러분을 위해 **핵심만 딱 3가지**로 요약했습니다. 이것만 봐도 절반은 성공입니다! 👇
+    try {
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
 
-> ### 🚀 30초 핵심 요약
-> 
-> 1. **누가?** ${target.substring(0, 30)}... 등
-> 2. **무엇을?** ${content.substring(0, 40)}...
-> 3. **어떻게?** ${apply.split(' ')[0]} 등으로 간편 신청 가능!
-`;
+        // 첫 줄을 제목으로 추출
+        const splitIndex = text.indexOf('\n');
+        let title = text.substring(0, splitIndex).replace(/^#+\s*/, '').trim();
+        let content = text.substring(splitIndex + 1).trim();
 
-    // 2. 바디 (체크리스트)
-    const checklist = `
-## ✅ 나도 받을 수 있을까? (자격 체크)
+        // 제목이 너무 길면 안전장치
+        if (title.length > 50) title = `${benefit.name} - 신청 가이드`;
 
-가장 중요한 건 역시 **'내가 대상인가?'** 겠죠.
-아래 항목 중 해당되는 게 있는지 체크해보세요.
+        return { title, content };
+    } catch (e) {
+        console.error("AI Generation Failed:", e);
+        throw new Error("AI 글쓰기 실패");
+    }
+}
 
-${target.split('. ').map(t => `- ${t.trim()}`).join('\n')}
-
-**💡 에디터의 TIP:**
-> 지원 대상 조건이 헷갈린다면, 망설이지 말고 관할 부서에 **"제 상황이 이런데 가능한가요?"** 라고 물어보는 게 가장 빠릅니다!
-`;
-
-    // 3. 바디 (혜택 상세)
-    const benefitDetail = `
-## 🎁 어떤 혜택이 기다리고 있나요?
-
-선정되신 분들에게는 다음과 같은 든든한 지원이 제공됩니다.
-${type} 분야에서 실질적인 도움이 되는 혜택들이죠.
-
-| 구분 | 내용 |
-| :--- | :--- |
-| **지원 형태** | ${type} |
-| **주요 혜택** | ${content.replace(/\n/g, "<br/>")} |
-| **지급 방식** | ${benefit.pay_type || "별도 문의"} |
-
-단순한 금액 지원을 넘어, 여러분의 삶의 질을 높여줄 소중한 기회입니다. ${randomEmoji}
-`;
-
-    // 4. 바디 (신청 방법 & 팁)
-    const howTo = `
-## 📝 신청, 어렵지 않아요!
-
-"서류 복잡하면 어쩌지..." 걱정하지 마세요. 절차는 생각보다 심플합니다.
-
-1. **신청 기간 확인**: (상세 공고문 참조)
-2. **접수처 방문**: ${apply}
-3. **제출 서류**: 신분증, 신청서 등 (상세 페이지에서 다운로드)
-
-**🚧 주의사항:**
-> 신청 기간을 놓치면 다음 기약이 없을 수도 있습니다. **지금 바로 달력에 표시**해두는 센스! 🗓️
-`;
-
-    // 5. 아웃트로
-    const outro = `
----
-
-**${benefit.name}**, 이제 좀 감이 잡히시나요?
-정보가 힘인 시대, 아는 만큼 누릴 수 있습니다.
-
-혹시 더 궁금한 점이 있거나, **공식 공고문 원본**을 보고 싶으시다면?
-아래 버튼을 눌러 **상세 페이지**에서 확인해보세요. 모든 정보가 투명하게 공개되어 있습니다.
-
-여러분의 든든한 내일을 응원합니다! 💪
-`;
-
-    return intro + checklist + benefitDetail + howTo + outro;
-};
-
-// --- (아래는 기존 Server Actions 유지) ---
-
+// 1. 단일 포스트 생성 (AI 버전)
 export async function generateSinglePost(password: string) {
     if (password !== (process.env.ADMIN_PASSWORD || "admin1234")) {
         return { success: false, message: "비밀번호가 일치하지 않습니다." };
@@ -116,51 +80,43 @@ export async function generateSinglePost(password: string) {
     try {
         const supabase = getServiceClient();
 
-        // 랜덤 데이터 추출 (실제론 더 정교한 로직 권장)
+        // 랜덤 데이터 1개 추출
         const { data } = await supabase.from("benefits").select("*").limit(100);
-
-        if (!data || data.length === 0) {
-            return { success: false, message: "데이터가 없습니다." };
-        }
+        if (!data || data.length === 0) return { success: false, message: "데이터 없음" };
 
         const benefit = data[Math.floor(Math.random() * data.length)] as BenefitRecord;
 
-        const titleTemplate = TITLE_TEMPLATES[Math.floor(Math.random() * TITLE_TEMPLATES.length)];
-        const region = benefit.governing_org || "전국";
-        const title = titleTemplate
-            .replace("{name}", benefit.name)
-            .replace("{region}", region);
-
+        // AI 생성
+        const { title, content } = await generatePostByAI(benefit);
         const slug = generateSlug(title, benefit.id);
-        const markdown = generatePostContent(benefit);
 
+        // DB 저장
         const { error } = await supabase.from("posts").insert({
             benefit_id: benefit.id,
             title: title,
             slug: slug,
-            content: markdown,
-            // Excerpt도 매력적으로 수정
-            excerpt: `[${region}] ${benefit.name}: 자격 요건부터 신청 꿀팁까지! 30초 만에 핵심 내용을 확인해보세요. 🔍`,
-            tags: [benefit.category, region.split(" ")[0] || "지원금", "2025정책", "필수정보"].filter(Boolean)
+            content: content,
+            excerpt: content.substring(0, 100).replace(/[#*`]/g, "") + "...", // 본문 앞부분을 요약으로
+            tags: [benefit.category, benefit.governing_org?.split(" ")[0]].filter(Boolean) as string[]
         });
 
         if (error) throw error;
 
-        revalidatePath("/"); // 캐시 갱신
-        return { success: true, message: `발행 완료: ${title}` };
+        revalidatePath("/");
+        return { success: true, message: `[AI] 발행 완료: ${title}` };
 
     } catch (e: any) {
         console.error(e);
-        return { success: false, message: e.message };
+        return { success: false, message: `Error: ${e.message}` };
     }
 }
 
+// 2. 통합 대시보드 통계 조회
 export async function getDashboardStats() {
     const supabase = getServiceClient();
     const { count: benefitCount } = await supabase.from("benefits").select("*", { count: 'exact', head: true });
     const { count: postCount } = await supabase.from("posts").select("*", { count: 'exact', head: true });
 
-    // 방문자 통계 (최근 7일)
     const { data: recentViews } = await supabase
         .from("page_views")
         .select("path, created_at")
@@ -193,6 +149,7 @@ export async function getDashboardStats() {
     };
 }
 
+// 3. Head 스크립트 저장
 export async function saveHeadScript(password: string, script: string) {
     if (password !== (process.env.ADMIN_PASSWORD || "admin1234")) return { success: false, message: "Auth Failed" };
 
@@ -207,6 +164,7 @@ export async function saveHeadScript(password: string, script: string) {
     return { success: true, message: "저장되었습니다." };
 }
 
+// 4. Head 스크립트 불러오기
 export async function getHeadScript() {
     const supabase = getServiceClient();
     const { data } = await supabase
