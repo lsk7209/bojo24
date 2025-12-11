@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR } from "next/font/google";
+import Script from "next/script";
+import { Header, Footer } from "@components/layout-common";
 import "./globals.css";
 
 const notoSansKr = Noto_Sans_KR({
@@ -14,7 +16,7 @@ const siteDescription =
   "행정안전부 보조금24 정보를 AI로 요약하고 쉽게 찾을 수 있는 플랫폼";
 
 const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://example.com";
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://bojo24.vercel.app";
 
 export const metadata: Metadata = {
   title: {
@@ -31,6 +33,9 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     type: "website",
   },
+  verification: {
+    google: "f08c47fec0942fa0", // ads.txt에 있는 값과 유사한 검증 코드가 있다면 여기에 기입 (일단 보류)
+  }
 };
 
 export default function RootLayout({
@@ -40,8 +45,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko" className={notoSansKr.className}>
-      <body className="min-h-screen bg-slate-50 text-slate-900 antialiased selection:bg-blue-100 selection:text-blue-900">
-        <div className="mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-12">{children}</div>
+      <head>
+        {/* 구글 애드센스 스크립트 */}
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3050601904412736"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
+      </head>
+      <body className="flex min-h-screen flex-col bg-slate-50 text-slate-900 antialiased selection:bg-blue-100 selection:text-blue-900">
+        <Header />
+        <div className="flex-1 w-full mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-12">
+          {children}
+        </div>
+        <Footer />
       </body>
     </html>
   );
