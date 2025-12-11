@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { generateSinglePost, getDashboardStats, saveHeadScript, getHeadScript } from "./actions";
-import { Card, Button } from "@components/ui";
+import { Card, Button, Badge } from "@components/ui";
 
 export default function AdminPage() {
     const [password, setPassword] = useState("");
