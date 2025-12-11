@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Noto_Sans_KR } from "next/font/google";
 import Script from "next/script";
 import { Header, Footer } from "@components/layout-common";
+import { AnalyticsTracker } from "@components/analytics-tracker";
+import { DynamicHead } from "@components/dynamic-head";
 import "./globals.css";
 
 const notoSansKr = Noto_Sans_KR({
@@ -56,11 +58,14 @@ export default function RootLayout({
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
+        {/* 관리자 설정 동적 스크립트 */}
+        <DynamicHead />
       </head>
       <body className="flex min-h-screen flex-col bg-slate-50 text-slate-900 antialiased selection:bg-blue-100 selection:text-blue-900">
         <Header />
         <div className="flex-1 w-full mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-12">
           {children}
+          <AnalyticsTracker />
         </div>
         <Footer />
       </body>

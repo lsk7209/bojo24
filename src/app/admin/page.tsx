@@ -1,114 +1,175 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { generateSinglePost, getStats } from "./actions";
+import { generateSinglePost, getDashboardStats, saveHeadScript, getHeadScript } from "./actions";
 import { Card, Button } from "@components/ui";
 
 export default function AdminPage() {
     const [password, setPassword] = useState("");
     const [isAuthorized, setIsAuthorized] = useState(false);
+    const [activeTab, setActiveTab] = useState<"dashboard" | "content" | "settings">("dashboard");
     const [loading, setLoading] = useState(false);
+
+    // Data States
+    const [stats, setStats] = useState<any>(null);
+    const [headScript, setHeadScript] = useState("");
     const [logs, setLogs] = useState<string[]>([]);
-    const [stats, setStats] = useState({ benefits: 0, posts: 0 });
 
     const checkAuth = () => {
-        // 클라이언트 측 간단 체크 (실제 보안은 서버 액션에서 수행됨)
-        // 여기선 UI 진입만 막는 용도
-        if (password === "admin1234") { // 데모용 비밀번호
+        if (password === "admin1234") {
             setIsAuthorized(true);
-            loadStats();
+            loadAllData();
         } else {
             alert("비밀번호가 틀렸습니다.");
         }
     };
 
-    const loadStats = async () => {
-        const s = await getStats();
+    const loadAllData = async () => {
+        const s = await getDashboardStats();
         setStats(s);
+
+        const hs = await getHeadScript();
+        setHeadScript(hs);
     };
 
     const handleGenerate = async () => {
         setLoading(true);
-        setLogs((prev) => ["생성 요청 중...", ...prev]);
-
+        setLogs(prev => ["생성 시작...", ...prev]);
         const res = await generateSinglePost(password);
-
-        if (res.success) {
-            setLogs((prev) => [`✅ ${res.message}`, ...prev]);
-            loadStats(); // 통계 갱신
-        } else {
-            setLogs((prev) => [`❌ 실패: ${res.message}`, ...prev]);
-        }
+        setLogs(prev => [res.success ? `✅ ${res.message}` : `❌ ${res.message}`, ...prev]);
+        loadAllData();
         setLoading(false);
+    };
+
+    const handleSaveScript = async () => {
+        const res = await saveHeadScript(password, headScript);
+        alert(res.message);
     };
 
     if (!isAuthorized) {
         return (
-            <div className="flex h-screen items-center justify-center bg-slate-100">
-                <Card className="w-full max-w-sm p-8 space-y-4">
-                    <h1 className="text-2xl font-bold text-center">관리자 접속</h1>
+            <div className="flex h-screen items-center justify-center bg-slate-100 p-4">
+                <Card className="w-full max-w-sm p-8 space-y-4 shadow-xl">
+                    <h1 className="text-2xl font-bold text-center">🔐 관리자 접속</h1>
                     <input
                         type="password"
-                        className="w-full p-2 border rounded"
-                        placeholder="비밀번호 입력 (admin1234)"
+                        className="w-full p-3 border rounded-lg"
+                        placeholder="비밀번호 입력"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && checkAuth()}
                     />
-                    <Button className="w-full" onClick={checkAuth}>
-                        접속하기
-                    </Button>
+                    <Button className="w-full" onClick={checkAuth}>접속하기</Button>
                 </Card>
             </div>
         );
     }
 
     return (
-        <main className="mx-auto max-w-4xl p-8 space-y-8">
-            <header className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold">🛠️ Admin Dashboard</h1>
-                <Button variant="ghost" onClick={() => setIsAuthorized(false)}>로그아웃</Button>
+        <main className="mx-auto max-w-6xl p-4 sm:p-8 space-y-8 pb-20">
+            <header className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <h1 className="text-3xl font-bold text-slate-800">Admin Console</h1>
+                <div className="flex gap-2">
+                    <Button variant={activeTab === "dashboard" ? "primary" : "ghost"} onClick={() => setActiveTab("dashboard")}>대시보드</Button>
+                    <Button variant={activeTab === "settings" ? "primary" : "ghost"} onClick={() => setActiveTab("settings")}>설정관리</Button>
+                    <Button variant="ghost" onClick={() => setIsAuthorized(false)} className="text-red-500">로그아웃</Button>
+                </div>
             </header>
 
-            {/* 통계 카드 */}
-            <div className="grid grid-cols-2 gap-4">
-                <Card className="bg-blue-50 border-blue-100">
-                    <div className="text-sm text-blue-600 font-bold">전체 데이터</div>
-                    <div className="text-3xl font-bold text-blue-900">{stats.benefits.toLocaleString()}건</div>
-                </Card>
-                <Card className="bg-green-50 border-green-100">
-                    <div className="text-sm text-green-600 font-bold">발행된 포스팅</div>
-                    <div className="text-3xl font-bold text-green-900">{stats.posts.toLocaleString()}건</div>
-                </Card>
-            </div>
-
-            {/* 액션 패널 */}
-            <Card className="space-y-4">
-                <h2 className="text-xl font-bold">🤖 AI 블로그 생성</h2>
-                <p className="text-slate-600 text-sm">
-                    버튼을 누르면 현재 데이터 중 하나를 랜덤으로 골라 SEO 최적화된 블로그 글을 발행합니다.
-                </p>
-                <div className="flex gap-4">
-                    <Button
-                        onClick={handleGenerate}
-                        disabled={loading}
-                        className={loading ? "opacity-50" : ""}
-                    >
-                        {loading ? "생성 중..." : "🚀 글 1개 생성하기"}
-                    </Button>
-                </div>
-            </Card>
-
-            {/* 로그 패널 */}
-            <Card className="bg-slate-900 text-slate-100 min-h-[300px] font-mono text-sm p-4 overflow-y-auto">
-                <div className="text-slate-400 mb-2">--- System Logs ---</div>
-                {logs.length === 0 && <div className="text-slate-600">대기 중...</div>}
-                {logs.map((log, i) => (
-                    <div key={i} className="py-1 border-b border-slate-800 last:border-0">
-                        {log}
+            {/* 1. 대시보드 탭 */}
+            {activeTab === "dashboard" && stats && (
+                <div className="space-y-6">
+                    {/* 요약 카드 */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <Card className="bg-blue-50 border-blue-100 p-6">
+                            <div className="text-sm font-bold text-blue-600">총 혜택 데이터</div>
+                            <div className="text-3xl font-black text-slate-900">{stats.overview.benefits}</div>
+                        </Card>
+                        <Card className="bg-green-50 border-green-100 p-6">
+                            <div className="text-sm font-bold text-green-600">발행된 포스팅</div>
+                            <div className="text-3xl font-black text-slate-900">{stats.overview.posts}</div>
+                        </Card>
+                        <Card className="bg-purple-50 border-purple-100 p-6">
+                            <div className="text-sm font-bold text-purple-600">누적 조회수 (Sample)</div>
+                            <div className="text-3xl font-black text-slate-900">{stats.overview.totalViews}</div>
+                        </Card>
                     </div>
-                ))}
-            </Card>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* 방문자 추이 */}
+                        <Card>
+                            <h3 className="text-lg font-bold mb-4">📈 일별 방문 추이 (최근 7일)</h3>
+                            <div className="space-y-2">
+                                {stats.dailyVisits.map(([date, count]: any) => (
+                                    <div key={date} className="flex items-center gap-2 text-sm">
+                                        <span className="w-24 text-slate-500">{date}</span>
+                                        <div className="flex-1 h-4 bg-slate-100 rounded-full overflow-hidden">
+                                            <div style={{ width: `${Math.min(count * 5, 100)}%` }} className="h-full bg-blue-500 rounded-full" />
+                                        </div>
+                                        <span className="font-bold w-10 text-right">{count}</span>
+                                    </div>
+                                ))}
+                                {stats.dailyVisits.length === 0 && <div className="text-slate-400 py-4">데이터가 없습니다.</div>}
+                            </div>
+                        </Card>
+
+                        {/* 인기 페이지 */}
+                        <Card>
+                            <h3 className="text-lg font-bold mb-4">🔥 인기 콘텐츠 TOP 10</h3>
+                            <ul className="space-y-2 text-sm">
+                                {stats.topPages.map(([path, count]: any, idx: number) => (
+                                    <li key={path} className="flex justify-between items-center py-1 border-b last:border-0 border-slate-50">
+                                        <span className="truncate flex-1 pr-4">
+                                            <span className="inline-block w-6 text-slate-400 font-mono">{idx + 1}.</span>
+                                            {path}
+                                        </span>
+                                        <Badge>{count} view</Badge>
+                                    </li>
+                                ))}
+                                {stats.topPages.length === 0 && <div className="text-slate-400 py-4">데이터가 없습니다.</div>}
+                            </ul>
+                        </Card>
+                    </div>
+
+                    {/* 액션 */}
+                    <Card className="bg-slate-50">
+                        <h3 className="text-lg font-bold mb-2">⚡ 빠른 작업</h3>
+                        <div className="flex gap-2">
+                            <Button onClick={handleGenerate} disabled={loading}>
+                                {loading ? "생성 중..." : "AI 블로그 포스팅 1건 발행"}
+                            </Button>
+                        </div>
+                        {/* 로그 뷰어 */}
+                        <div className="mt-4 p-3 bg-slate-900 text-green-400 text-xs font-mono rounded h-32 overflow-y-auto">
+                            {logs.map((L, i) => <div key={i}>{L}</div>)}
+                            {logs.length === 0 && <span className="text-slate-600">System Ready...</span>}
+                        </div>
+                    </Card>
+                </div>
+            )}
+
+            {/* 2. 설정 탭 */}
+            {activeTab === "settings" && (
+                <div className="space-y-6">
+                    <Card>
+                        <h3 className="text-lg font-bold mb-2">HTML Head 스크립트 관리</h3>
+                        <p className="text-sm text-slate-500 mb-4">
+                            &lt;head&gt; 태그 내에 삽입할 스크립트를 입력하세요. (예: Google Analytics, 네이버 소유권 확인 등)
+                            <br />
+                            <span className="text-red-500">주의: 잘못된 스크립트 입력 시 사이트가 깨질 수 있습니다.</span>
+                        </p>
+                        <textarea
+                            className="w-full h-64 p-4 font-mono text-sm border rounded bg-slate-50 focus:bg-white transition-colors"
+                            value={headScript}
+                            onChange={(e) => setHeadScript(e.target.value)}
+                            placeholder='<script>...</script>'
+                        />
+                        <div className="mt-4 flex justify-end">
+                            <Button variant="primary" onClick={handleSaveScript}>변경사항 저장</Button>
+                        </div>
+                    </Card>
+                </div>
+            )}
         </main>
     );
 }
