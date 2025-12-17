@@ -6,6 +6,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { buildTargetEnhancementPrompt } from "./prompts/targetEnhancement";
 import { buildBenefitEnhancementPrompt } from "./prompts/benefitEnhancement";
+import { buildFAQAnswerEnhancementPrompt } from "./prompts/faqEnhancement";
 
 // Gemini API 초기화 (환경 변수 확인)
 let genAI: GoogleGenerativeAI | null = null;
