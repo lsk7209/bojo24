@@ -181,8 +181,8 @@ export async function optimizeBenefitContent(
   };
   
   // 6. FAQ 자동 생성 (공공데이터 기반, AEO 최적화)
-  // 중요: FAQ는 원본 공공데이터만 사용 (Gemini 보완된 targetContent 사용 안 함)
-  const faqs = generateFAQs(benefitName, category, originalTargetContent, benefitContent, applyMethod, contact, detailData);
+  // Gemini로 답변 보완 (100~300자 범위)
+  const faqs = await generateFAQs(benefitName, category, originalTargetContent, originalBenefitContent, applyMethod, contact, detailData, benefitId, governingOrg);
   
   // 7. 키워드 추출 (SEO 최적화)
   const keywords = extractKeywords(benefitName, category, governingOrg, targetContent, benefitContent);
@@ -368,16 +368,19 @@ function extractDocuments(documents: string): string[] {
 /**
  * FAQ 자동 생성 (공공데이터 기반, AEO 최적화)
  * 구글이 고유 컨텐츠로 인정할 수 있도록 구조화된 질문-답변 생성
+ * Gemini로 답변 보완 (100~300자 범위)
  */
-function generateFAQs(
+async function generateFAQs(
   name: string,
   category: string,
   target: string,
   benefit: string,
   apply: string,
   contact: { phone?: string; website?: string; email?: string },
-  detail?: Record<string, string>
-): Array<{ question: string; answer: string }> {
+  detail?: Record<string, string>,
+  benefitId?: string,
+  governingOrg?: string
+): Promise<Array<{ question: string; answer: string }>> {
   const faqs: Array<{ question: string; answer: string }> = [];
   const detailData = detail || {};
   
