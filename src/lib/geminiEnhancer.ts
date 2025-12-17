@@ -144,14 +144,21 @@ export async function enhanceTarget(
   benefitId?: string
 ): Promise<string | null> {
   // Gemini 보완이 활성화되지 않았으면 null 반환
-  if (!isGeminiEnhancementEnabled(benefitId)) {
+  const isEnabled = isGeminiEnhancementEnabled(benefitId);
+  console.log(`[Gemini Debug] enhanceTarget - benefitId: ${benefitId}, isEnabled: ${isEnabled}`);
+  
+  if (!isEnabled) {
+    console.log(`[Gemini Debug] enhanceTarget - 비활성화됨. GEMINI_ENHANCEMENT_ALLOWED_IDS: ${process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS || "없음"}`);
     return null;
   }
   
   const geminiModel = initGemini();
   if (!geminiModel) {
+    console.log(`[Gemini Debug] enhanceTarget - Gemini 모델 초기화 실패`);
     return null;
   }
+  
+  console.log(`[Gemini Debug] enhanceTarget - Gemini API 호출 시작`);
 
   try {
     const criteria = detail["선정기준"] || detail["선정 기준"] || "";
