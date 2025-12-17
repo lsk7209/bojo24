@@ -13,6 +13,8 @@ let model: ReturnType<typeof GoogleGenerativeAI.prototype.getGenerativeModel> | 
  * Gemini 보완 활성화 여부 확인
  * 환경 변수 GEMINI_ENHANCEMENT_ENABLED=true로 활성화
  * 또는 특정 보조금 ID 리스트에 포함된 경우만 활성화
+ * 
+ * 현재는 기본적으로 비활성화됨 (공공데이터만 사용)
  */
 function isGeminiEnhancementEnabled(benefitId?: string): boolean {
   // 환경 변수로 전역 활성화/비활성화 제어
@@ -24,7 +26,7 @@ function isGeminiEnhancementEnabled(benefitId?: string): boolean {
     : [];
   
   // 전역 활성화 또는 특정 ID에 포함된 경우만 활성화
-  return globalEnabled || (benefitId && allowedIds.includes(benefitId));
+  return Boolean(globalEnabled || (benefitId && allowedIds.includes(benefitId)));
 }
 
 function initGemini() {

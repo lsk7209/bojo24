@@ -1,10 +1,12 @@
 /**
  * 보조금 상세페이지 컨텐츠 최적화 유틸리티
  * 공공데이터 기반으로 구글 검색 최적화된 구조 생성
- * 부족한 내용은 Gemini로 보완하여 고유 컨텐츠 생성
+ * 
+ * Gemini 보완 기능은 현재 비활성화됨 (필요시 주석 해제)
  */
 
-import { enhanceSummary, enhanceTarget, enhanceBenefit, needsEnhancement } from "./geminiEnhancer";
+// Gemini 보완 기능 임시 비활성화
+// import { enhanceSummary, enhanceTarget, enhanceBenefit, needsEnhancement } from "./geminiEnhancer";
 
 export interface BenefitDetail {
   detail?: Record<string, string>;
@@ -81,61 +83,19 @@ export async function optimizeBenefitContent(
 ): Promise<OptimizedContent> {
   const detailData = detail.detail || detail.list || {};
   
-  // 1. 요약 생성 (구글 스니펫 최적화)
-  let summary = generateSummary(benefitName, category, governingOrg, detailData);
+  // 1. 요약 생성 (구글 스니펫 최적화) - 공공데이터만 사용
+  const summary = generateSummary(benefitName, category, governingOrg, detailData);
   
-  // 공공데이터가 부족하면 Gemini로 보완
-  if (needsEnhancement(summary, 200)) {
-    const enhanced = await enhanceSummary(benefitName, category, governingOrg, summary, detailData);
-    if (enhanced) {
-      summary = enhanced;
-    }
-  }
-  
-  // 2. 지원 대상 섹션
-  let targetContent = detailData["지원대상"] || detailData["대상"] || "정보 없음";
+  // 2. 지원 대상 섹션 - 공공데이터만 사용
+  const targetContent = detailData["지원대상"] || detailData["대상"] || "정보 없음";
   const criteria = detailData["선정기준"] || detailData["선정 기준"] || "";
   
-  // 공공데이터가 부족하면 Gemini로 보완
-  if (needsEnhancement(targetContent, 100)) {
-    if (process.env.NODE_ENV === "development") {
-      console.log(`🔄 지원 대상 보완 필요 (${targetContent.length}자 < 100자). Gemini 호출 중...`);
-    }
-    const enhanced = await enhanceTarget(benefitName, governingOrg, targetContent, detailData);
-    if (enhanced) {
-      if (process.env.NODE_ENV === "development") {
-        console.log(`✅ 지원 대상 보완 완료 (${enhanced.length}자)`);
-      }
-      targetContent = enhanced;
-    } else {
-      if (process.env.NODE_ENV === "development") {
-        console.warn("⚠️ Gemini 지원 대상 보완 실패. 공공데이터만 사용합니다.");
-      }
-    }
-  }
-  
-  // 3. 지원 내용 섹션
-  let benefitContent = detailData["지원내용"] || detailData["지원 내용"] || "정보 없음";
+  // 3. 지원 내용 섹션 - 공공데이터만 사용
+  const benefitContent = detailData["지원내용"] || detailData["지원 내용"] || "정보 없음";
   const amount = extractAmount(benefitContent);
   const benefitType = extractBenefitType(benefitContent);
   
-  // 공공데이터가 부족하면 Gemini로 보완
-  if (needsEnhancement(benefitContent, 150)) {
-    if (process.env.NODE_ENV === "development") {
-      console.log(`🔄 지원 내용 보완 필요 (${benefitContent.length}자 < 150자). Gemini 호출 중...`);
-    }
-    const enhanced = await enhanceBenefit(benefitName, governingOrg, benefitContent, detailData);
-    if (enhanced) {
-      if (process.env.NODE_ENV === "development") {
-        console.log(`✅ 지원 내용 보완 완료 (${enhanced.length}자)`);
-      }
-      benefitContent = enhanced;
-    } else {
-      if (process.env.NODE_ENV === "development") {
-        console.warn("⚠️ Gemini 지원 내용 보완 실패. 공공데이터만 사용합니다.");
-      }
-    }
-  }
+  // Gemini 보완 기능은 비활성화됨 (공공데이터만 사용)
   
   // 4. 신청 방법 섹션
   const applyMethod = detailData["신청방법"] || detailData["신청 방법"] || "정보 없음";
