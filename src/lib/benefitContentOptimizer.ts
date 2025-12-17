@@ -93,6 +93,16 @@ export async function optimizeBenefitContent(
   // 특정 보조금 ID에 대해서만 Gemini로 지원 대상 보완 (100~150자 목표)
   // 환경 변수 GEMINI_ENHANCEMENT_ALLOWED_IDS에 포함된 경우만 활성화
   if (benefitId && targetContent && targetContent !== "정보 없음" && targetContent.length < 150) {
+    // 디버그: 환경 변수 확인
+    const allowedIds = process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS 
+      ? process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS.split(",").map(id => id.trim())
+      : [];
+    const isAllowed = allowedIds.includes(benefitId);
+    const hasApiKey = !!process.env.GEMINI_API_KEY;
+    
+    // 프로덕션에서도 디버그 로그 출력 (문제 진단용)
+    console.log(`[Gemini Debug] benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey}, allowedIds: [${allowedIds.join(", ")}]`);
+    
     const enhanced = await enhanceTarget(
       benefitName,
       governingOrg,
@@ -104,14 +114,9 @@ export async function optimizeBenefitContent(
       // enhanced가 이미 100~150자로 최적화되어 있음
       // 공공데이터와 병합된 경우도 있으므로 그대로 사용
       targetContent = enhanced;
-      
-      if (process.env.NODE_ENV === "development") {
-        console.log(`✅ 지원 대상 Gemini 보완 완료: ${targetContent.length}자`);
-      }
+      console.log(`✅ 지원 대상 Gemini 보완 완료: ${targetContent.length}자`);
     } else {
-      if (process.env.NODE_ENV === "development") {
-        console.log(`⚠️ Gemini 지원 대상 보완 실패 또는 비활성화 (benefitId: ${benefitId})`);
-      }
+      console.log(`⚠️ Gemini 지원 대상 보완 실패 또는 비활성화 (benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey})`);
     }
   }
   
