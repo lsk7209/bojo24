@@ -90,9 +90,9 @@ export async function optimizeBenefitContent(
   let targetContent = detailData["지원대상"] || detailData["대상"] || "정보 없음";
   const criteria = detailData["선정기준"] || detailData["선정 기준"] || "";
   
-  // 특정 보조금 ID에 대해서만 Gemini로 지원 대상 보완 (100~150자 목표)
+  // 특정 보조금 ID에 대해서만 Gemini로 지원 대상 보완 (최소 100자 이상 목표)
   // 환경 변수 GEMINI_ENHANCEMENT_ALLOWED_IDS에 포함된 경우만 활성화
-  if (benefitId && targetContent && targetContent !== "정보 없음" && targetContent.length < 150) {
+  if (benefitId && targetContent && targetContent !== "정보 없음" && targetContent.length < 200) {
     // 디버그: 환경 변수 확인
     const allowedIds = process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS 
       ? process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS.split(",").map(id => id.trim())

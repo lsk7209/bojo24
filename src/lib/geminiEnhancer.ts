@@ -176,39 +176,29 @@ export async function enhanceTarget(
 [요구사항]
 위 공공데이터를 기반으로, **지원 대상**을 가독성 있게 정리해주세요.
 
-1. **100~150자**로 간결하게 작성하세요 (정확히 100~150자)
+1. **최소 100자 이상**으로 작성하세요 (가능한 한 상세하게)
 2. **자격 요건을 구체적으로** 설명하세요 (나이, 소득, 거주지 등)
 3. **실제 신청 가능한 사람들의 예시**를 포함하세요
 4. 공공데이터에 없는 정보는 추가하지 마세요
 5. 문장은 자연스럽고 읽기 쉽게 작성하세요
-6. 불필요한 반복이나 장황한 설명은 피하세요
+6. 불필요한 반복은 피하되, 필요한 정보는 모두 포함하세요
 
 [출력 형식]
 순수 텍스트만 반환하세요. JSON이나 마크다운 형식은 사용하지 마세요.
-반드시 100~150자 사이로 작성하세요.
+내용이 길어도 괜찮으니, 자격 요건과 예시를 충분히 포함하여 작성하세요.
 `;
 
     const result = await geminiModel.generateContent(prompt);
     let enhanced = result.response.text().trim();
     
-    // 100~150자로 제한 (가독성 확보)
-    if (enhanced.length > 150) {
-      // 150자를 넘으면 마지막 문장을 완성하여 자름
-      const trimmed = enhanced.substring(0, 147);
-      const lastPeriod = trimmed.lastIndexOf(".");
-      enhanced = lastPeriod > 100 
-        ? trimmed.substring(0, lastPeriod + 1)
-        : trimmed + "...";
-    }
-    
-    // 최소 100자 이상이 되도록 보장
+    // 최소 100자 이상이 되도록 보장 (공공데이터가 부족한 경우)
     if (enhanced.length < 100 && publicDataTarget.length < 100) {
-      // 공공데이터와 병합하여 100자 이상 만들기
+      // 공공데이터와 병합하여 더 풍부한 내용 만들기
       const merged = `${publicDataTarget}\n\n${enhanced}`;
-      return merged.length > 150 ? merged.substring(0, 147) + "..." : merged;
+      return merged;
     }
     
-    // 공공데이터와 자연스럽게 병합 (100~150자 목표)
+    // Gemini가 생성한 전체 내용 반환 (길이 제한 없음)
     // 공공데이터가 이미 포함되어 있으면 enhanced만 반환
     return enhanced;
   } catch (error: any) {
