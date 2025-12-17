@@ -3,6 +3,7 @@ import { FloatingActionButton } from "@components/fab-button";
 import { buildAllStructuredData } from "./schema";
 import { getServiceClient } from "@lib/supabaseClient";
 import { formatDescription } from "@lib/formattext";
+import { formatMarkdown } from "@lib/formatMarkdown";
 import { buildStructuredAnswers } from "@lib/zeroClickOptimization";
 import { optimizeBenefitContent, generateSummary } from "@lib/benefitContentOptimizer";
 import { Badge, Card } from "@components/ui";
