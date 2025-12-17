@@ -128,12 +128,43 @@ export async function optimizeBenefitContent(
     console.log(`[Gemini Debug] 보완 조건 불만족 - benefitId: ${benefitId}, targetContent 길이: ${targetContent?.length || 0}, 조건: ${benefitId && targetContent && targetContent !== "정보 없음" && targetContent.length < 150}`);
   }
   
-  // 3. 지원 내용 섹션 - 공공데이터만 사용
-  const benefitContent = detailData["지원내용"] || detailData["지원 내용"] || "정보 없음";
+  // 3. 지원 내용 섹션
+  // 원본 공공데이터 저장 (FAQ 생성 시 사용)
+  const originalBenefitContent = detailData["지원내용"] || detailData["지원 내용"] || "정보 없음";
+  let benefitContent = originalBenefitContent; // 표시용 (Gemini 보완 가능)
   const amount = extractAmount(benefitContent);
   const benefitType = extractBenefitType(benefitContent);
   
-  // Gemini 보완 기능은 비활성화됨 (공공데이터만 사용)
+  // 특정 보조금 ID에 대해서만 Gemini로 지원 내용 보완 (200~300자 목표)
+  // 환경 변수 GEMINI_ENHANCEMENT_ALLOWED_IDS에 포함된 경우만 활성화
+  // 주의: benefitContent는 표시용으로만 보완하고, FAQ는 원본 공공데이터 사용
+  if (benefitId && benefitContent && benefitContent !== "정보 없음" && benefitContent.length < 400) {
+    // 디버그: 환경 변수 확인
+    const allowedIds = process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS 
+      ? process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS.split(",").map(id => id.trim())
+      : [];
+    const isAllowed = allowedIds.includes(benefitId);
+    const hasApiKey = !!process.env.GEMINI_API_KEY;
+    
+    console.log(`[Gemini Debug] benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey}, section: 지원 내용`);
+    
+    const { enhanceBenefit } = await import("./geminiEnhancer");
+    const enhanced = await enhanceBenefit(
+      benefitName,
+      governingOrg,
+      benefitContent,
+      detailData,
+      benefitId,
+      amount,
+      benefitType
+    );
+    if (enhanced) {
+      benefitContent = enhanced;
+      console.log(`✅ 지원 내용 Gemini 보완 완료: ${benefitContent.length}자`);
+    } else {
+      console.log(`⚠️ Gemini 지원 내용 보완 실패 또는 비활성화 (benefitId: ${benefitId})`);
+    }
+  }
   
   // 4. 신청 방법 섹션
   const applyMethod = detailData["신청방법"] || detailData["신청 방법"] || "정보 없음";
