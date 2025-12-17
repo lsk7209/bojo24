@@ -314,7 +314,12 @@ export default async function BenefitDetailPage({ params }: PageParams) {
             <div className="space-y-4 text-base text-slate-800 leading-relaxed">
               <div itemProp="acceptedAnswer" itemScope itemType="https://schema.org/Answer">
                 <div itemProp="text">
-                  {formatDescription(optimizedContent.sections.target.content)}
+                  {/* Gemini 보완된 내용은 마크다운 형식, 공공데이터는 일반 형식 */}
+                  {optimizedContent.sections.target.content.includes("**") || 
+                   optimizedContent.sections.target.content.includes("- ") ||
+                   optimizedContent.sections.target.content.includes("•") 
+                    ? formatMarkdown(optimizedContent.sections.target.content)
+                    : formatDescription(optimizedContent.sections.target.content)}
                 </div>
               </div>
               {optimizedContent.sections.target.criteria && (

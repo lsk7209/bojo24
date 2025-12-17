@@ -165,29 +165,13 @@ export async function enhanceTarget(
     const criteria = detail["선정기준"] || detail["선정 기준"] || "";
     const applyMethod = detail["신청방법"] || detail["신청 방법"] || "";
 
-    const prompt = `
-당신은 대한민국 정부 보조금 정보를 시민들이 이해하기 쉽게 설명하는 전문가입니다.
-
-[보조금 정보]
-- 정책명: ${benefitName}
-- 관할 기관: ${governingOrg}
-- 현재 지원 대상 정보: ${publicDataTarget}
-- 선정 기준: ${criteria || "정보 없음"}
-
-[요구사항]
-위 공공데이터를 기반으로, **지원 대상**을 가독성 있게 정리해주세요.
-
-1. **150~200자**로 작성하세요 (정확히 150~200자 사이)
-2. **자격 요건을 구체적으로** 설명하세요 (나이, 소득, 거주지 등)
-3. **실제 신청 가능한 사람들의 예시**를 포함하세요
-4. 공공데이터에 없는 정보는 추가하지 마세요
-5. 문장은 자연스럽고 읽기 쉽게 작성하세요
-6. 불필요한 반복은 피하되, 필요한 정보는 모두 포함하세요
-
-[출력 형식]
-순수 텍스트만 반환하세요. JSON이나 마크다운 형식은 사용하지 마세요.
-반드시 150~200자 사이로 작성하세요.
-`;
+    // 재사용 가능한 프롬프트 사용 (볼드, 목록 등 구조화된 형식 지원)
+    const prompt = buildTargetEnhancementPrompt(
+      benefitName,
+      governingOrg,
+      publicDataTarget,
+      criteria
+    );
 
     const result = await geminiModel.generateContent(prompt);
     let enhanced = result.response.text().trim();
