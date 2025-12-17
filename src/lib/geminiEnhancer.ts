@@ -9,6 +9,24 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 let genAI: GoogleGenerativeAI | null = null;
 let model: ReturnType<typeof GoogleGenerativeAI.prototype.getGenerativeModel> | null = null;
 
+/**
+ * Gemini 보완 활성화 여부 확인
+ * 환경 변수 GEMINI_ENHANCEMENT_ENABLED=true로 활성화
+ * 또는 특정 보조금 ID 리스트에 포함된 경우만 활성화
+ */
+function isGeminiEnhancementEnabled(benefitId?: string): boolean {
+  // 환경 변수로 전역 활성화/비활성화 제어
+  const globalEnabled = process.env.GEMINI_ENHANCEMENT_ENABLED === "true";
+  
+  // 특정 보조금 ID 리스트 (환경 변수에서 읽기)
+  const allowedIds = process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS 
+    ? process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS.split(",").map(id => id.trim())
+    : [];
+  
+  // 전역 활성화 또는 특정 ID에 포함된 경우만 활성화
+  return globalEnabled || (benefitId && allowedIds.includes(benefitId));
+}
+
 function initGemini() {
   if (!process.env.GEMINI_API_KEY) {
     // 개발 환경에서만 로그 출력
@@ -51,8 +69,17 @@ export async function enhanceSummary(
   category: string,
   governingOrg: string,
   publicDataSummary: string,
-  detail: Record<string, string>
+  detail: Record<string, string>,
+  benefitId?: string
 ): Promise<string | null> {
+  // Gemini 보완이 활성화되지 않았으면 null 반환
+  if (!isGeminiEnhancementEnabled(benefitId)) {
+    if (process.env.NODE_ENV === "development") {
+      console.log(`⏸️ Gemini 보완 비활성화됨 (benefitId: ${benefitId || "unknown"})`);
+    }
+    return null;
+  }
+  
   const geminiModel = initGemini();
   if (!geminiModel) {
     return null; // Gemini API 키가 없으면 null 반환
@@ -111,8 +138,14 @@ export async function enhanceTarget(
   benefitName: string,
   governingOrg: string,
   publicDataTarget: string,
-  detail: Record<string, string>
+  detail: Record<string, string>,
+  benefitId?: string
 ): Promise<string | null> {
+  // Gemini 보완이 활성화되지 않았으면 null 반환
+  if (!isGeminiEnhancementEnabled(benefitId)) {
+    return null;
+  }
+  
   const geminiModel = initGemini();
   if (!geminiModel) {
     return null;
@@ -166,8 +199,14 @@ export async function enhanceBenefit(
   benefitName: string,
   governingOrg: string,
   publicDataBenefit: string,
-  detail: Record<string, string>
+  detail: Record<string, string>,
+  benefitId?: string
 ): Promise<string | null> {
+  // Gemini 보완이 활성화되지 않았으면 null 반환
+  if (!isGeminiEnhancementEnabled(benefitId)) {
+    return null;
+  }
+  
   const geminiModel = initGemini();
   if (!geminiModel) {
     return null;
