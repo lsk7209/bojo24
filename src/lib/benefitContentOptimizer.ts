@@ -101,11 +101,17 @@ export async function optimizeBenefitContent(
       benefitId
     );
     if (enhanced) {
-      // 100~150자로 제한하여 가독성 확보
-      const trimmed = enhanced.length > 150 
-        ? enhanced.substring(0, 147) + "..."
-        : enhanced;
-      targetContent = trimmed;
+      // enhanced가 이미 100~150자로 최적화되어 있음
+      // 공공데이터와 병합된 경우도 있으므로 그대로 사용
+      targetContent = enhanced;
+      
+      if (process.env.NODE_ENV === "development") {
+        console.log(`✅ 지원 대상 Gemini 보완 완료: ${targetContent.length}자`);
+      }
+    } else {
+      if (process.env.NODE_ENV === "development") {
+        console.log(`⚠️ Gemini 지원 대상 보완 실패 또는 비활성화 (benefitId: ${benefitId})`);
+      }
     }
   }
   

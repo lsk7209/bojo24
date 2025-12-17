@@ -182,10 +182,28 @@ export async function enhanceTarget(
 `;
 
     const result = await geminiModel.generateContent(prompt);
-    const enhanced = result.response.text().trim();
+    let enhanced = result.response.text().trim();
     
-    // 공공데이터와 자연스럽게 병합
-    return `${publicDataTarget}\n\n${enhanced}`;
+    // 100~150자로 제한 (가독성 확보)
+    if (enhanced.length > 150) {
+      // 150자를 넘으면 마지막 문장을 완성하여 자름
+      const trimmed = enhanced.substring(0, 147);
+      const lastPeriod = trimmed.lastIndexOf(".");
+      enhanced = lastPeriod > 100 
+        ? trimmed.substring(0, lastPeriod + 1)
+        : trimmed + "...";
+    }
+    
+    // 최소 100자 이상이 되도록 보장
+    if (enhanced.length < 100 && publicDataTarget.length < 100) {
+      // 공공데이터와 병합하여 100자 이상 만들기
+      const merged = `${publicDataTarget}\n\n${enhanced}`;
+      return merged.length > 150 ? merged.substring(0, 147) + "..." : merged;
+    }
+    
+    // 공공데이터와 자연스럽게 병합 (100~150자 목표)
+    // 공공데이터가 이미 포함되어 있으면 enhanced만 반환
+    return enhanced;
   } catch (error: any) {
     // 개발 환경에서만 에러 로그 출력
     if (process.env.NODE_ENV === "development") {
