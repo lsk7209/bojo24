@@ -352,3 +352,104 @@ export async function enhanceBenefit(
   }
 }
 
+/**
+ * Gemini로 핵심 요약 보완 (새 버전 - 200~500자)
+ */
+export async function enhanceSummary(
+  benefitName: string,
+  category: string,
+  governingOrg: string,
+  target: string,
+  benefit: string,
+  amount: string | null,
+  apply: string,
+  deadline: string | null,
+  currentSummary: string,
+  benefitId?: string
+): Promise<string | null> {
+  // Gemini 보완이 활성화되지 않았으면 null 반환
+  const isEnabled = isGeminiEnhancementEnabled(benefitId);
+  console.log(`[Gemini Debug] enhanceSummary - benefitId: ${benefitId}, isEnabled: ${isEnabled}`);
+  
+  if (!isEnabled) {
+    console.log(`[Gemini Debug] enhanceSummary - 비활성화됨. GEMINI_ENHANCEMENT_ALLOWED_IDS: ${process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS || "없음"}`);
+    return null;
+  }
+  
+  const geminiModel = initGemini();
+  if (!geminiModel) {
+    console.log(`[Gemini Debug] enhanceSummary - Gemini 모델 초기화 실패`);
+    return null;
+  }
+  
+  console.log(`[Gemini Debug] enhanceSummary - Gemini API 호출 시작`);
+
+  try {
+    // 재사용 가능한 프롬프트 사용 (200~500자)
+    const prompt = buildSummaryEnhancementPrompt(
+      benefitName,
+      category,
+      governingOrg,
+      target,
+      benefit,
+      amount,
+      apply,
+      deadline,
+      currentSummary
+    );
+
+    const result = await geminiModel.generateContent(prompt);
+    let enhanced = result.response.text().trim();
+    
+    // 200~500자 범위로 조정 (문장이 자연스럽게 끝나도록 약간의 여유 허용)
+    const TARGET_MIN = 200;
+    const TARGET_MAX = 500;
+    const ALLOWED_OVERFLOW = 50; // 500자를 최대 50자까지 넘어도 허용 (문장 완성용)
+    
+    if (enhanced.length > TARGET_MAX + ALLOWED_OVERFLOW) {
+      // 550자를 넘으면 마지막 문장을 완성하여 자름
+      const maxLength = TARGET_MAX + ALLOWED_OVERFLOW;
+      const trimmed = enhanced.substring(0, maxLength);
+      
+      // 마지막 문장이 자연스럽게 끝나도록 마침표나 쉼표를 찾아서 자름
+      const lastPeriod = trimmed.lastIndexOf(".");
+      const lastComma = trimmed.lastIndexOf("，");
+      const lastKoreanPeriod = trimmed.lastIndexOf("。");
+      
+      const cutPoint = Math.max(
+        lastPeriod > TARGET_MIN ? lastPeriod + 1 : -1,
+        lastComma > TARGET_MIN ? lastComma + 1 : -1,
+        lastKoreanPeriod > TARGET_MIN ? lastKoreanPeriod + 1 : -1
+      );
+      
+      if (cutPoint > TARGET_MIN) {
+        enhanced = trimmed.substring(0, cutPoint);
+      } else {
+        // 자연스러운 끝점을 찾지 못하면 500자에서 자름
+        enhanced = trimmed.substring(0, TARGET_MAX);
+      }
+    }
+    
+    // 최소 200자 이상이 되도록 보장
+    if (enhanced.length < TARGET_MIN) {
+      // 원본 요약과 병합하여 최소 길이 확보
+      const merged = `${currentSummary}\n\n${enhanced}`;
+      if (merged.length > TARGET_MAX + ALLOWED_OVERFLOW) {
+        const trimmed = merged.substring(0, TARGET_MAX + ALLOWED_OVERFLOW);
+        const lastPeriod = trimmed.lastIndexOf(".");
+        return lastPeriod > TARGET_MIN ? trimmed.substring(0, lastPeriod + 1) : trimmed.substring(0, TARGET_MAX);
+      }
+      return merged;
+    }
+    
+    // Gemini가 생성한 내용 반환 (200~550자 범위)
+    return enhanced;
+  } catch (error: any) {
+    // 개발 환경에서만 에러 로그 출력
+    if (process.env.NODE_ENV === "development") {
+      console.error("Gemini 핵심 요약 보완 실패:", error?.message || error);
+    }
+    return null;
+  }
+}
+
