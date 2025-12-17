@@ -26,9 +26,15 @@ const optionalEnvVars = {
 /**
  * 환경 변수 검증
  * @param required - 검증할 필수 환경 변수 목록 (기본값: 모든 필수 변수)
- * @throws {Error} 필수 환경 변수가 없을 경우
+ * @throws {Error} 필수 환경 변수가 없을 경우 (CI 환경에서는 예외 발생 안 함)
  */
 export function validateEnv(required: (keyof typeof requiredEnvVars)[] = Object.keys(requiredEnvVars) as (keyof typeof requiredEnvVars)[]) {
+  // CI 환경에서는 검증을 건너뜀
+  const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
+  if (isCI) {
+    return;
+  }
+  
   const missing: string[] = [];
   
   for (const key of required) {
