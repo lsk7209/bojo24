@@ -297,7 +297,7 @@ function generateFAQs(
   target: string,
   benefit: string,
   apply: string,
-  contact: { phone?: string; website?: string },
+  contact: { phone?: string; website?: string; email?: string },
   detail?: Record<string, string>
 ): Array<{ question: string; answer: string }> {
   const faqs: Array<{ question: string; answer: string }> = [];
