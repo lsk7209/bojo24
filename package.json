@@ -15,7 +15,8 @@
     "gen:content": "tsx src/scripts/generateUniqueContent.ts",
     "validate-env": "tsx src/scripts/validateEnv.ts",
     "check:data": "tsx src/scripts/checkDataStatus.ts",
-    "test:gemini": "tsx src/scripts/testGeminiEnhancement.ts"
+    "test:gemini": "tsx src/scripts/testGeminiEnhancement.ts",
+    "test:single": "tsx src/scripts/testSingleBenefit.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.11.5",
