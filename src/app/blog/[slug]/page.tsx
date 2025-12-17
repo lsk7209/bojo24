@@ -72,7 +72,7 @@ export default async function BlogPostPage({ params }: PageParams) {
                                 🤖
                             </div>
                             <div>
-                                <div className="font-bold text-slate-900 text-sm">보조금 파인더 AI</div>
+                                <div className="font-bold text-slate-900 text-sm">보조24</div>
                                 <div className="text-xs text-slate-500">{new Date(post.created_at).toLocaleDateString()} · 3분 읽기</div>
                             </div>
                         </div>

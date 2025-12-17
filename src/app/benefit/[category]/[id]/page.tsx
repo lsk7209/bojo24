@@ -157,7 +157,7 @@ export const generateMetadata = async ({
     // 추가 메타 태그 (Zero-click 최적화)
     other: {
       "answer": answerSnippet, // 구글 스니펫 답변
-      "article:author": "보조금 파인더 AI",
+      "article:author": "보조24",
       "article:published_time": benefit.last_updated_at || new Date().toISOString(),
       "article:modified_time": benefit.last_updated_at || new Date().toISOString(),
       "article:section": category,

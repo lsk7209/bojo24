@@ -14,7 +14,7 @@ export default function HomePage() {
             ✨ Beta Version
           </div>
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl mb-6">
-            보조금 파인더 <br className="hidden sm:block" />
+            보조24 <br className="hidden sm:block" />
             <span className="text-blue-600">스마트하게 찾으세요</span>
           </h1>
           <p className="text-lg text-slate-600 leading-relaxed mb-8 max-w-xl">

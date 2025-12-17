@@ -6,9 +6,9 @@ export const Header = () => {
         <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md">
             <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 md:px-6">
                 <Link href="/" className="flex items-center gap-2">
-                    <span className="text-xl font-bold text-blue-600">Bojo24</span>
+                    <span className="text-xl font-bold text-blue-600">보조24</span>
                     <span className="hidden text-sm font-medium text-slate-600 sm:inline-block">
-                        보조금 파인더
+                        보조24
                     </span>
                 </Link>
                 <nav className="flex items-center gap-6 text-sm font-medium text-slate-600">
@@ -30,13 +30,13 @@ export const Footer = () => {
             <div className="mx-auto max-w-5xl px-4 md:px-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
                     <div>
-                        <strong className="block text-lg font-bold text-slate-900 mb-2">보조금 파인더</strong>
+                        <strong className="block text-lg font-bold text-slate-900 mb-2">보조24</strong>
                         <p>대한민국 모든 공공서비스를 쉽고 빠르게 찾아드립니다.</p>
                     </div>
                     <div className="flex flex-col gap-2 sm:text-right">
                         <Link href="/privacy" className="hover:text-slate-900">개인정보처리방침</Link>
                         <Link href="/terms" className="hover:text-slate-900">이용약관</Link>
-                        <span className="text-xs mt-2">© 2025 Bojo24. All rights reserved.</span>
+                        <span className="text-xs mt-2">© 2025 보조24. All rights reserved.</span>
                     </div>
                 </div>
 

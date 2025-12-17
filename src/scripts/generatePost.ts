@@ -54,7 +54,7 @@ const generatePostContent = (benefit: BenefitRecord) => {
 `;
 
     return `
-안녕하세요! 공공데이터 분석 전문, **보조금 파인더**입니다. 📊
+안녕하세요! 공공데이터 분석 전문, **보조24**입니다. 📊
 
 혹시 **${region}**에서 제공하는 **${benefit.name}**에 대해 들어보셨나요?
 "나랑 상관없겠지" 하고 넘기기엔 혜택이 너무 아까운 정책 중 하나입니다.

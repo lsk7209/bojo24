@@ -116,7 +116,7 @@ export const buildOrganizationJsonLd = () => {
     "name": "보조24",
     "url": BASE_URL,
     "logo": `${BASE_URL}/logo.png`,
-    "description": "행정안전부 보조금24 정보를 AI로 요약하고 쉽게 찾을 수 있는 플랫폼",
+    "description": "행정안전부 보조24 정보를 AI로 요약하고 쉽게 찾을 수 있는 플랫폼",
     "sameAs": [
       // 소셜 미디어 링크 추가 가능
     ]
@@ -198,7 +198,7 @@ export const buildPersonJsonLd = () => {
   return JSON.stringify({
     "@context": "https://schema.org",
     "@type": "Person",
-    "name": "보조금 파인더 AI",
+    "name": "보조24",
     "jobTitle": "정부 보조금 분석 전문가",
     "description": "행정안전부 보조24 공공데이터를 분석하여 시민들에게 쉽고 정확한 정보를 제공합니다.",
     "knowsAbout": [

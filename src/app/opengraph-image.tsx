@@ -4,7 +4,7 @@ import { ImageResponse } from "next/og";
 export const runtime = "edge";
 
 // Image metadata
-export const alt = "보조금 파인더 - 나에게 딱 맞는 정부 혜택 찾기";
+export const alt = "보조24 - 나에게 딱 맞는 정부 혜택 찾기";
 export const size = {
     width: 1200,
     height: 630,
@@ -33,7 +33,7 @@ export default async function Image() {
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                    <span>🇰🇷 Bojo24</span>
+                    <span>🇰🇷 보조24</span>
                 </div>
                 <div style={{ fontSize: 30, marginTop: 20, color: "#64748b", fontWeight: 500 }}>
                     AI 기반 맞춤형 보조금 검색 서비스

@@ -5,7 +5,7 @@ import { SectionHeader } from "@components/section-header";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "정보마당 | 보조금 파인더",
+    title: "정보마당 | 보조24",
     description: "정부 혜택과 관련된 유용한 정보와 꿀팁을 확인하세요."
 };
 
@@ -73,7 +73,7 @@ export default async function BlogListPage() {
                                     {post.excerpt}
                                 </p>
                                 <div className="text-xs text-slate-400">
-                                    {new Date(post.created_at).toLocaleDateString()} · 보조금 파인더
+                                    {new Date(post.created_at).toLocaleDateString()} · 보조24
                                 </div>
                             </Card>
                         </Link>
