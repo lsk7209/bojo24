@@ -101,7 +101,9 @@ export async function optimizeBenefitContent(
     const hasApiKey = !!process.env.GEMINI_API_KEY;
     
     // 프로덕션에서도 디버그 로그 출력 (문제 진단용)
+    // Vercel Deployments 로그에서 확인 가능
     console.log(`[Gemini Debug] benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey}, allowedIds: [${allowedIds.join(", ")}]`);
+    console.log(`[Gemini Debug] GEMINI_ENHANCEMENT_ALLOWED_IDS 값: "${process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS || "없음"}"`);
     
     const enhanced = await enhanceTarget(
       benefitName,
@@ -118,6 +120,9 @@ export async function optimizeBenefitContent(
     } else {
       console.log(`⚠️ Gemini 지원 대상 보완 실패 또는 비활성화 (benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey})`);
     }
+  } else {
+    // 조건이 맞지 않는 경우도 로그 출력
+    console.log(`[Gemini Debug] 보완 조건 불만족 - benefitId: ${benefitId}, targetContent 길이: ${targetContent?.length || 0}, 조건: ${benefitId && targetContent && targetContent !== "정보 없음" && targetContent.length < 150}`);
   }
   
   // 3. 지원 내용 섹션 - 공공데이터만 사용
