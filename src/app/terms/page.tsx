@@ -65,7 +65,7 @@ export default function TermsPage() {
           <div className="space-y-3 text-slate-700 leading-relaxed">
             <p>회사는 다음과 같은 서비스를 제공합니다:</p>
             <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>행정안전부 보조금24 공공데이터 기반 보조금 정보 검색 서비스</li>
+              <li>행정안전부 보조24 공공데이터 기반 보조금 정보 검색 서비스</li>
               <li>보조금 상세 정보 제공 서비스</li>
               <li>AI 기반 보조금 요약 및 FAQ 제공 서비스</li>
               <li>기타 회사가 추가 개발하거나 제휴계약 등을 통해 제공하는 일체의 서비스</li>
@@ -117,7 +117,7 @@ export default function TermsPage() {
               복제, 송신, 출판, 배포, 방송 기타 방법에 의하여 영리목적으로 이용하거나 제3자에게 이용하게 하여서는 안됩니다.
             </p>
             <p className="text-sm text-slate-600">
-              본 서비스에서 제공하는 보조금 정보는 행정안전부 보조금24 공공데이터를 기반으로 하며, 
+              본 서비스에서 제공하는 보조금 정보는 행정안전부 보조24 공공데이터를 기반으로 하며, 
               정확한 정보는 해당 기관의 공식 웹사이트를 통해 확인하시기 바랍니다.
             </p>
           </div>

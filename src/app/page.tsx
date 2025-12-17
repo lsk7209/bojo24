@@ -18,7 +18,7 @@ export default function HomePage() {
             <span className="text-blue-600">스마트하게 찾으세요</span>
           </h1>
           <p className="text-lg text-slate-600 leading-relaxed mb-8 max-w-xl">
-            행정안전부 보조금24 데이터를 실시간으로 분석해 <br className="hidden sm:block" />
+            행정안전부 보조24 데이터를 실시간으로 분석해 <br className="hidden sm:block" />
             AI가 3줄 요약과 핵심 FAQ를 제공합니다.
           </p>
           <div className="flex flex-wrap items-center gap-4">

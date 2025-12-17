@@ -15,7 +15,7 @@ const notoSansKr = Noto_Sans_KR({
 
 const siteName = "보조24";
 const siteDescription =
-  "행정안전부 보조금24 정보를 AI로 요약하고 쉽게 찾을 수 있는 플랫폼";
+  "행정안전부 보조24 공공데이터를 분석하여 쉽고 정확한 정보를 제공하는 플랫폼";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://bojo24.kr";

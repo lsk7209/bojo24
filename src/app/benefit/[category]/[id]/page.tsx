@@ -45,30 +45,44 @@ export const generateMetadata = async ({
   const category = benefit.category || "정부 지원금";
   const org = benefit.governing_org || "정부 기관";
   
-  // Zero-click 스니펫 최적화를 위한 메타 설명
-  const description = benefit.gemini_summary 
-    ? `${benefit.gemini_summary.substring(0, 120)}...`
-    : `${category} 분야의 ${benefit.name} 정보. ${org}에서 제공하는 지원금 자격 요건, 신청 방법, 혜택 내용을 확인하세요.`;
-
-  // 키워드 추출 (자연어 질문 최적화)
-  const keywords = [
+  const benefitDetail = benefit.detail_json as {
+    list?: Record<string, string>;
+    detail?: Record<string, string>;
+    supportConditions?: Record<string, string>;
+  } | undefined;
+  
+  // 공공데이터 기반 최적화된 컨텐츠 생성 (Gemini 의존성 제거)
+  const optimizedContent = optimizeBenefitContent(
     benefit.name,
     category,
     org,
-    "보조금",
-    "정부 지원금",
-    "신청 방법",
-    "자격 요건",
-    `${benefit.name} 신청`,
-    `${benefit.name} 자격`,
-    `${benefit.name} 받는 방법`,
-    `${category} 보조금`
-  ].filter(Boolean);
+    benefitDetail || {}
+  );
+
+  // Zero-click 스니펫 최적화를 위한 메타 설명 (공공데이터 기반)
+  const description = optimizedContent.summary.length > 120
+    ? `${optimizedContent.summary.substring(0, 120)}...`
+    : `${category} 분야의 ${benefit.name} 정보. ${org}에서 제공하는 지원금 자격 요건, 신청 방법, 혜택 내용을 확인하세요.`;
+
+  // 키워드 추출 (자연어 질문 최적화)
+  const keywords = optimizedContent.keywords.length > 0
+    ? optimizedContent.keywords
+    : [
+        benefit.name,
+        category,
+        org,
+        "보조금",
+        "정부 지원금",
+        "신청 방법",
+        "자격 요건",
+        `${benefit.name} 신청`,
+        `${benefit.name} 자격`,
+        `${benefit.name} 받는 방법`,
+        `${category} 보조금`
+      ].filter(Boolean);
 
   // Zero-click 답변을 위한 요약 (구글 스니펫 타겟팅)
-  const snippet = benefit.gemini_summary 
-    ? benefit.gemini_summary.split('\n')[0] // 첫 번째 문장
-    : `${benefit.name}은 ${org}에서 제공하는 ${category} 분야 지원금입니다.`;
+  const snippet = optimizedContent.summary.split('\n')[0] || optimizedContent.summary.substring(0, 100);
 
   const detail = benefit.detail_json as {
     list?: Record<string, string>;
@@ -149,14 +163,14 @@ export default async function BenefitDetailPage({ params }: PageParams) {
     list?: Record<string, string>;
     detail?: Record<string, string>;
     supportConditions?: Record<string, string>;
-  };
+  } | undefined;
   
-  // 공공데이터 기반 최적화된 컨텐츠 구조 생성 (구글 검색 최적화)
+  // 공공데이터 기반 최적화된 컨텐츠 구조 생성 (구글 검색 최적화, Gemini 의존성 제거)
   const optimizedContent = optimizeBenefitContent(
     benefit.name,
     benefit.category || "정부 지원금",
     benefit.governing_org || "정부 기관",
-    detail
+    detail || {}
   );
   
   // 모든 구조화 데이터 생성 (공공데이터 기반 FAQ 포함)
@@ -165,21 +179,21 @@ export default async function BenefitDetailPage({ params }: PageParams) {
   // Zero-click 스니펫 최적화 데이터
   const structuredAnswers = buildStructuredAnswers(benefit);
   const officialUrl =
-    detail.detail?.["온라인신청사이트URL"] ||
-    detail.list?.["상세조회URL"] ||
+    detail?.detail?.["온라인신청사이트URL"] ||
+    detail?.list?.["상세조회URL"] ||
     "#";
   const contact =
-    detail.detail?.["문의처"] ||
-    detail.list?.["전화문의"] ||
-    detail.list?.["접수기관"] ||
+    detail?.detail?.["문의처"] ||
+    detail?.list?.["전화문의"] ||
+    detail?.list?.["접수기관"] ||
     benefit.governing_org ||
     "문의처 정보가 없습니다.";
   const purpose =
-    detail.detail?.["서비스목적"] ||
-    detail.list?.["서비스목적요약"] ||
+    detail?.detail?.["서비스목적"] ||
+    detail?.list?.["서비스목적요약"] ||
     "";
 
-  const faqs = (benefit.gemini_faq_json as { q: string; a: string }[] | null) || [];
+  // Gemini FAQ 제거, 공공데이터 기반 FAQ만 사용
 
   return (
     <main className="mx-auto flex max-w-4xl flex-col gap-6 pb-24 sm:pb-32">
@@ -208,12 +222,13 @@ export default async function BenefitDetailPage({ params }: PageParams) {
               </time>
             )}
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold leading-tight text-slate-900" itemProp="headline">
+          <h1 className="text-3xl sm:text-4xl font-extrabold leading-tight text-slate-900 mb-4" itemProp="headline">
             {benefit.name}
           </h1>
           {purpose && (
-            <p className="text-base sm:text-lg text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">
-              💡 {purpose}
+            <p className="text-base sm:text-lg text-slate-700 leading-relaxed bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-xl border-2 border-blue-100 font-medium">
+              <span className="inline-block mr-2 text-xl">💡</span>
+              {purpose}
             </p>
           )}
         </div>
@@ -225,7 +240,7 @@ export default async function BenefitDetailPage({ params }: PageParams) {
             <span itemProp="name">보조24</span>
           </span>
           {" • "}
-          <span>출처: 행정안전부 보조금24 공공데이터</span>
+          <span>출처: 행정안전부 보조24 공공데이터</span>
           {" • "}
           <span itemProp="provider" itemScope itemType="https://schema.org/Organization">
             <span itemProp="name">{benefit.governing_org}</span>
@@ -238,70 +253,64 @@ export default async function BenefitDetailPage({ params }: PageParams) {
         <SectionHeader
           eyebrow="SUMMARY"
           title="핵심 요약"
-          description="구글 검색 최적화된 요약 정보입니다."
+          description="한눈에 파악하는 지원금 정보입니다."
         />
-        <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-100">
+        <Card className="bg-gradient-to-br from-blue-50 via-blue-50/50 to-white border-2 border-blue-200 shadow-md">
           <div 
-            className="text-lg leading-relaxed text-slate-800 whitespace-pre-line font-medium"
+            className="text-base sm:text-lg leading-relaxed text-slate-900 whitespace-pre-line break-words"
             itemProp="text"
           >
             {optimizedContent.summary}
           </div>
-          <div className="mt-4 flex items-center justify-between border-t border-blue-100 pt-4">
-            <div className="flex items-center gap-2 text-xs text-blue-400 font-medium">
-              <span>📊 공공데이터 기반</span>
+          <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-blue-200 pt-4">
+            <div className="flex items-center gap-2 text-xs text-blue-600 font-semibold">
+              <span className="inline-flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                공공데이터 기반
+              </span>
               <span>•</span>
               <span itemProp="author" itemScope itemType="https://schema.org/Organization">
-                <span itemProp="name">행정안전부 보조금24</span>
+                <span itemProp="name">행정안전부 보조24</span>
               </span>
             </div>
             {benefit.last_updated_at && (
               <time 
-                className="text-xs text-slate-400"
+                className="text-xs text-slate-500 font-medium"
                 dateTime={benefit.last_updated_at}
                 itemProp="dateModified"
               >
-                업데이트: {benefit.last_updated_at.substring(0, 10)}
+                최종 업데이트: {benefit.last_updated_at.substring(0, 10)}
               </time>
             )}
           </div>
         </Card>
       </section>
       
-      {/* AI 요약 (있는 경우 추가 표시) */}
-      {benefit.gemini_summary && benefit.gemini_summary !== optimizedContent.summary && (
-        <section aria-label="AI 요약" className="opacity-75">
-          <Card className="bg-slate-50/50 border-slate-200">
-            <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
-              {benefit.gemini_summary}
-            </div>
-            <div className="mt-2 text-xs text-slate-400">
-              🤖 AI 생성 요약
-            </div>
-          </Card>
-        </section>
-      )}
 
 
       {/* 주요 정보 그리드 (구글 검색 최적화 구조) */}
       <div className="grid gap-6 sm:grid-cols-2">
         {/* 지원 대상 섹션 */}
         <section aria-label={optimizedContent.sections.target.title} itemScope itemType="https://schema.org/Question">
-          <h3 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
-            <span className="text-xl">🎯</span>
+          <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 flex items-center gap-3">
+            <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-2xl">🎯</span>
             <span itemProp="name">{optimizedContent.sections.target.title}</span>
           </h3>
-          <Card className="h-full bg-slate-50/50">
-            <div className="space-y-4 text-sm text-slate-700">
+          <Card className="h-full bg-gradient-to-br from-slate-50 to-white border-2 border-slate-200 hover:border-blue-300 transition-colors">
+            <div className="space-y-4 text-base text-slate-800 leading-relaxed">
               <div itemProp="acceptedAnswer" itemScope itemType="https://schema.org/Answer">
                 <div itemProp="text">
                   {formatDescription(optimizedContent.sections.target.content)}
                 </div>
               </div>
               {optimizedContent.sections.target.criteria && (
-                <div className="mt-4 pt-4 border-t border-slate-200">
-                  <strong className="block text-slate-900 mb-1">선정 기준</strong>
-                  {formatDescription(optimizedContent.sections.target.criteria)}
+                <div className="mt-5 pt-5 border-t-2 border-slate-200">
+                  <strong className="block text-slate-900 mb-2 text-lg font-semibold">📋 선정 기준</strong>
+                  <div className="text-slate-700">
+                    {formatDescription(optimizedContent.sections.target.criteria)}
+                  </div>
                 </div>
               )}
             </div>
@@ -310,24 +319,24 @@ export default async function BenefitDetailPage({ params }: PageParams) {
 
         {/* 지원 내용 섹션 */}
         <section aria-label={optimizedContent.sections.benefit.title} itemScope itemType="https://schema.org/Question">
-          <h3 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
-            <span className="text-xl">🎁</span>
+          <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 flex items-center gap-3">
+            <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-2xl">🎁</span>
             <span itemProp="name">{optimizedContent.sections.benefit.title}</span>
           </h3>
-          <Card className="h-full bg-slate-50/50">
-            <div className="text-sm text-slate-700 leading-relaxed">
+          <Card className="h-full bg-gradient-to-br from-green-50/30 to-white border-2 border-green-200 hover:border-green-400 transition-colors">
+            <div className="text-base text-slate-800 leading-relaxed">
               <div itemProp="acceptedAnswer" itemScope itemType="https://schema.org/Answer">
                 <div itemProp="text">
                   {formatDescription(optimizedContent.sections.benefit.content)}
                 </div>
               </div>
               {(optimizedContent.sections.benefit.amount || optimizedContent.sections.benefit.type) && (
-                <div className="mt-4 pt-4 border-t border-slate-200 flex flex-wrap gap-2">
+                <div className="mt-5 pt-5 border-t-2 border-green-200 flex flex-wrap gap-3">
                   {optimizedContent.sections.benefit.amount && (
-                    <Badge tone="primary">💰 {optimizedContent.sections.benefit.amount}</Badge>
+                    <Badge tone="primary" className="text-sm px-4 py-1.5">💰 {optimizedContent.sections.benefit.amount}</Badge>
                   )}
                   {optimizedContent.sections.benefit.type && (
-                    <Badge tone="muted">📋 {optimizedContent.sections.benefit.type}</Badge>
+                    <Badge tone="muted" className="text-sm px-4 py-1.5">📋 {optimizedContent.sections.benefit.type}</Badge>
                   )}
                 </div>
               )}
@@ -355,22 +364,22 @@ export default async function BenefitDetailPage({ params }: PageParams) {
           
           {/* 단계별 가이드 (구조화) */}
           {optimizedContent.sections.apply.steps.length > 0 && (
-            <div className="space-y-3 mt-6">
+            <div className="space-y-4 mt-6">
               {optimizedContent.sections.apply.steps.map((step, index) => (
                 <div 
                   key={index}
-                  className="flex gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200"
+                  className="flex gap-4 p-5 bg-gradient-to-r from-blue-50/50 to-white rounded-xl border-2 border-blue-100 hover:border-blue-300 hover:shadow-md transition-all"
                   itemScope
                   itemType="https://schema.org/HowToStep"
                 >
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-base shadow-md">
                     {index + 1}
                   </div>
-                  <div className="flex-1">
-                    <div className="font-semibold text-slate-900 mb-1" itemProp="name">
+                  <div className="flex-1 pt-0.5">
+                    <div className="font-bold text-slate-900 mb-2 text-lg" itemProp="name">
                       단계 {index + 1}
                     </div>
-                    <div className="text-slate-700" itemProp="text">
+                    <div className="text-slate-700 leading-relaxed text-base" itemProp="text">
                       {step}
                     </div>
                   </div>
@@ -381,13 +390,16 @@ export default async function BenefitDetailPage({ params }: PageParams) {
           
           {/* 필요 서류 */}
           {optimizedContent.sections.apply.documents && optimizedContent.sections.apply.documents.length > 0 && (
-            <div className="mt-6 pt-6 border-t border-slate-200">
-              <h4 className="font-semibold text-slate-900 mb-3">📄 필요 서류</h4>
-              <ul className="space-y-2">
+            <div className="mt-8 pt-6 border-t-2 border-slate-200">
+              <h4 className="font-bold text-slate-900 mb-4 text-lg flex items-center gap-2">
+                <span className="text-xl">📄</span>
+                필요 서류
+              </h4>
+              <ul className="space-y-3">
                 {optimizedContent.sections.apply.documents.map((doc, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-sm text-slate-700">
-                    <span className="text-blue-500 mt-1">•</span>
-                    <span>{doc}</span>
+                  <li key={idx} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold mt-0.5">✓</span>
+                    <span className="text-slate-800 leading-relaxed text-base">{doc}</span>
                   </li>
                 ))}
               </ul>
@@ -396,17 +408,112 @@ export default async function BenefitDetailPage({ params }: PageParams) {
           
           {/* 신청 기간 */}
           {optimizedContent.sections.apply.deadline && (
-            <div className="mt-4 pt-4 border-t border-slate-200">
-              <strong className="block text-sm font-semibold text-slate-900 mb-1">📅 신청 기간</strong>
-              <p className="text-sm text-slate-700">{optimizedContent.sections.apply.deadline}</p>
+            <div className="mt-6 pt-6 border-t-2 border-slate-200">
+              <div className="flex items-center gap-3 p-4 bg-orange-50 rounded-xl border-2 border-orange-200">
+                <span className="text-2xl">📅</span>
+                <div>
+                  <strong className="block text-base font-bold text-slate-900 mb-1">신청 기간</strong>
+                  <p className="text-base text-slate-800 font-medium">{optimizedContent.sections.apply.deadline}</p>
+                </div>
+              </div>
             </div>
           )}
         </Card>
       </section>
 
+      {/* 정책 분석 섹션 (고유 컨텐츠 - 전문성 강조) */}
+      {optimizedContent.sections.analysis && (
+        <section aria-label="정책 분석" itemScope itemType="https://schema.org/Article">
+          <SectionHeader
+            eyebrow="ANALYSIS"
+            title={optimizedContent.sections.analysis.title}
+            description="공공데이터를 분석한 정책 인사이트입니다."
+          />
+          <Card className="bg-gradient-to-br from-purple-50 via-purple-50/30 to-white border-2 border-purple-200 shadow-md">
+            <div className="text-base text-slate-900 leading-relaxed mb-6" itemProp="articleBody">
+              {optimizedContent.sections.analysis.content}
+            </div>
+            {optimizedContent.sections.analysis.insights && optimizedContent.sections.analysis.insights.length > 0 && (
+              <div className="mt-6 pt-6 border-t-2 border-purple-200">
+                <h4 className="font-bold text-slate-900 mb-4 text-lg flex items-center gap-2">
+                  <span className="text-xl">💡</span>
+                  주요 인사이트
+                </h4>
+                <ul className="space-y-3">
+                  {optimizedContent.sections.analysis.insights.map((insight, idx) => (
+                    <li key={idx} className="flex items-start gap-3 p-3 bg-white rounded-lg border border-purple-100">
+                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500 text-white flex items-center justify-center text-xs font-bold mt-0.5">✓</span>
+                      <span className="text-base text-slate-800 leading-relaxed">{insight}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <div className="mt-6 pt-4 border-t border-purple-100 text-xs text-slate-600 font-medium">
+              <span itemProp="publisher" itemScope itemType="https://schema.org/Organization">
+                <span itemProp="name">보조24</span>
+              </span>
+              {" • "}
+              <span>공공데이터 기반 분석</span>
+            </div>
+          </Card>
+        </section>
+      )}
 
-      {/* FAQ 섹션 (AEO 최적화 - 자연어 질문 답변) */}
-      {faqs.length > 0 && (
+      {/* 실전 팁 섹션 (고유 컨텐츠 - 경험 기반) */}
+      {optimizedContent.sections.tips && optimizedContent.sections.tips.items.length > 0 && (
+        <section aria-label="실전 팁" itemScope itemType="https://schema.org/HowTo">
+          <SectionHeader
+            eyebrow="TIPS"
+            title={optimizedContent.sections.tips.title}
+            description="신청 시 유용한 실전 팁입니다."
+          />
+          <Card className="bg-gradient-to-br from-green-50 via-green-50/30 to-white border-2 border-green-200 shadow-md">
+            <ul className="space-y-4">
+              {optimizedContent.sections.tips.items.map((tip, idx) => (
+                <li 
+                  key={idx}
+                  className="flex items-start gap-4 p-4 bg-white rounded-xl border-2 border-green-100 hover:border-green-300 hover:shadow-sm transition-all"
+                  itemScope
+                  itemType="https://schema.org/HowToTip"
+                >
+                  <span className="flex-shrink-0 w-8 h-8 rounded-xl bg-green-600 text-white flex items-center justify-center text-sm font-bold shadow-md">
+                    {idx + 1}
+                  </span>
+                  <span className="text-base text-slate-800 leading-relaxed pt-1" itemProp="text">
+                    {tip}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6 pt-4 border-t-2 border-green-100 text-xs text-slate-600 font-medium">
+              💡 공공데이터 분석을 바탕으로 한 실용적인 조언입니다.
+            </div>
+          </Card>
+        </section>
+      )}
+
+      {/* 신청 일정 섹션 */}
+      {optimizedContent.sections.timeline && (
+        <section aria-label="신청 일정">
+          <SectionHeader
+            eyebrow="TIMELINE"
+            title={optimizedContent.sections.timeline.title}
+            description="신청 및 지급 일정 정보입니다."
+          />
+          <Card className="bg-gradient-to-br from-orange-50 via-orange-50/30 to-white border-2 border-orange-200 shadow-md">
+            <div className="text-base text-slate-900 leading-relaxed whitespace-pre-line font-medium">
+              {optimizedContent.sections.timeline.content}
+            </div>
+            <div className="mt-6 pt-4 border-t-2 border-orange-100 text-xs text-slate-600 font-medium bg-orange-50/50 p-3 rounded-lg">
+              ⚠️ 정확한 일정은 공식 홈페이지에서 최종 확인하시기 바랍니다.
+            </div>
+          </Card>
+        </section>
+      )}
+
+      {/* FAQ 섹션 (AEO 최적화 - 자연어 질문 답변, 공공데이터 기반) */}
+      {optimizedContent.faqs.length > 0 && (
         <section 
           aria-label="자주 묻는 질문"
           itemScope
@@ -415,56 +522,30 @@ export default async function BenefitDetailPage({ params }: PageParams) {
           <SectionHeader
             eyebrow="FAQ"
             title="자주 묻는 질문"
-            description="사용자들이 궁금해할 만한 내용을 미리 정리했습니다."
+            description="공공데이터를 기반으로 자동 생성된 질문과 답변입니다."
           />
           <div className="space-y-4">
-            {/* 공공데이터 기반 FAQ 우선 표시 */}
             {optimizedContent.faqs.map((item, idx) => (
               <div
-                key={`optimized-${idx}`}
-                className="rounded-xl border border-slate-200 bg-white p-5 transition-shadow hover:shadow-sm"
+                key={`faq-${idx}`}
+                className="rounded-xl border-2 border-slate-200 bg-white p-6 transition-all hover:shadow-lg hover:border-blue-300"
                 itemScope
                 itemType="https://schema.org/Question"
               >
                 <h4 
-                  className="flex items-start gap-2 font-bold text-slate-900 text-lg"
+                  className="flex items-start gap-3 font-bold text-slate-900 text-lg mb-4"
                   itemProp="name"
                 >
-                  <span className="text-blue-600">Q.</span>
-                  {item.question}
+                  <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-sm font-bold">Q</span>
+                  <span className="pt-1">{item.question}</span>
                 </h4>
                 <div 
-                  className="mt-3 text-slate-700 leading-relaxed"
+                  className="ml-11 text-base text-slate-800 leading-relaxed pl-4 border-l-2 border-blue-100"
                   itemProp="acceptedAnswer"
                   itemScope
                   itemType="https://schema.org/Answer"
                 >
-                  <p itemProp="text">{item.answer}</p>
-                </div>
-              </div>
-            ))}
-            {/* Gemini 생성 FAQ (있는 경우) */}
-            {faqs.map((item, idx) => (
-              <div
-                key={idx}
-                className="rounded-xl border border-slate-200 bg-white p-5 transition-shadow hover:shadow-sm"
-                itemScope
-                itemType="https://schema.org/Question"
-              >
-                <h4 
-                  className="flex items-start gap-2 font-bold text-slate-900 text-lg"
-                  itemProp="name"
-                >
-                  <span className="text-blue-600">Q.</span>
-                  {item.q}
-                </h4>
-                <div 
-                  className="mt-3 flex items-start gap-2 text-slate-600 leading-relaxed pl-7 border-l-2 border-slate-100 ml-1"
-                  itemScope
-                  itemType="https://schema.org/Answer"
-                  itemProp="acceptedAnswer"
-                >
-                  <span itemProp="text">{item.a}</span>
+                  <p itemProp="text" className="font-medium">{item.answer}</p>
                 </div>
               </div>
             ))}

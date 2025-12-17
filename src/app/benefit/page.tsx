@@ -47,7 +47,7 @@ const fetchBenefits = async ({
 
 export const metadata: Metadata = {
   title: "지원금 목록",
-  description: "수집된 보조금24 지원금 목록을 한눈에 확인하세요."
+  description: "수집된 보조24 지원금 목록을 한눈에 확인하세요."
 };
 
 export default async function BenefitListPage({

@@ -200,7 +200,7 @@ export const buildPersonJsonLd = () => {
     "@type": "Person",
     "name": "보조금 파인더 AI",
     "jobTitle": "정부 보조금 분석 전문가",
-    "description": "행정안전부 보조금24 공공데이터를 분석하여 시민들에게 쉽고 정확한 정보를 제공합니다.",
+    "description": "행정안전부 보조24 공공데이터를 분석하여 시민들에게 쉽고 정확한 정보를 제공합니다.",
     "knowsAbout": [
       "정부 보조금",
       "공공서비스",
@@ -259,7 +259,7 @@ export const buildDatasetJsonLd = (benefit: BenefitRecord) => {
     "@context": "https://schema.org",
     "@type": "Dataset",
     "name": `${benefit.name} 정보`,
-    "description": "행정안전부 보조금24 공공데이터 기반 정보",
+    "description": "행정안전부 보조24 공공데이터 기반 정보",
     "creator": {
       "@type": "Organization",
       "name": "행정안전부",

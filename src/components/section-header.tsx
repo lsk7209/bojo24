@@ -6,14 +6,14 @@ type Props = {
 };
 
 export const SectionHeader = ({ eyebrow, title, description, action }: Props) => (
-  <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-slate-200 pb-6 mb-2">
-    <div className="space-y-2">
+  <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b-2 border-slate-300 pb-6 mb-6">
+    <div className="space-y-3">
       {eyebrow ? (
-        <p className="text-xs font-bold uppercase tracking-wider text-blue-600">
+        <p className="text-xs font-bold uppercase tracking-widest text-blue-600 bg-blue-50 px-3 py-1 rounded-full inline-block">
           {eyebrow}
         </p>
       ) : null}
-      <h2 className="text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
+      <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">{title}</h2>
       {description ? (
         <p className="max-w-3xl text-base text-slate-600 leading-relaxed">
           {description}

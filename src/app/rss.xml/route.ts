@@ -26,7 +26,7 @@ export async function GET() {
   <channel>
     <title>보조24 - 정부 혜택 정보</title>
     <link>${BASE_URL}</link>
-    <description>행정안전부 보조금24 정보를 AI로 요약하고 쉽게 찾을 수 있는 플랫폼입니다. 최신 보조금 정보와 신청 가이드를 제공합니다.</description>
+    <description>행정안전부 보조24 공공데이터를 분석하여 쉽고 정확한 정보를 제공하는 플랫폼입니다. 최신 보조금 정보와 신청 가이드를 제공합니다.</description>
     <language>ko-KR</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <pubDate>${new Date().toUTCString()}</pubDate>
