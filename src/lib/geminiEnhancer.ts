@@ -391,7 +391,9 @@ export async function enhanceSummary(
   console.log(`[Gemini Debug] enhanceSummary - Gemini API 호출 시작`);
 
   try {
-    // 재사용 가능한 프롬프트 사용 (200~500자)
+    // 재사용 가능한 프롬프트 사용 (동적 글자수)
+    const currentLength = currentSummary.length;
+    const targetLength = calculateTargetLength(currentLength);
     const prompt = buildSummaryEnhancementPrompt(
       benefitName,
       category,
@@ -401,7 +403,9 @@ export async function enhanceSummary(
       amount,
       apply,
       deadline,
-      currentSummary
+      currentSummary,
+      currentLength,
+      { min: targetLength.min, max: targetLength.max }
     );
 
     const result = await geminiModel.generateContent(prompt);
