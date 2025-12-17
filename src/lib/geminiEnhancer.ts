@@ -258,51 +258,88 @@ export async function enhanceBenefit(
   governingOrg: string,
   publicDataBenefit: string,
   detail: Record<string, string>,
-  benefitId?: string
+  benefitId?: string,
+  amount?: string | null,
+  benefitType?: string | null
 ): Promise<string | null> {
   // Gemini 보완이 활성화되지 않았으면 null 반환
-  if (!isGeminiEnhancementEnabled(benefitId)) {
+  const isEnabled = isGeminiEnhancementEnabled(benefitId);
+  console.log(`[Gemini Debug] enhanceBenefit - benefitId: ${benefitId}, isEnabled: ${isEnabled}`);
+  
+  if (!isEnabled) {
+    console.log(`[Gemini Debug] enhanceBenefit - 비활성화됨. GEMINI_ENHANCEMENT_ALLOWED_IDS: ${process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS || "없음"}`);
     return null;
   }
   
   const geminiModel = initGemini();
   if (!geminiModel) {
+    console.log(`[Gemini Debug] enhanceBenefit - Gemini 모델 초기화 실패`);
     return null;
   }
+  
+  console.log(`[Gemini Debug] enhanceBenefit - Gemini API 호출 시작`);
 
   try {
-    const amount = detail["지원금액"] || detail["지원 금액"] || "";
-    const deadline = detail["신청기간"] || detail["접수기간"] || detail["신청 기간"] || "";
-
-    const prompt = `
-당신은 대한민국 정부 보조금 정보를 시민들이 이해하기 쉽게 설명하는 전문가입니다.
-
-[보조금 정보]
-- 정책명: ${benefitName}
-- 관할 기관: ${governingOrg}
-- 현재 지원 내용 정보: ${publicDataBenefit}
-- 지원 금액: ${amount || "정보 없음"}
-- 신청 기간: ${deadline || "정보 없음"}
-
-[요구사항]
-위 공공데이터를 기반으로, **지원 내용**을 더 구체적이고 이해하기 쉽게 설명해주세요.
-
-1. **구체적인 금액/혜택 범위**를 명시하세요
-2. **사용 방법 및 제한 사항**을 설명하세요
-3. **실제 받을 수 있는 혜택의 예시**를 제공하세요
-4. "이렇게 활용하실 수 있습니다" 형태로 실용적으로 설명하세요
-5. 공공데이터에 없는 정보는 추가하지 마세요
-6. 2-3문단으로 구성하세요
-
-[출력 형식]
-순수 텍스트만 반환하세요. JSON이나 마크다운 형식은 사용하지 마세요.
-`;
+    // 재사용 가능한 프롬프트 사용 (다양한 형식, 200~300자)
+    const prompt = buildBenefitEnhancementPrompt(
+      benefitName,
+      governingOrg,
+      publicDataBenefit,
+      amount || null,
+      benefitType || null
+    );
 
     const result = await geminiModel.generateContent(prompt);
-    const enhanced = result.response.text().trim();
+    let enhanced = result.response.text().trim();
     
-    // 공공데이터와 자연스럽게 병합
-    return `${publicDataBenefit}\n\n${enhanced}`;
+    // 200~300자 범위로 조정 (문장이 자연스럽게 끝나도록 약간의 여유 허용)
+    const TARGET_MIN = 200;
+    const TARGET_MAX = 300;
+    const ALLOWED_OVERFLOW = 30; // 300자를 최대 30자까지 넘어도 허용 (문장 완성용)
+    
+    if (enhanced.length > TARGET_MAX + ALLOWED_OVERFLOW) {
+      // 330자를 넘으면 마지막 문장을 완성하여 자름
+      const maxLength = TARGET_MAX + ALLOWED_OVERFLOW;
+      const trimmed = enhanced.substring(0, maxLength);
+      
+      // 마지막 문장이 자연스럽게 끝나도록 마침표나 쉼표를 찾아서 자름
+      const lastPeriod = trimmed.lastIndexOf(".");
+      const lastComma = trimmed.lastIndexOf("，");
+      const lastKoreanPeriod = trimmed.lastIndexOf("。");
+      
+      const cutPoint = Math.max(
+        lastPeriod > TARGET_MIN ? lastPeriod + 1 : -1,
+        lastComma > TARGET_MIN ? lastComma + 1 : -1,
+        lastKoreanPeriod > TARGET_MIN ? lastKoreanPeriod + 1 : -1
+      );
+      
+      if (cutPoint > TARGET_MIN) {
+        enhanced = trimmed.substring(0, cutPoint);
+      } else {
+        // 자연스러운 끝점을 찾지 못하면 300자에서 자름
+        enhanced = trimmed.substring(0, TARGET_MAX);
+      }
+    }
+    
+    // 최소 200자 이상이 되도록 보장
+    if (enhanced.length < TARGET_MIN) {
+      // 공공데이터와 병합하여 최소 길이 확보
+      const merged = `${publicDataBenefit}\n\n${enhanced}`;
+      if (merged.length > TARGET_MAX + ALLOWED_OVERFLOW) {
+        const trimmed = merged.substring(0, TARGET_MAX + ALLOWED_OVERFLOW);
+        const lastPeriod = trimmed.lastIndexOf(".");
+        return lastPeriod > TARGET_MIN ? trimmed.substring(0, lastPeriod + 1) : trimmed.substring(0, TARGET_MAX);
+      }
+      return merged;
+    }
+    
+    // Gemini가 생성한 내용 반환 (200~330자 범위)
+    // 예시가 포함되었는지 확인 (없으면 경고)
+    if (!enhanced.includes("예를 들어") && !enhanced.includes("예시") && !enhanced.includes("예를")) {
+      console.log(`⚠️ [Gemini Debug] 예시 섹션이 포함되지 않았습니다. 내용: ${enhanced.substring(0, 100)}...`);
+    }
+    
+    return enhanced;
   } catch (error: any) {
     // 개발 환경에서만 에러 로그 출력
     if (process.env.NODE_ENV === "development") {
