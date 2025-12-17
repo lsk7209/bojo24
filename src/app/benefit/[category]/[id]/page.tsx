@@ -4,7 +4,7 @@ import { buildAllStructuredData } from "./schema";
 import { getServiceClient } from "@lib/supabaseClient";
 import { formatDescription } from "@lib/formattext";
 import { buildStructuredAnswers } from "@lib/zeroClickOptimization";
-import { optimizeBenefitContent } from "@lib/benefitContentOptimizer";
+import { optimizeBenefitContent, generateSummary } from "@lib/benefitContentOptimizer";
 import { Badge, Card } from "@components/ui";
 import type { BenefitRecord } from "@/types/benefit";
 import type { Metadata } from "next";
@@ -51,13 +51,22 @@ export const generateMetadata = async ({
     supportConditions?: Record<string, string>;
   } | undefined;
   
-  // 공공데이터 기반 최적화된 컨텐츠 생성 (Gemini 의존성 제거)
-  const optimizedContent = optimizeBenefitContent(
-    benefit.name,
-    category,
-    org,
-    benefitDetail || {}
-  );
+  // 공공데이터 기반 최적화된 컨텐츠 생성 (부족한 부분은 Gemini로 보완)
+  // 메타데이터 생성 시에는 빠른 응답을 위해 공공데이터만 사용 (Gemini 보완 제외)
+  const detailData = benefitDetail?.detail || benefitDetail?.list || {};
+  const publicSummary = generateSummary(benefit.name, category, org, detailData);
+  const optimizedContent = {
+    summary: publicSummary,
+    keywords: [
+      benefit.name,
+      category,
+      org,
+      "보조금",
+      "정부 지원금",
+      "신청 방법",
+      "자격 요건"
+    ].filter(Boolean)
+  };
 
   // Zero-click 스니펫 최적화를 위한 메타 설명 (공공데이터 기반)
   const description = optimizedContent.summary.length > 120
@@ -165,8 +174,8 @@ export default async function BenefitDetailPage({ params }: PageParams) {
     supportConditions?: Record<string, string>;
   } | undefined;
   
-  // 공공데이터 기반 최적화된 컨텐츠 구조 생성 (구글 검색 최적화, Gemini 의존성 제거)
-  const optimizedContent = optimizeBenefitContent(
+  // 공공데이터 기반 최적화된 컨텐츠 구조 생성 (부족한 부분은 Gemini로 보완)
+  const optimizedContent = await optimizeBenefitContent(
     benefit.name,
     benefit.category || "정부 지원금",
     benefit.governing_org || "정부 기관",

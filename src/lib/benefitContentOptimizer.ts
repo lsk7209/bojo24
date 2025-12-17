@@ -1,7 +1,10 @@
 /**
  * 보조금 상세페이지 컨텐츠 최적화 유틸리티
  * 공공데이터 기반으로 구글 검색 최적화된 구조 생성
+ * 부족한 내용은 Gemini로 보완하여 고유 컨텐츠 생성
  */
+
+import { enhanceSummary, enhanceTarget, enhanceBenefit, needsEnhancement } from "./geminiEnhancer";
 
 export interface BenefitDetail {
   detail?: Record<string, string>;
@@ -68,26 +71,51 @@ export interface OptimizedContent {
 
 /**
  * 공공데이터를 기반으로 최적화된 컨텐츠 구조 생성
+ * 부족한 내용은 Gemini로 보완 (비동기)
  */
-export function optimizeBenefitContent(
+export async function optimizeBenefitContent(
   benefitName: string,
   category: string,
   governingOrg: string,
   detail: BenefitDetail
-): OptimizedContent {
+): Promise<OptimizedContent> {
   const detailData = detail.detail || detail.list || {};
   
   // 1. 요약 생성 (구글 스니펫 최적화)
-  const summary = generateSummary(benefitName, category, governingOrg, detailData);
+  let summary = generateSummary(benefitName, category, governingOrg, detailData);
+  
+  // 공공데이터가 부족하면 Gemini로 보완
+  if (needsEnhancement(summary, 200)) {
+    const enhanced = await enhanceSummary(benefitName, category, governingOrg, summary, detailData);
+    if (enhanced) {
+      summary = enhanced;
+    }
+  }
   
   // 2. 지원 대상 섹션
-  const targetContent = detailData["지원대상"] || detailData["대상"] || "정보 없음";
+  let targetContent = detailData["지원대상"] || detailData["대상"] || "정보 없음";
   const criteria = detailData["선정기준"] || detailData["선정 기준"] || "";
   
+  // 공공데이터가 부족하면 Gemini로 보완
+  if (needsEnhancement(targetContent, 100)) {
+    const enhanced = await enhanceTarget(benefitName, governingOrg, targetContent, detailData);
+    if (enhanced) {
+      targetContent = enhanced;
+    }
+  }
+  
   // 3. 지원 내용 섹션
-  const benefitContent = detailData["지원내용"] || detailData["지원 내용"] || "정보 없음";
+  let benefitContent = detailData["지원내용"] || detailData["지원 내용"] || "정보 없음";
   const amount = extractAmount(benefitContent);
   const benefitType = extractBenefitType(benefitContent);
+  
+  // 공공데이터가 부족하면 Gemini로 보완
+  if (needsEnhancement(benefitContent, 150)) {
+    const enhanced = await enhanceBenefit(benefitName, governingOrg, benefitContent, detailData);
+    if (enhanced) {
+      benefitContent = enhanced;
+    }
+  }
   
   // 4. 신청 방법 섹션
   const applyMethod = detailData["신청방법"] || detailData["신청 방법"] || "정보 없음";
@@ -166,7 +194,7 @@ export function optimizeBenefitContent(
  * 요약 생성 (구글 스니펫 최적화, 고유 컨텐츠 강화)
  * 공공데이터를 분석하여 구글이 고유 컨텐츠로 인정할 수 있는 구조화된 요약 생성
  */
-function generateSummary(
+export function generateSummary(
   name: string,
   category: string,
   org: string,

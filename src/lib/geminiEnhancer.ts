@@ -1,0 +1,201 @@
+/**
+ * Gemini API를 활용한 컨텐츠 보완 유틸리티
+ * 공공데이터가 부족한 경우에만 Gemini로 보완하여 고유 컨텐츠 생성
+ */
+
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+// Gemini API 초기화 (환경 변수 확인)
+let genAI: GoogleGenerativeAI | null = null;
+let model: ReturnType<typeof GoogleGenerativeAI.prototype.getGenerativeModel> | null = null;
+
+function initGemini() {
+  if (!process.env.GEMINI_API_KEY) {
+    return null;
+  }
+  if (!genAI) {
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    model = genAI.getGenerativeModel({ model: "gemini-pro" });
+  }
+  return model;
+}
+
+/**
+ * 공공데이터 품질 체크
+ * 부족한 경우 true 반환
+ */
+export function needsEnhancement(
+  content: string,
+  minLength: number = 150
+): boolean {
+  if (!content || content === "정보 없음") return true;
+  const cleanContent = content.replace(/\s+/g, " ").trim();
+  return cleanContent.length < minLength;
+}
+
+/**
+ * Gemini로 요약 보완
+ */
+export async function enhanceSummary(
+  benefitName: string,
+  category: string,
+  governingOrg: string,
+  publicDataSummary: string,
+  detail: Record<string, string>
+): Promise<string | null> {
+  const geminiModel = initGemini();
+  if (!geminiModel) {
+    return null; // Gemini API 키가 없으면 null 반환
+  }
+
+  try {
+    const purpose = detail["서비스목적"] || detail["서비스목적요약"] || "";
+    const target = detail["지원대상"] || detail["대상"] || "";
+    const benefit = detail["지원내용"] || detail["지원 내용"] || "";
+    const amount = detail["지원금액"] || detail["지원 금액"] || "";
+
+    const prompt = `
+당신은 대한민국 정부 보조금 정보를 시민들이 이해하기 쉽게 설명하는 전문가입니다.
+
+[보조금 정보]
+- 정책명: ${benefitName}
+- 카테고리: ${category}
+- 관할 기관: ${governingOrg}
+- 서비스 목적: ${purpose || "정보 없음"}
+- 지원 대상: ${target || "정보 없음"}
+- 지원 내용: ${benefit || "정보 없음"}
+- 지원 금액: ${amount || "정보 없음"}
+
+[현재 공공데이터 요약]
+${publicDataSummary}
+
+[요구사항]
+위 공공데이터를 기반으로, 일반 시민이 이해하기 쉬운 **상세하고 구체적인 요약**을 작성해주세요.
+
+1. **사용자 관점**으로 재구성하세요 (행정 용어 최소화)
+2. **구체적인 예시**를 포함하세요 (금액, 기간, 혜택 등)
+3. **실용적인 정보**를 강조하세요 (누가, 무엇을, 얼마나, 언제)
+4. **3-5문단**으로 구성하세요 (각 문단은 2-3문장)
+5. 공공데이터에 없는 정보는 추가하지 마세요
+6. 줄바꿈은 \\n을 사용하세요
+
+[출력 형식]
+순수 텍스트만 반환하세요. JSON이나 마크다운 형식은 사용하지 마세요.
+`;
+
+    const result = await geminiModel.generateContent(prompt);
+    const enhanced = result.response.text().trim();
+    
+    // 공공데이터와 자연스럽게 병합
+    return `${publicDataSummary}\n\n${enhanced}`;
+  } catch (error) {
+    console.error("Gemini 요약 보완 실패:", error);
+    return null; // 실패 시 원본 반환
+  }
+}
+
+/**
+ * Gemini로 지원 대상 보완
+ */
+export async function enhanceTarget(
+  benefitName: string,
+  governingOrg: string,
+  publicDataTarget: string,
+  detail: Record<string, string>
+): Promise<string | null> {
+  const geminiModel = initGemini();
+  if (!geminiModel) {
+    return null;
+  }
+
+  try {
+    const criteria = detail["선정기준"] || detail["선정 기준"] || "";
+    const applyMethod = detail["신청방법"] || detail["신청 방법"] || "";
+
+    const prompt = `
+당신은 대한민국 정부 보조금 정보를 시민들이 이해하기 쉽게 설명하는 전문가입니다.
+
+[보조금 정보]
+- 정책명: ${benefitName}
+- 관할 기관: ${governingOrg}
+- 현재 지원 대상 정보: ${publicDataTarget}
+- 선정 기준: ${criteria || "정보 없음"}
+
+[요구사항]
+위 공공데이터를 기반으로, **지원 대상**을 더 구체적이고 이해하기 쉽게 설명해주세요.
+
+1. **자격 요건을 구체적으로** 설명하세요 (나이, 소득, 거주지 등)
+2. **예외 사항**이 있다면 명시하세요
+3. **실제 신청 가능한 사람들의 예시**를 제공하세요
+4. "이런 분들은 신청 가능합니다" 형태로 친근하게 설명하세요
+5. 공공데이터에 없는 정보는 추가하지 마세요
+6. 2-3문단으로 구성하세요
+
+[출력 형식]
+순수 텍스트만 반환하세요. JSON이나 마크다운 형식은 사용하지 마세요.
+`;
+
+    const result = await geminiModel.generateContent(prompt);
+    const enhanced = result.response.text().trim();
+    
+    // 공공데이터와 자연스럽게 병합
+    return `${publicDataTarget}\n\n${enhanced}`;
+  } catch (error) {
+    console.error("Gemini 지원 대상 보완 실패:", error);
+    return null;
+  }
+}
+
+/**
+ * Gemini로 지원 내용 보완
+ */
+export async function enhanceBenefit(
+  benefitName: string,
+  governingOrg: string,
+  publicDataBenefit: string,
+  detail: Record<string, string>
+): Promise<string | null> {
+  const geminiModel = initGemini();
+  if (!geminiModel) {
+    return null;
+  }
+
+  try {
+    const amount = detail["지원금액"] || detail["지원 금액"] || "";
+    const deadline = detail["신청기간"] || detail["접수기간"] || detail["신청 기간"] || "";
+
+    const prompt = `
+당신은 대한민국 정부 보조금 정보를 시민들이 이해하기 쉽게 설명하는 전문가입니다.
+
+[보조금 정보]
+- 정책명: ${benefitName}
+- 관할 기관: ${governingOrg}
+- 현재 지원 내용 정보: ${publicDataBenefit}
+- 지원 금액: ${amount || "정보 없음"}
+- 신청 기간: ${deadline || "정보 없음"}
+
+[요구사항]
+위 공공데이터를 기반으로, **지원 내용**을 더 구체적이고 이해하기 쉽게 설명해주세요.
+
+1. **구체적인 금액/혜택 범위**를 명시하세요
+2. **사용 방법 및 제한 사항**을 설명하세요
+3. **실제 받을 수 있는 혜택의 예시**를 제공하세요
+4. "이렇게 활용하실 수 있습니다" 형태로 실용적으로 설명하세요
+5. 공공데이터에 없는 정보는 추가하지 마세요
+6. 2-3문단으로 구성하세요
+
+[출력 형식]
+순수 텍스트만 반환하세요. JSON이나 마크다운 형식은 사용하지 마세요.
+`;
+
+    const result = await geminiModel.generateContent(prompt);
+    const enhanced = result.response.text().trim();
+    
+    // 공공데이터와 자연스럽게 병합
+    return `${publicDataBenefit}\n\n${enhanced}`;
+  } catch (error) {
+    console.error("Gemini 지원 내용 보완 실패:", error);
+    return null;
+  }
+}
+
