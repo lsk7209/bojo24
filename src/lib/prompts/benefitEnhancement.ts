@@ -3,8 +3,12 @@
  * 재사용 가능하도록 별도 파일로 관리
  */
 
+import { COMMON_ENHANCEMENT_GUIDELINES, buildLengthGuidance } from "./baseEnhancement";
+
 export const BENEFIT_ENHANCEMENT_PROMPT = `
 당신은 대한민국 정부 보조금 정보를 시민들이 이해하기 쉽게 설명하는 전문가입니다.
+
+${COMMON_ENHANCEMENT_GUIDELINES}
 
 [보조금 정보]
 - 정책명: {benefitName}
@@ -13,10 +17,12 @@ export const BENEFIT_ENHANCEMENT_PROMPT = `
 - 지원 규모: {amount}
 - 지원 형태: {benefitType}
 
+{lengthGuidance}
+
 [요구사항]
 위 공공데이터를 기반으로, **지원 내용**을 가독성 있게 정리해주세요.
 
-1. **200~300자**로 작성하세요 (정확히 200~300자 사이)
+1. **{targetMin}~{targetMax}자**로 작성하세요 (정확히 {targetMin}~{targetMax}자 사이)
 2. **다양한 형식**을 활용하세요:
    - 볼드(**텍스트**)를 활용하여 중요한 정보 강조
    - 목록(- 또는 •)을 활용하여 혜택을 명확히 나열
@@ -57,9 +63,10 @@ export const BENEFIT_ENHANCEMENT_PROMPT = `
 **중요 사항:**
 1. "**예를 들어**"는 반드시 같은 줄에 예시 내용과 함께 작성해야 합니다.
 2. 예시는 구체적인 혜택 수령 방법이나 금액을 포함해야 합니다.
-3. 전체 내용은 200~300자 사이로 작성하세요.
+3. 전체 내용은 {targetMin}~{targetMax}자 사이로 작성하세요.
 4. 위 형식과 순서를 정확히 따라주세요.
 5. 금액이나 규모가 있다면 반드시 포함하세요.
+6. 현재 글자수가 적으므로, 더 상세하고 구체적으로 작성하여 목표 글자수에 도달하세요.
 `;
 
 /**
@@ -70,13 +77,20 @@ export function buildBenefitEnhancementPrompt(
   governingOrg: string,
   publicDataBenefit: string,
   amount: string | null,
-  benefitType: string | null
+  benefitType: string | null,
+  currentLength: number,
+  targetLength: { min: number; max: number }
 ): string {
+  const lengthGuidance = buildLengthGuidance(currentLength, targetLength.min, targetLength.max);
+  
   return BENEFIT_ENHANCEMENT_PROMPT
     .replace("{benefitName}", benefitName)
     .replace("{governingOrg}", governingOrg)
     .replace("{publicDataBenefit}", publicDataBenefit)
     .replace("{amount}", amount || "정보 없음")
-    .replace("{benefitType}", benefitType || "정보 없음");
+    .replace("{benefitType}", benefitType || "정보 없음")
+    .replace("{lengthGuidance}", lengthGuidance)
+    .replace(/{targetMin}/g, targetLength.min.toString())
+    .replace(/{targetMax}/g, targetLength.max.toString());
 }
 

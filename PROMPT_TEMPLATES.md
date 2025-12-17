@@ -2,6 +2,79 @@
 
 이 문서는 보조금 상세페이지의 각 섹션을 Gemini로 보완할 때 사용하는 프롬프트 템플릿을 정리합니다.
 
+## 📊 동적 글자수 조정 시스템
+
+### 글자수 증가 패턴
+
+현재 글자수에 따라 목표 글자수를 동적으로 조정합니다:
+
+- **100자 이내** → **200~300자**로 증가
+- **300자 이내** → **400~500자**로 증가
+- **600자 이내** → **700~800자**로 증가
+- **600자 초과** → 현재 글자수의 **1.2~1.5배**로 증가
+
+### 구현 위치
+
+- **유틸리티**: `src/lib/utils/contentLengthCalculator.ts`
+- **함수**: `calculateTargetLength(currentLength: number)`
+
+### 사용 예시
+
+```typescript
+import { calculateTargetLength } from "@lib/utils/contentLengthCalculator";
+
+const currentLength = 150; // 현재 글자수
+const target = calculateTargetLength(currentLength);
+// 결과: { min: 200, max: 300, overflow: 30 }
+```
+
+## 📋 필요서류 (Documents) 프롬프트
+
+**파일 위치**: `src/lib/prompts/documentsEnhancement.ts`
+
+### 목적
+
+줄바꿈이 잘못된 필요서류 목록을 가독성 있게 정리합니다.
+
+### 처리 예시
+
+**입력 (잘못된 형식)**:
+```
+1. 신청서
+✓
+서약서 및 동의서 각 1부부
+✓
+2. 가족관계증명서 (신청인
+✓
+배우자) 각 1부
+```
+
+**출력 (정리된 형식)**:
+```
+1. 신청서 서약서 및 동의서 각 1부
+2. 가족관계증명서 (신청인 배우자) 각 1부
+```
+
+### 특징
+
+- 줄바꿈 오류 자동 수정
+- 불필요한 체크마크(✓) 제거
+- 각 항목을 하나의 완전한 문장으로 병합
+- 번호 형식 유지 (1., 2., 3. 등)
+
+### 사용법
+
+```typescript
+import { enhanceDocuments } from "@lib/geminiEnhancer";
+
+const formatted = await enhanceDocuments(
+  benefitName,
+  governingOrg,
+  rawDocuments,
+  benefitId
+);
+```
+
 ## 📋 지원 대상 (Target) 프롬프트
 
 **파일 위치**: `src/lib/prompts/targetEnhancement.ts`
@@ -27,8 +100,9 @@
 
 ### 글자수 제한
 
-- **목표**: 150~200자
-- **허용 범위**: 최대 220자까지 (문장 완성을 위해)
+- **동적 조정**: 현재 글자수에 따라 목표 글자수 자동 계산
+- **예시**: 100자 → 200~300자, 300자 → 400~500자
+- **허용 범위**: 목표 최대값 + overflow (문장 완성을 위해)
 
 ### 마크다운 규칙
 
@@ -60,6 +134,33 @@ const prompt = buildTargetEnhancementPrompt(
 
 **예를 들어** 동대문구에 거주하시는 60대 **국가유공자** 김철수 씨나, 40대 **독립유공자** 이영희 씨는 이 지원을 신청하실 수 있습니다.
 ```
+
+## 📋 신청 방법 (Apply) 프롬프트
+
+**파일 위치**: `src/lib/prompts/applyEnhancement.ts`
+
+### 형식 구조
+
+```
+**신청 방법**
+[개요 문단]
+
+**1단계**: [단계 1 설명]
+**2단계**: [단계 2 설명]
+**3단계**: [단계 3 설명]
+
+[추가 안내]
+```
+
+### 특징
+
+- 단계별 가이드 형식
+- 동적 글자수 조정
+- 구체적인 행동 지침 포함
+
+### 글자수 제한
+
+- **동적 조정**: 현재 글자수에 따라 목표 글자수 자동 계산
 
 ## 🔄 다른 섹션에 적용하기
 
@@ -97,11 +198,13 @@ const prompt = buildTargetEnhancementPrompt(
 
 ### 공통 원칙
 
-1. **150~200자 범위** 유지
+1. **동적 글자수 조정** - 현재 글자수에 따라 목표 자동 계산
 2. **구조화된 형식** 사용 (제목, 개요, 목록, 예시)
 3. **볼드 활용**으로 중요한 키워드 강조
-4. **예시 필수** 포함 (구체적인 인물/사례)
+4. **예시 필수** 포함 (구체적인 인물/사례) - 지원 대상, 지원 내용에만 해당
 5. **공공데이터 기반**으로만 작성 (추가 정보 금지)
+6. **고유 컨텐츠 생성** - 단순 복사가 아닌 재구성 및 가공
+7. **가독성 향상** - 문단 구분, 목록 활용, 자연스러운 문장
 
 ### 마크다운 규칙
 
@@ -124,10 +227,12 @@ const prompt = buildTargetEnhancementPrompt(
 
 ## 📌 현재 적용 상태
 
-- ✅ **지원 대상**: `targetEnhancement.ts` - 적용 완료
-- ⏳ **지원 내용**: 미적용 (필요 시 생성)
-- ⏳ **신청 방법**: 미적용 (필요 시 생성)
-- ⏳ **기타 섹션**: 미적용 (필요 시 생성)
+- ✅ **핵심 요약**: `summaryEnhancement.ts` - 동적 글자수 적용 완료
+- ✅ **지원 대상**: `targetEnhancement.ts` - 동적 글자수 적용 완료
+- ✅ **지원 내용**: `benefitEnhancement.ts` - 동적 글자수 적용 완료
+- ✅ **신청 방법**: `applyEnhancement.ts` - 동적 글자수 적용 완료
+- ✅ **FAQ 답변**: `faqEnhancement.ts` - 동적 글자수 적용 완료
+- ✅ **필요서류**: `documentsEnhancement.ts` - 줄바꿈 오류 수정 완료
 
 ## 🔍 환경 변수 설정
 

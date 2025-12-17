@@ -3,8 +3,12 @@
  * 재사용 가능하도록 별도 파일로 관리
  */
 
+import { COMMON_ENHANCEMENT_GUIDELINES, buildLengthGuidance } from "./baseEnhancement";
+
 export const TARGET_ENHANCEMENT_PROMPT = `
 당신은 대한민국 정부 보조금 정보를 시민들이 이해하기 쉽게 설명하는 전문가입니다.
+
+${COMMON_ENHANCEMENT_GUIDELINES}
 
 [보조금 정보]
 - 정책명: {benefitName}
@@ -12,10 +16,12 @@ export const TARGET_ENHANCEMENT_PROMPT = `
 - 현재 지원 대상 정보: {publicDataTarget}
 - 선정 기준: {criteria}
 
+{lengthGuidance}
+
 [요구사항]
 위 공공데이터를 기반으로, **지원 대상**을 가독성 있게 정리해주세요.
 
-1. **150~200자**로 작성하세요 (정확히 150~200자 사이)
+1. **{targetMin}~{targetMax}자**로 작성하세요 (정확히 {targetMin}~{targetMax}자 사이)
 2. **구조화된 형식**으로 작성하세요:
    - 볼드(**텍스트**)를 활용하여 중요한 키워드 강조
    - 목록(- 또는 •)을 활용하여 자격 요건을 명확히 나열
@@ -54,8 +60,9 @@ export const TARGET_ENHANCEMENT_PROMPT = `
 **중요 사항:**
 1. "**예를 들어**"는 반드시 같은 줄에 예시 내용과 함께 작성해야 합니다.
 2. 예시는 구체적인 인물 이름과 연령대를 포함해야 합니다.
-3. 전체 내용은 150~200자 사이로 작성하세요.
+3. 전체 내용은 {targetMin}~{targetMax}자 사이로 작성하세요.
 4. 위 형식과 순서를 정확히 따라주세요.
+5. 현재 글자수가 적으므로, 더 상세하고 구체적으로 작성하여 목표 글자수에 도달하세요.
 `;
 
 /**
@@ -65,12 +72,19 @@ export function buildTargetEnhancementPrompt(
   benefitName: string,
   governingOrg: string,
   publicDataTarget: string,
-  criteria: string
+  criteria: string,
+  currentLength: number,
+  targetLength: { min: number; max: number }
 ): string {
+  const lengthGuidance = buildLengthGuidance(currentLength, targetLength.min, targetLength.max);
+  
   return TARGET_ENHANCEMENT_PROMPT
     .replace("{benefitName}", benefitName)
     .replace("{governingOrg}", governingOrg)
     .replace("{publicDataTarget}", publicDataTarget)
-    .replace("{criteria}", criteria || "정보 없음");
+    .replace("{criteria}", criteria || "정보 없음")
+    .replace("{lengthGuidance}", lengthGuidance)
+    .replace(/{targetMin}/g, targetLength.min.toString())
+    .replace(/{targetMax}/g, targetLength.max.toString());
 }
 

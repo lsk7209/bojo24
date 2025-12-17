@@ -8,6 +8,9 @@ import { buildTargetEnhancementPrompt } from "./prompts/targetEnhancement";
 import { buildBenefitEnhancementPrompt } from "./prompts/benefitEnhancement";
 import { buildFAQAnswerEnhancementPrompt } from "./prompts/faqEnhancement";
 import { buildSummaryEnhancementPrompt } from "./prompts/summaryEnhancement";
+import { buildApplyEnhancementPrompt } from "./prompts/applyEnhancement";
+import { buildDocumentsEnhancementPrompt } from "./prompts/documentsEnhancement";
+import { calculateTargetLength } from "./utils/contentLengthCalculator";
 
 // Gemini API 초기화 (환경 변수 확인)
 let genAI: GoogleGenerativeAI | null = null;

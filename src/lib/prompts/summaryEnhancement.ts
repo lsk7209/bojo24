@@ -3,8 +3,12 @@
  * 재사용 가능하도록 별도 파일로 관리
  */
 
+import { COMMON_ENHANCEMENT_GUIDELINES, buildLengthGuidance } from "./baseEnhancement";
+
 export const SUMMARY_ENHANCEMENT_PROMPT = `
 당신은 대한민국 정부 보조금 정보를 시민들이 이해하기 쉽게 설명하는 전문가입니다.
+
+${COMMON_ENHANCEMENT_GUIDELINES}
 
 [보조금 정보]
 - 정책명: {benefitName}
@@ -17,10 +21,12 @@ export const SUMMARY_ENHANCEMENT_PROMPT = `
 - 신청 기간: {deadline}
 - 현재 요약 내용: {currentSummary}
 
+{lengthGuidance}
+
 [요구사항]
 위 공공데이터를 기반으로, **핵심 요약**을 명확하고 읽기 쉽게 작성해주세요.
 
-1. **200~500자**로 작성하세요 (정확히 200~500자 사이)
+1. **{targetMin}~{targetMax}자**로 작성하세요 (정확히 {targetMin}~{targetMax}자 사이)
 2. **구조화된 형식**을 사용하세요:
    - 첫 문장: 보조금 이름과 핵심 정보 (1문장)
    - 본문: 지원 대상, 지원 내용, 지원 금액 등 핵심 정보 (2~3문장)
@@ -54,12 +60,13 @@ export const SUMMARY_ENHANCEMENT_PROMPT = `
 신청 방법은 관내 위탁의료기관에 직접 방문하거나, 동대문구청 보훈과(02-2127-4000)로 문의하시면 됩니다.
 
 **중요 사항:**
-1. 전체 내용은 200~500자 사이로 작성하세요.
+1. 전체 내용은 {targetMin}~{targetMax}자 사이로 작성하세요.
 2. 첫 문장에 보조금 이름과 카테고리를 포함하세요.
 3. 지원 대상, 지원 내용, 지원 금액 등 핵심 정보를 명확히 전달하세요.
 4. 마지막 문장에 신청 방법 또는 기간을 포함하세요.
 5. 공공데이터에 없는 정보는 추가하지 마세요.
 6. 문장은 자연스럽고 읽기 쉽게 작성하세요.
+7. 현재 글자수가 적으므로, 더 상세하고 구체적으로 작성하여 목표 글자수에 도달하세요.
 `;
 
 /**
@@ -74,8 +81,12 @@ export function buildSummaryEnhancementPrompt(
   amount: string | null,
   apply: string,
   deadline: string | null,
-  currentSummary: string
+  currentSummary: string,
+  currentLength: number,
+  targetLength: { min: number; max: number }
 ): string {
+  const lengthGuidance = buildLengthGuidance(currentLength, targetLength.min, targetLength.max);
+  
   return SUMMARY_ENHANCEMENT_PROMPT
     .replace("{benefitName}", benefitName)
     .replace("{category}", category)
@@ -85,6 +96,9 @@ export function buildSummaryEnhancementPrompt(
     .replace("{amount}", amount || "정보 없음")
     .replace("{apply}", apply || "정보 없음")
     .replace("{deadline}", deadline || "정보 없음")
-    .replace("{currentSummary}", currentSummary);
+    .replace("{currentSummary}", currentSummary)
+    .replace("{lengthGuidance}", lengthGuidance)
+    .replace(/{targetMin}/g, targetLength.min.toString())
+    .replace(/{targetMax}/g, targetLength.max.toString());
 }
 

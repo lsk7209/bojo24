@@ -207,10 +207,74 @@ export async function optimizeBenefitContent(
   }
   
   // 4. 신청 방법 섹션
-  const applyMethod = detailData["신청방법"] || detailData["신청 방법"] || "정보 없음";
+  // 원본 공공데이터 저장
+  const originalApplyMethod = detailData["신청방법"] || detailData["신청 방법"] || "정보 없음";
+  let applyMethod = originalApplyMethod; // 표시용 (Gemini 보완 가능)
   const steps = parseApplySteps(applyMethod);
-  const documents = extractDocuments(detailData["구비서류"] || detailData["필요서류"] || "");
+  const rawDocuments = detailData["구비서류"] || detailData["필요서류"] || "";
+  let documents = extractDocuments(rawDocuments); // 표시용 (Gemini 보완 가능)
   const deadline = detailData["신청기간"] || detailData["접수기간"] || detailData["신청 기간"] || "";
+  
+  // 특정 보조금 ID에 대해서만 Gemini로 신청 방법 보완 (동적 글자수)
+  if (benefitId && applyMethod && applyMethod !== "정보 없음" && applyMethod.length < 1000) {
+    // 디버그: 환경 변수 확인
+    const allowedIds = process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS 
+      ? process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS.split(",").map(id => id.trim())
+      : [];
+    const isAllowed = allowedIds.includes(benefitId);
+    const hasApiKey = !!process.env.GEMINI_API_KEY;
+    
+    console.log(`[Gemini Debug] benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey}, section: 신청 방법`);
+    
+    const { enhanceApply } = await import("./geminiEnhancer");
+    const enhanced = await enhanceApply(
+      benefitName,
+      governingOrg,
+      applyMethod,
+      rawDocuments || null,
+      deadline || null,
+      detailData,
+      benefitId
+    );
+    if (enhanced) {
+      applyMethod = enhanced;
+      console.log(`✅ 신청 방법 Gemini 보완 완료: ${applyMethod.length}자`);
+    } else {
+      console.log(`⚠️ Gemini 신청 방법 보완 실패 또는 비활성화 (benefitId: ${benefitId})`);
+    }
+  }
+  
+  // 특정 보조금 ID에 대해서만 Gemini로 필요서류 정리 (존재할 때만)
+  if (benefitId && rawDocuments && rawDocuments.length > 0 && documents.length > 0) {
+    // 디버그: 환경 변수 확인
+    const allowedIds = process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS 
+      ? process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS.split(",").map(id => id.trim())
+      : [];
+    const isAllowed = allowedIds.includes(benefitId);
+    const hasApiKey = !!process.env.GEMINI_API_KEY;
+    
+    console.log(`[Gemini Debug] benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey}, section: 필요서류`);
+    
+    const { enhanceDocuments } = await import("./geminiEnhancer");
+    const enhanced = await enhanceDocuments(
+      benefitName,
+      governingOrg,
+      rawDocuments,
+      benefitId
+    );
+    if (enhanced && enhanced.length > 0) {
+      documents = enhanced;
+      console.log(`✅ 필요서류 Gemini 보완 완료: ${documents.length}개 항목`);
+    } else {
+      // Gemini 보완 실패 시 기본 정리 로직 사용
+      const { formatDocuments } = await import("./utils/documentFormatter");
+      const formatted = formatDocuments(rawDocuments);
+      if (formatted.length > 0) {
+        documents = formatted;
+        console.log(`✅ 필요서류 기본 정리 완료: ${documents.length}개 항목`);
+      }
+    }
+  }
   
   // 5. 문의처 섹션
   const contact = {
