@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { Button } from "@components/ui";
+import { BannerAd } from "@components/adsense-ad";
 
 export default function HomePage() {
   return (
     <main className="flex flex-col gap-10 pb-16 pt-6">
+      {/* 상단 배너 광고 */}
+      <BannerAd adSlot="1234567890" className="mb-4" />
       {/* Hero Section */}
       <header className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-blue-50/50 via-white to-white p-8 sm:p-12 ring-1 ring-slate-200/50 shadow-sm">
         <div className="relative z-10 max-w-2xl">

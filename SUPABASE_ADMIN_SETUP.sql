@@ -18,6 +18,12 @@ create table if not exists page_views (
 alter table admin_settings enable row level security;
 alter table page_views enable row level security;
 
+-- 기존 정책 삭제 (중복 실행 방지)
+DROP POLICY IF EXISTS "Public read settings" ON admin_settings;
+DROP POLICY IF EXISTS "Public insert views" ON page_views;
+DROP POLICY IF EXISTS "Admin full access settings" ON admin_settings;
+DROP POLICY IF EXISTS "Admin full access views" ON page_views;
+
 -- 누구나 설정 읽기 가능 (Head 스크립트 로딩용)
 create policy "Public read settings" on admin_settings for select using (true);
 

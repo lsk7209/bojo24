@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Badge, Card, Button } from "@components/ui";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { AdPlaceholder } from "@components/ad-placeholder";
+import { InlineAd } from "@components/adsense-ad";
 import ReactMarkdown from "react-markdown";
 
 type PageParams = {
@@ -148,9 +148,9 @@ export default async function BlogPostPage({ params }: PageParams) {
                 </div>
             </article>
 
-            {/* 중간 광고 */}
+            {/* 중간 광고 (본문 중간) */}
             <div className="my-12">
-                <AdPlaceholder label="맞춤형 정보 광고" />
+                <InlineAd adSlot="1234567890" />
             </div>
 
             {/* 관련 링크 카드 */}

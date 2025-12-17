@@ -1,9 +1,14 @@
 PUBLICDATA_SERVICE_KEY_ENC=your-encoded-key
 PUBLICDATA_BASE_URL=https://api.odcloud.kr/api/gov24/v3
 
+# 서버 사이드용 (서버 컴포넌트, API Routes)
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 SUPABASE_ANON_KEY=your-anon-key
+
+# 클라이언트 사이드용 (필수! 클라이언트 컴포넌트에서 접근)
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
 GEMINI_API_KEY=your-gemini-api-key
 

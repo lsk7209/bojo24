@@ -1,5 +1,11 @@
 # 환경 변수 설정 가이드
 
+> **중요**: Vercel과 GitHub Secrets는 별도로 설정해야 합니다!
+> - **Vercel**: 사이트 실행용
+> - **GitHub Secrets**: 자동 데이터 수집용
+
+자세한 내용은 `VERCEL_ENV_COMPLETE.md` 파일을 참고하세요.
+
 > 아래 값들은 로컬 `.env` 또는 Vercel 환경 변수로 설정하세요. 민감 정보는 절대 커밋하지 않습니다.
 
 ## 공공데이터(보조금24)

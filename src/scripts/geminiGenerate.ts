@@ -2,16 +2,14 @@
 import "dotenv/config";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getServiceClient } from "@lib/supabaseClient";
+import { env, validateEnv } from "@lib/env";
 import type { BenefitRecord } from "@/types/benefit";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+// 환경 변수 검증
+validateEnv(['GEMINI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']);
+
 const BATCH_LIMIT = 20;
-
-if (!GEMINI_API_KEY) {
-  throw new Error("GEMINI_API_KEY 환경 변수가 필요합니다.");
-}
-
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 // model 명 변경: gemini-1.5-flash -> gemini-pro (안정성 확보)
 const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 

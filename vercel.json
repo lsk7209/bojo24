@@ -1,5 +1,38 @@
 {
-    "framework": "nextjs",
-    "buildCommand": "next build",
-    "installCommand": "npm install"
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "installCommand": "npm ci",
+  "devCommand": "next dev",
+  "outputDirectory": ".next",
+  "regions": ["icn1"],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "src/app/**/*.ts": {
+      "maxDuration": 30
+    },
+    "src/app/**/*.tsx": {
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    }
+  ]
 }

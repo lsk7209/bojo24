@@ -13,7 +13,7 @@ const notoSansKr = Noto_Sans_KR({
   display: "swap",
 });
 
-const siteName = "보조금24";
+const siteName = "보조24";
 const siteDescription =
   "행정안전부 보조금24 정보를 AI로 요약하고 쉽게 찾을 수 있는 플랫폼";
 
@@ -39,6 +39,12 @@ export const metadata: Metadata = {
     google: "wsoEFYnqrAkhjBrkV4Q9iWCOzfZBySwWZZhRVQbI04M",
     other: {
       "naver-site-verification": "2e4e153be51c48838641e6e87c005fa0a8663b3d",
+    },
+  },
+  alternates: {
+    canonical: siteUrl,
+    types: {
+      "application/rss+xml": [{ url: `${siteUrl}/rss.xml` }],
     },
   }
 };

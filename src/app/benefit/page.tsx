@@ -1,16 +1,11 @@
 import { getAnonClient } from "@lib/supabaseClient";
 import { SectionHeader } from "@components/section-header";
-import { Button, Badge, Card } from "@components/ui";
+import { Button, Card } from "@components/ui";
+import { InlineAd } from "@components/adsense-ad";
+import { BenefitListClient } from "@components/benefit-list-client";
 import Link from "next/link";
 import type { Metadata } from "next";
-
-type BenefitListItem = {
-  id: string;
-  name: string;
-  category: string | null;
-  governing_org: string | null;
-  last_updated_at: string | null;
-};
+import type { BenefitListItem } from "@components/benefit-list-types";
 
 const CATEGORIES = [
   "육아/교육",
@@ -49,12 +44,6 @@ const fetchBenefits = async ({
   }
 };
 
-const formatDate = (value?: string | null) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
-};
 
 export const metadata: Metadata = {
   title: "지원금 목록",
@@ -134,6 +123,11 @@ export default async function BenefitListPage({
         </Card>
       </div>
 
+      {/* 인라인 광고 (검색 결과 상단) */}
+      {hasData && (
+        <InlineAd adSlot="1234567890" className="mb-6" />
+      )}
+
       {/* 리스트 영역 */}
       {!hasData ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 py-20 text-center">
@@ -151,37 +145,10 @@ export default async function BenefitListPage({
           </div>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {benefits.map((item) => (
-            <Link
-              key={item.id}
-              href={`/benefit/${encodeURIComponent(item.category || "기타")}/${encodeURIComponent(item.id)}`}
-              className="group relative flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md hover:border-blue-300"
-            >
-              <div>
-                <div className="flex items-start justify-between mb-3">
-                  <Badge tone="muted">{item.category || "기타"}</Badge>
-                  {/* 날짜 표시 */}
-                </div>
-                <h3 className="line-clamp-2 text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                  {item.name}
-                </h3>
-                <p className="mt-2 text-sm text-slate-500 font-medium">
-                  {item.governing_org || "기관 정보 없음"}
-                </p>
-              </div>
-
-              <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
-                <span className="text-xs text-slate-400">
-                  {formatDate(item.last_updated_at)} 업데이트
-                </span>
-                <span className="text-sm font-semibold text-blue-600 group-hover:translate-x-1 transition-transform">
-                  자세히 보기 →
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <BenefitListClient 
+          initialBenefits={benefits} 
+          initialSearchParams={{ q, category }}
+        />
       )}
     </main>
   );

@@ -1,0 +1,55 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-and-build:
+    name: Lint & Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Validate environment variables
+        run: npm run validate-env
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || '' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || '' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || '' }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || '' }}
+          PUBLICDATA_SERVICE_KEY_ENC: ${{ secrets.PUBLICDATA_SERVICE_KEY_ENC || '' }}
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL || 'https://bojo24.vercel.app' }}
+        continue-on-error: true
+
+      - name: Build
+        run: npm run build
+        env:
+          # 빌드 시 필요한 최소 환경 변수 (실제 값은 사용하지 않음)
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'placeholder' }}
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL || 'https://bojo24.vercel.app' }}
+
+  # Vercel 배포는 Vercel GitHub Integration을 통해 자동으로 처리됩니다.
+  # 필요시 수동 배포 워크플로우를 추가할 수 있습니다.
+

@@ -7,18 +7,26 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "type-check": "npx tsc --noEmit",
     "fetch:benefits": "tsx src/scripts/fetchBenefits.ts",
-    "gen:gemini": "tsx src/scripts/geminiGenerate.ts"
+    "fetch:benefits:incremental": "tsx src/scripts/fetchBenefitsIncremental.ts",
+    "gen:gemini": "tsx src/scripts/geminiGenerate.ts",
+    "gen:post": "tsx src/scripts/generateUniquePost.ts",
+    "gen:content": "tsx src/scripts/generateUniqueContent.ts",
+    "validate-env": "tsx src/scripts/validateEnv.ts",
+    "check:data": "tsx src/scripts/checkDataStatus.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.11.5",
     "@supabase/supabase-js": "^2.45.4",
     "@tailwindcss/typography": "^0.5.19",
+    "clsx": "^2.1.1",
     "dotenv": "^16.4.5",
     "next": "14.2.3",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-markdown": "^10.1.0"
+    "react-markdown": "^10.1.0",
+    "tailwind-merge": "^2.5.2"
   },
   "devDependencies": {
     "@types/node": "^20.14.9",

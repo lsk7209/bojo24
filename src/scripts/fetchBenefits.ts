@@ -2,6 +2,7 @@
 import "dotenv/config";
 import { fetchJson } from "@lib/http";
 import { getServiceClient } from "@lib/supabaseClient";
+import { env, validateEnv } from "@lib/env";
 import type {
   ApiEnvelope,
   BenefitRecord,
@@ -10,18 +11,14 @@ import type {
   SupportConditionsItem
 } from "@/types/benefit";
 
-const BASE_URL =
-  process.env.PUBLICDATA_BASE_URL ?? "https://api.odcloud.kr/api/gov24/v3";
-const SERVICE_KEY = process.env.PUBLICDATA_SERVICE_KEY_ENC
-  ? decodeURIComponent(process.env.PUBLICDATA_SERVICE_KEY_ENC)
-  : null;
-const PAGE_SIZE = Number(process.env.PUBLICDATA_PAGE_SIZE || 100);
-const FETCH_DELAY = Number(process.env.PUBLICDATA_DELAY_MS || 600);
-const MAX_PAGES = null; // 전체 페이지 수집 (제한 해제)
+// 환경 변수 검증
+validateEnv(['PUBLICDATA_SERVICE_KEY_ENC', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']);
 
-if (!SERVICE_KEY) {
-  throw new Error("PUBLICDATA_SERVICE_KEY_ENC 환경 변수가 필요합니다.");
-}
+const BASE_URL = env.PUBLICDATA_BASE_URL;
+const SERVICE_KEY = decodeURIComponent(env.PUBLICDATA_SERVICE_KEY_ENC);
+const PAGE_SIZE = env.PUBLICDATA_PAGE_SIZE;
+const FETCH_DELAY = env.PUBLICDATA_DELAY_MS;
+const MAX_PAGES = env.PUBLICDATA_MAX_PAGES; // 전체 페이지 수집 (제한 해제)
 
 const buildUrl = (path: string, params: Record<string, string | number>) => {
   const url = new URL(`${BASE_URL.replace(/\/$/, "")}/${path}`);
@@ -101,7 +98,7 @@ const upsertRecords = async (records: BenefitRecord[]) => {
 };
 
 const main = async () => {
-  console.log("보조금24 전체 데이터 수집 시작 (Full Scan)");
+  console.log("보조24 전체 데이터 수집 시작 (Full Scan)");
 
   // 1. 전체 목록 페이지 수집
   console.log("목록 조회 중...");

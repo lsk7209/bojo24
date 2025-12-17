@@ -1,0 +1,63 @@
+name: Data Sync (Scheduled)
+
+on:
+  schedule:
+    # 매일 한국 시간 오전 2시 (UTC 17:00 전날)
+    - cron: '0 17 * * *'
+  workflow_dispatch: # 수동 실행 가능
+
+jobs:
+  fetch-benefits:
+    name: Fetch Benefits Data
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fetch Benefits (Incremental Update)
+        env:
+          PUBLICDATA_SERVICE_KEY_ENC: ${{ secrets.PUBLICDATA_SERVICE_KEY_ENC }}
+          PUBLICDATA_BASE_URL: ${{ secrets.PUBLICDATA_BASE_URL || 'https://api.odcloud.kr/api/gov24/v3' }}
+          PUBLICDATA_DELAY_MS: ${{ secrets.PUBLICDATA_DELAY_MS || '600' }}
+          PUBLICDATA_PAGE_SIZE: ${{ secrets.PUBLICDATA_PAGE_SIZE || '100' }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npm run fetch:benefits:incremental
+
+  generate-gemini:
+    name: Generate Gemini Summaries
+    runs-on: ubuntu-latest
+    needs: fetch-benefits
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Gemini Content
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: npm run gen:gemini
+
