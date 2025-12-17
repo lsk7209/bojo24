@@ -68,9 +68,10 @@ export function needsEnhancement(
 }
 
 /**
- * Gemini로 요약 보완
+ * Gemini로 요약 보완 (기존 함수 - 하위 호환성 유지)
+ * @deprecated 새로운 enhanceSummary 함수를 사용하세요 (더 많은 파라미터 지원)
  */
-export async function enhanceSummary(
+export async function enhanceSummaryLegacy(
   benefitName: string,
   category: string,
   governingOrg: string,
