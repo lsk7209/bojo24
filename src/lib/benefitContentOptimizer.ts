@@ -83,8 +83,48 @@ export async function optimizeBenefitContent(
 ): Promise<OptimizedContent> {
   const detailData = detail.detail || detail.list || {};
   
-  // 1. 요약 생성 (구글 스니펫 최적화) - 공공데이터만 사용
-  const summary = generateSummary(benefitName, category, governingOrg, detailData);
+  // 1. 요약 생성 (구글 스니펫 최적화)
+  // 먼저 공공데이터 기반 요약 생성
+  let summary = generateSummary(benefitName, category, governingOrg, detailData);
+  
+  // 특정 보조금 ID에 대해서만 Gemini로 요약 보완 (200~500자 목표)
+  // 환경 변수 GEMINI_ENHANCEMENT_ALLOWED_IDS에 포함된 경우만 활성화
+  if (benefitId && summary && summary.length < 600) {
+    // 디버그: 환경 변수 확인
+    const allowedIds = process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS 
+      ? process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS.split(",").map(id => id.trim())
+      : [];
+    const isAllowed = allowedIds.includes(benefitId);
+    const hasApiKey = !!process.env.GEMINI_API_KEY;
+    
+    console.log(`[Gemini Debug] benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey}, section: 핵심 요약`);
+    
+    const { enhanceSummary } = await import("./geminiEnhancer");
+    const deadline = detailData["신청기간"] || detailData["접수기간"] || detailData["신청 기간"] || null;
+    const originalTargetContent = detailData["지원대상"] || detailData["대상"] || "정보 없음";
+    const originalBenefitContent = detailData["지원내용"] || detailData["지원 내용"] || "정보 없음";
+    const amount = extractAmount(originalBenefitContent);
+    const applyMethod = detailData["신청방법"] || detailData["신청 방법"] || "정보 없음";
+    
+    const enhanced = await enhanceSummary(
+      benefitName,
+      category,
+      governingOrg,
+      originalTargetContent,
+      originalBenefitContent,
+      amount,
+      applyMethod,
+      deadline,
+      summary,
+      benefitId
+    );
+    if (enhanced) {
+      summary = enhanced;
+      console.log(`✅ 핵심 요약 Gemini 보완 완료: ${summary.length}자`);
+    } else {
+      console.log(`⚠️ Gemini 핵심 요약 보완 실패 또는 비활성화 (benefitId: ${benefitId})`);
+    }
+  }
   
   // 2. 지원 대상 섹션
   // 원본 공공데이터 저장 (FAQ 생성 시 사용)
