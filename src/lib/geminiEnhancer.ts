@@ -234,6 +234,11 @@ export async function enhanceTarget(
     }
     
     // Gemini가 생성한 내용 반환 (150~220자 범위)
+    // 예시가 포함되었는지 확인 (없으면 경고)
+    if (!enhanced.includes("예를 들어") && !enhanced.includes("예시") && !enhanced.includes("예를")) {
+      console.log(`⚠️ [Gemini Debug] 예시 섹션이 포함되지 않았습니다. 내용: ${enhanced.substring(0, 100)}...`);
+    }
+    
     return enhanced;
   } catch (error: any) {
     // 개발 환경에서만 에러 로그 출력
