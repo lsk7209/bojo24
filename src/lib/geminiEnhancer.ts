@@ -170,23 +170,26 @@ export async function enhanceTarget(
 
   try {
     const criteria = detail["선정기준"] || detail["선정 기준"] || "";
-    const applyMethod = detail["신청방법"] || detail["신청 방법"] || "";
-
-    // 재사용 가능한 프롬프트 사용 (볼드, 목록 등 구조화된 형식 지원)
+    const currentLength = publicDataTarget.length;
+    const targetLength = calculateTargetLength(currentLength);
+    
+    // 재사용 가능한 프롬프트 사용 (동적 글자수)
     const prompt = buildTargetEnhancementPrompt(
       benefitName,
       governingOrg,
       publicDataTarget,
-      criteria
+      criteria,
+      currentLength,
+      { min: targetLength.min, max: targetLength.max }
     );
 
     const result = await geminiModel.generateContent(prompt);
     let enhanced = result.response.text().trim();
     
-    // 150~200자 범위로 조정 (문장이 자연스럽게 끝나도록 약간의 여유 허용)
-    const TARGET_MIN = 150;
-    const TARGET_MAX = 200;
-    const ALLOWED_OVERFLOW = 20; // 200자를 최대 20자까지 넘어도 허용 (문장 완성용)
+    // 동적 글자수 범위로 조정 (문장이 자연스럽게 끝나도록 약간의 여유 허용)
+    const TARGET_MIN = targetLength.min;
+    const TARGET_MAX = targetLength.max;
+    const ALLOWED_OVERFLOW = targetLength.overflow;
     
     if (enhanced.length > TARGET_MAX + ALLOWED_OVERFLOW) {
       // 220자를 넘으면 마지막 문장을 완성하여 자름
