@@ -87,11 +87,14 @@ export async function optimizeBenefitContent(
   const summary = generateSummary(benefitName, category, governingOrg, detailData);
   
   // 2. 지원 대상 섹션
-  let targetContent = detailData["지원대상"] || detailData["대상"] || "정보 없음";
+  // 원본 공공데이터 저장 (FAQ 생성 시 사용)
+  const originalTargetContent = detailData["지원대상"] || detailData["대상"] || "정보 없음";
+  let targetContent = originalTargetContent; // 표시용 (Gemini 보완 가능)
   const criteria = detailData["선정기준"] || detailData["선정 기준"] || "";
   
-  // 특정 보조금 ID에 대해서만 Gemini로 지원 대상 보완 (최소 100자 이상 목표)
+  // 특정 보조금 ID에 대해서만 Gemini로 지원 대상 보완 (150~200자 목표)
   // 환경 변수 GEMINI_ENHANCEMENT_ALLOWED_IDS에 포함된 경우만 활성화
+  // 주의: targetContent는 표시용으로만 보완하고, FAQ는 원본 공공데이터 사용
   if (benefitId && targetContent && targetContent !== "정보 없음" && targetContent.length < 200) {
     // 디버그: 환경 변수 확인
     const allowedIds = process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS 
@@ -147,7 +150,8 @@ export async function optimizeBenefitContent(
   };
   
   // 6. FAQ 자동 생성 (공공데이터 기반, AEO 최적화)
-  const faqs = generateFAQs(benefitName, category, targetContent, benefitContent, applyMethod, contact, detailData);
+  // 중요: FAQ는 원본 공공데이터만 사용 (Gemini 보완된 targetContent 사용 안 함)
+  const faqs = generateFAQs(benefitName, category, originalTargetContent, benefitContent, applyMethod, contact, detailData);
   
   // 7. 키워드 추출 (SEO 최적화)
   const keywords = extractKeywords(benefitName, category, governingOrg, targetContent, benefitContent);
