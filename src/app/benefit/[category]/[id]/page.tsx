@@ -4,6 +4,7 @@ import { buildAllStructuredData } from "./schema";
 import { getServiceClient } from "@lib/supabaseClient";
 import { formatDescription } from "@lib/formattext";
 import { formatMarkdown } from "@lib/formatMarkdown";
+import { cleanMarkdown } from "@lib/cleanMarkdown";
 import { buildStructuredAnswers } from "@lib/zeroClickOptimization";
 import { optimizeBenefitContent, generateSummary } from "@lib/benefitContentOptimizer";
 import { Badge, Card } from "@components/ui";
@@ -562,7 +563,7 @@ export default async function BenefitDetailPage({ params }: PageParams) {
                   itemScope
                   itemType="https://schema.org/Answer"
                 >
-                  <p itemProp="text" className="font-medium">{item.answer}</p>
+                  <p itemProp="text" className="font-medium">{cleanMarkdown(item.answer)}</p>
                 </div>
               </div>
             ))}
