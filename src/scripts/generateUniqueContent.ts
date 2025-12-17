@@ -17,7 +17,7 @@ import type { BenefitRecord } from "@/types/benefit";
 validateEnv(['GEMINI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']);
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
 /**
  * 고유 컨텐츠 생성 (구글 고유 컨텐츠 인정을 위한)

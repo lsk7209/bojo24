@@ -10,8 +10,8 @@ validateEnv(['GEMINI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']);
 
 const BATCH_LIMIT = 20;
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
-// model 명 변경: gemini-1.5-flash -> gemini-pro (안정성 확보)
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+// Gemini 2.5 Flash Lite 모델 사용 (최신 모델, 빠르고 효율적)
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
 const buildPrompt = (benefit: BenefitRecord) => {
   const governingOrg = benefit.governing_org ?? "정부 기관";

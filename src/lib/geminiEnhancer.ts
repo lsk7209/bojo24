@@ -11,11 +11,21 @@ let model: ReturnType<typeof GoogleGenerativeAI.prototype.getGenerativeModel> | 
 
 function initGemini() {
   if (!process.env.GEMINI_API_KEY) {
+    // 개발 환경에서만 로그 출력
+    if (process.env.NODE_ENV === "development") {
+      console.warn("⚠️ GEMINI_API_KEY가 설정되지 않았습니다. 공공데이터만 사용됩니다.");
+    }
     return null;
   }
   if (!genAI) {
     genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    // Gemini API 모델: Gemini 2.5 Flash Lite (최신 모델)
+    // 빠르고 효율적이며 비용이 저렴한 모델
+    model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+    // 개발 환경에서만 로그 출력
+    if (process.env.NODE_ENV === "development") {
+      console.log("✅ Gemini 모델 초기화 완료: gemini-2.5-flash-lite");
+    }
   }
   return model;
 }
@@ -140,8 +150,11 @@ export async function enhanceTarget(
     
     // 공공데이터와 자연스럽게 병합
     return `${publicDataTarget}\n\n${enhanced}`;
-  } catch (error) {
-    console.error("Gemini 지원 대상 보완 실패:", error);
+  } catch (error: any) {
+    // 개발 환경에서만 에러 로그 출력
+    if (process.env.NODE_ENV === "development") {
+      console.error("Gemini 지원 대상 보완 실패:", error?.message || error);
+    }
     return null;
   }
 }
@@ -193,8 +206,11 @@ export async function enhanceBenefit(
     
     // 공공데이터와 자연스럽게 병합
     return `${publicDataBenefit}\n\n${enhanced}`;
-  } catch (error) {
-    console.error("Gemini 지원 내용 보완 실패:", error);
+  } catch (error: any) {
+    // 개발 환경에서만 에러 로그 출력
+    if (process.env.NODE_ENV === "development") {
+      console.error("Gemini 지원 내용 보완 실패:", error?.message || error);
+    }
     return null;
   }
 }

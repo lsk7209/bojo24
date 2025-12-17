@@ -98,9 +98,19 @@ export async function optimizeBenefitContent(
   
   // 공공데이터가 부족하면 Gemini로 보완
   if (needsEnhancement(targetContent, 100)) {
+    if (process.env.NODE_ENV === "development") {
+      console.log(`🔄 지원 대상 보완 필요 (${targetContent.length}자 < 100자). Gemini 호출 중...`);
+    }
     const enhanced = await enhanceTarget(benefitName, governingOrg, targetContent, detailData);
     if (enhanced) {
+      if (process.env.NODE_ENV === "development") {
+        console.log(`✅ 지원 대상 보완 완료 (${enhanced.length}자)`);
+      }
       targetContent = enhanced;
+    } else {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("⚠️ Gemini 지원 대상 보완 실패. 공공데이터만 사용합니다.");
+      }
     }
   }
   
@@ -111,9 +121,19 @@ export async function optimizeBenefitContent(
   
   // 공공데이터가 부족하면 Gemini로 보완
   if (needsEnhancement(benefitContent, 150)) {
+    if (process.env.NODE_ENV === "development") {
+      console.log(`🔄 지원 내용 보완 필요 (${benefitContent.length}자 < 150자). Gemini 호출 중...`);
+    }
     const enhanced = await enhanceBenefit(benefitName, governingOrg, benefitContent, detailData);
     if (enhanced) {
+      if (process.env.NODE_ENV === "development") {
+        console.log(`✅ 지원 내용 보완 완료 (${enhanced.length}자)`);
+      }
       benefitContent = enhanced;
+    } else {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("⚠️ Gemini 지원 내용 보완 실패. 공공데이터만 사용합니다.");
+      }
     }
   }
   
