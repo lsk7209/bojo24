@@ -174,12 +174,14 @@ export default async function BenefitDetailPage({ params }: PageParams) {
     supportConditions?: Record<string, string>;
   } | undefined;
   
-  // 공공데이터 기반 최적화된 컨텐츠 구조 생성 (공공데이터만 사용)
+  // 공공데이터 기반 최적화된 컨텐츠 구조 생성
+  // 특정 보조금 ID에 대해서만 Gemini 보완 가능 (환경 변수로 제어)
   const optimizedContent = await optimizeBenefitContent(
     benefit.name,
     benefit.category || "정부 지원금",
     benefit.governing_org || "정부 기관",
-    detail || {}
+    detail || {},
+    benefit.id // benefitId 전달 (Gemini 보완 활성화 여부 확인용)
   );
   
   // 모든 구조화 데이터 생성 (공공데이터 기반 FAQ 포함)

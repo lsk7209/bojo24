@@ -2,11 +2,10 @@
  * 보조금 상세페이지 컨텐츠 최적화 유틸리티
  * 공공데이터 기반으로 구글 검색 최적화된 구조 생성
  * 
- * Gemini 보완 기능은 현재 비활성화됨 (필요시 주석 해제)
+ * 특정 보조금 ID에 대해서만 Gemini 보완 가능 (환경 변수로 제어)
  */
 
-// Gemini 보완 기능 임시 비활성화
-// import { enhanceSummary, enhanceTarget, enhanceBenefit, needsEnhancement } from "./geminiEnhancer";
+import { enhanceTarget } from "./geminiEnhancer";
 
 export interface BenefitDetail {
   detail?: Record<string, string>;
@@ -79,16 +78,36 @@ export async function optimizeBenefitContent(
   benefitName: string,
   category: string,
   governingOrg: string,
-  detail: BenefitDetail
+  detail: BenefitDetail,
+  benefitId?: string
 ): Promise<OptimizedContent> {
   const detailData = detail.detail || detail.list || {};
   
   // 1. 요약 생성 (구글 스니펫 최적화) - 공공데이터만 사용
   const summary = generateSummary(benefitName, category, governingOrg, detailData);
   
-  // 2. 지원 대상 섹션 - 공공데이터만 사용
-  const targetContent = detailData["지원대상"] || detailData["대상"] || "정보 없음";
+  // 2. 지원 대상 섹션
+  let targetContent = detailData["지원대상"] || detailData["대상"] || "정보 없음";
   const criteria = detailData["선정기준"] || detailData["선정 기준"] || "";
+  
+  // 특정 보조금 ID에 대해서만 Gemini로 지원 대상 보완 (100~150자 목표)
+  // 환경 변수 GEMINI_ENHANCEMENT_ALLOWED_IDS에 포함된 경우만 활성화
+  if (benefitId && targetContent && targetContent !== "정보 없음" && targetContent.length < 150) {
+    const enhanced = await enhanceTarget(
+      benefitName,
+      governingOrg,
+      targetContent,
+      detailData,
+      benefitId
+    );
+    if (enhanced) {
+      // 100~150자로 제한하여 가독성 확보
+      const trimmed = enhanced.length > 150 
+        ? enhanced.substring(0, 147) + "..."
+        : enhanced;
+      targetContent = trimmed;
+    }
+  }
   
   // 3. 지원 내용 섹션 - 공공데이터만 사용
   const benefitContent = detailData["지원내용"] || detailData["지원 내용"] || "정보 없음";
