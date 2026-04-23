@@ -7,6 +7,7 @@ import { formatMarkdown } from "@lib/formatMarkdown";
 import { cleanMarkdown } from "@lib/cleanMarkdown";
 import { buildStructuredAnswers } from "@lib/zeroClickOptimization";
 import { optimizeBenefitContent, generateSummary } from "@lib/benefitContentOptimizer";
+import { resolveSiteUrl } from "@lib/site";
 import { Badge, Card } from "@components/ui";
 import type { BenefitRecord } from "@/types/benefit";
 import type { Metadata } from "next";
@@ -39,7 +40,7 @@ export const generateMetadata = async ({
     };
   }
 
-  const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://bojo24.kr';
+  const BASE_URL = resolveSiteUrl();
   const canonicalUrl = `${BASE_URL}/benefit/${params.category}/${params.id}`;
   
   // SEO 최적화된 제목 (키워드 포함)

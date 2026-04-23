@@ -11,6 +11,7 @@ import { buildSummaryEnhancementPrompt } from "./prompts/summaryEnhancement";
 import { buildApplyEnhancementPrompt } from "./prompts/applyEnhancement";
 import { buildDocumentsEnhancementPrompt } from "./prompts/documentsEnhancement";
 import { calculateTargetLength } from "./utils/contentLengthCalculator";
+import { cleanDocumentText } from "./utils/documentFormatter";
 
 // Gemini API 초기화 (환경 변수 확인)
 let genAI: GoogleGenerativeAI | null = null;
@@ -289,13 +290,18 @@ export async function enhanceBenefit(
   console.log(`[Gemini Debug] enhanceBenefit - Gemini API 호출 시작`);
 
   try {
+    const currentLength = publicDataBenefit.length;
+    const targetLength = calculateTargetLength(currentLength);
+
     // 재사용 가능한 프롬프트 사용 (다양한 형식, 200~300자)
     const prompt = buildBenefitEnhancementPrompt(
       benefitName,
       governingOrg,
       publicDataBenefit,
       amount || null,
-      benefitType || null
+      benefitType || null,
+      currentLength,
+      { min: targetLength.min, max: targetLength.max }
     );
 
     const result = await geminiModel.generateContent(prompt);
@@ -353,6 +359,114 @@ export async function enhanceBenefit(
     // 개발 환경에서만 에러 로그 출력
     if (process.env.NODE_ENV === "development") {
       console.error("Gemini 지원 내용 보완 실패:", error?.message || error);
+    }
+    return null;
+  }
+}
+
+/**
+ * Gemini로 신청 방법 보완
+ */
+export async function enhanceApply(
+  benefitName: string,
+  governingOrg: string,
+  publicDataApply: string,
+  documents: string | null,
+  deadline: string | null,
+  detail: Record<string, string>,
+  benefitId?: string
+): Promise<string | null> {
+  const isEnabled = isGeminiEnhancementEnabled(benefitId);
+  console.log(`[Gemini Debug] enhanceApply - benefitId: ${benefitId}, isEnabled: ${isEnabled}`);
+
+  if (!isEnabled) {
+    return null;
+  }
+
+  const geminiModel = initGemini();
+  if (!geminiModel) {
+    return null;
+  }
+
+  try {
+    const contact =
+      detail["문의처"] ||
+      detail["전화문의"] ||
+      detail["접수기관"] ||
+      "정보 없음";
+    const currentLength = publicDataApply.length;
+    const targetLength = calculateTargetLength(currentLength);
+    const prompt = `${buildApplyEnhancementPrompt(
+      benefitName,
+      governingOrg,
+      publicDataApply,
+      documents,
+      deadline,
+      currentLength,
+      { min: targetLength.min, max: targetLength.max }
+    )}\n\n[문의처]\n${contact}`;
+
+    const result = await geminiModel.generateContent(prompt);
+    const enhanced = result.response.text().trim();
+
+    if (!enhanced) {
+      return null;
+    }
+
+    return enhanced.length < targetLength.min
+      ? `${publicDataApply}\n\n${enhanced}`.trim()
+      : enhanced;
+  } catch (error: unknown) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("Gemini 신청 방법 보완 실패:", error);
+    }
+    return null;
+  }
+}
+
+/**
+ * Gemini로 필요서류 보완
+ */
+export async function enhanceDocuments(
+  benefitName: string,
+  governingOrg: string,
+  rawDocuments: string,
+  benefitId?: string
+): Promise<string[] | null> {
+  const isEnabled = isGeminiEnhancementEnabled(benefitId);
+  console.log(`[Gemini Debug] enhanceDocuments - benefitId: ${benefitId}, isEnabled: ${isEnabled}`);
+
+  if (!isEnabled) {
+    return null;
+  }
+
+  const geminiModel = initGemini();
+  if (!geminiModel) {
+    return null;
+  }
+
+  try {
+    const prompt = buildDocumentsEnhancementPrompt(
+      benefitName,
+      governingOrg,
+      cleanDocumentText(rawDocuments)
+    );
+    const result = await geminiModel.generateContent(prompt);
+    const enhanced = result.response.text().trim();
+
+    if (!enhanced) {
+      return null;
+    }
+
+    const documents = enhanced
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    return documents.length > 0 ? documents : null;
+  } catch (error: unknown) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("Gemini 필요서류 보완 실패:", error);
     }
     return null;
   }

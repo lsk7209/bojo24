@@ -1,7 +1,7 @@
 import { getAnonClient } from "@lib/supabaseClient";
 import { publicEnv } from "@lib/env";
 
-const BASE_URL = publicEnv.NEXT_PUBLIC_SITE_URL || "https://bojo24.kr";
+const BASE_URL = publicEnv.NEXT_PUBLIC_SITE_URL || "https://www.bojo24.kr";
 
 export async function GET() {
     const supabase = getAnonClient();

@@ -5,8 +5,9 @@
  * npx tsx src/scripts/regenerateBenefits.ts
  */
 
-import { createClient } from "@supabase/supabase-js";
+import "dotenv/config";
 import { optimizeBenefitContent } from "../lib/benefitContentOptimizer";
+import { getServiceClient } from "../lib/supabaseClient";
 
 const benefitIds = [
   "318000000430",
@@ -99,7 +100,7 @@ async function regenerateBenefits() {
       console.log(`   - 핵심 요약: ${optimized.summary.length}자`);
       console.log(`   - 지원 대상: ${optimized.sections.target.content.length}자`);
       console.log(`   - 지원 내용: ${optimized.sections.benefit.content.length}자`);
-      console.log(`   - 신청 방법: ${optimized.sections.apply.content.length}자`);
+      console.log(`   - 신청 방법: ${(optimized.sections.apply.method || "").length}자`);
       console.log(`   - FAQ: ${optimized.faqs.length}개`);
 
       // 결과를 콘솔에 출력 (실제로는 DB에 저장할 수도 있음)
@@ -111,9 +112,9 @@ async function regenerateBenefits() {
       console.log(`\n[지원 내용]`);
       console.log(optimized.sections.benefit.content.substring(0, 200) + "...");
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`❌ 처리 중 오류 발생: ${benefitId}`);
-      console.error(error?.message || error);
+      console.error(error instanceof Error ? error.message : error);
     }
   }
 

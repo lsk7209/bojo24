@@ -1,6 +1,7 @@
 import type { BenefitRecord } from "@/types/benefit";
+import { resolveSiteUrl } from "@lib/site";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://bojo24.kr';
+const BASE_URL = resolveSiteUrl();
 
 /**
  * FAQ 구조화 데이터 생성

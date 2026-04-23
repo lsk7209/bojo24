@@ -5,8 +5,12 @@
 
 import "dotenv/config";
 import { getServiceClient } from "@lib/supabaseClient";
-import { enhanceSummary, enhanceTarget, enhanceBenefit, needsEnhancement } from "@lib/geminiEnhancer";
-import type { BenefitRecord } from "@/types/benefit";
+import {
+  enhanceSummaryLegacy,
+  enhanceTarget,
+  enhanceBenefit,
+  needsEnhancement,
+} from "@lib/geminiEnhancer";
 
 const BENEFIT_ID = "305000000283"; // (국가유공자)인플루엔자 백신 및 접종 지원
 
@@ -65,12 +69,13 @@ async function testEnhancement() {
     console.log("\n✨ Gemini 보완 필요! (200자 미만)");
     console.log("🔄 Gemini로 보완 중...\n");
     
-    const enhanced = await enhanceSummary(
+    const enhanced = await enhanceSummaryLegacy(
       benefit.name,
       benefit.category || "정부 지원금",
       benefit.governing_org || "정부 기관",
       fullSummary,
-      detailData
+      detailData,
+      BENEFIT_ID
     );
 
     if (enhanced) {
@@ -103,7 +108,8 @@ async function testEnhancement() {
       benefit.name,
       benefit.governing_org || "정부 기관",
       publicTarget,
-      detailData
+      detailData,
+      BENEFIT_ID
     );
 
     if (enhanced) {
@@ -136,7 +142,8 @@ async function testEnhancement() {
       benefit.name,
       benefit.governing_org || "정부 기관",
       publicBenefit,
-      detailData
+      detailData,
+      BENEFIT_ID
     );
 
     if (enhanced) {

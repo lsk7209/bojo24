@@ -1,6 +1,10 @@
 /**
  * 환경 변수 검증 및 타입 안전한 접근을 위한 유틸리티
  */
+import {
+  DEFAULT_GA_MEASUREMENT_ID,
+  DEFAULT_SITE_URL,
+} from "@lib/site";
 
 const requiredEnvVars = {
   // Supabase (필수)
@@ -20,7 +24,8 @@ const optionalEnvVars = {
   PUBLICDATA_DELAY_MS: Number(process.env.PUBLICDATA_DELAY_MS || 600),
   PUBLICDATA_PAGE_SIZE: Number(process.env.PUBLICDATA_PAGE_SIZE || 100),
   PUBLICDATA_MAX_PAGES: process.env.PUBLICDATA_MAX_PAGES ? Number(process.env.PUBLICDATA_MAX_PAGES) : null,
-  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'https://bojo24.kr',
+  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || DEFAULT_SITE_URL,
+  NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || DEFAULT_GA_MEASUREMENT_ID,
 } as const;
 
 /**
@@ -100,5 +105,6 @@ export const env = {
  */
 export const publicEnv = {
   NEXT_PUBLIC_SITE_URL: optionalEnvVars.NEXT_PUBLIC_SITE_URL,
+  NEXT_PUBLIC_GA_MEASUREMENT_ID: optionalEnvVars.NEXT_PUBLIC_GA_MEASUREMENT_ID,
 } as const;
 

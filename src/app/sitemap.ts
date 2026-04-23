@@ -2,7 +2,7 @@ import { getAnonClient } from "@lib/supabaseClient";
 import { MetadataRoute } from "next";
 import { publicEnv } from "@lib/env";
 
-const BASE_URL = publicEnv.NEXT_PUBLIC_SITE_URL || "https://bojo24.kr";
+const BASE_URL = publicEnv.NEXT_PUBLIC_SITE_URL || "https://www.bojo24.kr";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const supabase = getAnonClient();
