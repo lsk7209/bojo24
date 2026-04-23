@@ -1,6 +1,7 @@
-import { InlineAd, BannerAd } from "@components/adsense-ad";
+import { InlineAd } from "@components/adsense-ad";
 import { FloatingActionButton } from "@components/fab-button";
 import { buildAllStructuredData } from "./schema";
+import { AD_SLOTS } from "@lib/ads";
 import { getServiceClient } from "@lib/supabaseClient";
 import { formatDescription } from "@lib/formattext";
 import { formatMarkdown } from "@lib/formatMarkdown";
@@ -370,7 +371,7 @@ export default async function BenefitDetailPage({ params }: PageParams) {
       </div>
 
       {/* 인라인 광고 (본문 중간) - 수익화 최적화 */}
-      <InlineAd adSlot="1234567890" className="my-8" />
+      <InlineAd adSlot={AD_SLOTS.benefitDetailInline} className="my-8" />
 
       {/* 신청 방법 (구글 HowTo Schema 최적화) */}
       <section aria-label={optimizedContent.sections.apply.title} itemScope itemType="https://schema.org/HowTo">

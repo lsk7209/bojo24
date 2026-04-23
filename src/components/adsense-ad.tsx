@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import Script from "next/script";
+import { useEffect, useRef } from "react";
+import { ADSENSE_CLIENT, normalizeAdSlot } from "@lib/ads";
 
 declare global {
   interface Window {
@@ -10,98 +10,73 @@ declare global {
 }
 
 type AdSenseAdProps = {
-  /**
-   * AdSense 광고 슬롯 ID
-   * 예: "1234567890"
-   */
-  adSlot: string;
-  /**
-   * 광고 형식
-   */
+  adSlot?: string | null;
   format?: "auto" | "rectangle" | "vertical" | "horizontal";
-  /**
-   * 반응형 광고 여부
-   */
   responsive?: boolean;
-  /**
-   * 광고 스타일 클래스
-   */
   className?: string;
-  /**
-   * 광고 레이블 (접근성)
-   */
   label?: string;
-  /**
-   * 광고 크기 (비반응형일 때)
-   */
   style?: React.CSSProperties;
 };
 
-/**
- * Google AdSense 광고 컴포넌트
- * 
- * 사용 예시:
- * <AdSenseAd 
- *   adSlot="1234567890" 
- *   format="auto" 
- *   responsive={true}
- * />
- */
+type AdSlotWrapperProps = {
+  adSlot?: string | null;
+  className?: string;
+};
+
 export function AdSenseAd({
   adSlot,
   format = "auto",
   responsive = true,
   className = "",
   label = "광고",
-  style
+  style,
 }: AdSenseAdProps) {
-  useEffect(() => {
-    try {
-      // AdSense 스크립트가 로드된 후 광고 푸시
-      if (window.adsbygoogle && !(window.adsbygoogle as any).loaded) {
-        window.adsbygoogle = window.adsbygoogle || [];
-        window.adsbygoogle.push({});
-      }
-    } catch (err) {
-      console.error("AdSense error:", err);
-    }
-  }, []);
+  const pushedRef = useRef(false);
+  const normalizedAdSlot = normalizeAdSlot(adSlot);
 
-  // AdSense Publisher ID (환경 변수 또는 하드코딩)
-  const adClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT || "ca-pub-3050601904412736";
+  useEffect(() => {
+    if (!normalizedAdSlot || pushedRef.current) {
+      return;
+    }
+
+    try {
+      window.adsbygoogle = window.adsbygoogle || [];
+      window.adsbygoogle.push({});
+      pushedRef.current = true;
+    } catch {
+      pushedRef.current = false;
+    }
+  }, [normalizedAdSlot]);
+
+  if (!normalizedAdSlot) {
+    return null;
+  }
 
   return (
-    <>
+    <aside
+      aria-label={label}
+      className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"
+    >
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+        광고
+      </p>
       <ins
         className={`adsbygoogle ${className}`}
         style={{
           display: "block",
-          ...style
+          ...style,
         }}
-        data-ad-client={adClient}
-        data-ad-slot={adSlot}
+        data-ad-client={ADSENSE_CLIENT}
+        data-ad-slot={normalizedAdSlot}
         data-ad-format={format}
         data-full-width-responsive={responsive ? "true" : "false"}
         aria-label={label}
       />
-      <Script
-        id={`adsense-${adSlot}`}
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `
-            (adsbygoogle = window.adsbygoogle || []).push({});
-          `
-        }}
-      />
-    </>
+    </aside>
   );
 }
 
-/**
- * 반응형 광고 래퍼 컴포넌트
- * 모바일/데스크톱 최적화
- */
-export function ResponsiveAd({ adSlot, className = "" }: { adSlot: string; className?: string }) {
+export function ResponsiveAd({ adSlot, className = "" }: AdSlotWrapperProps) {
   return (
     <div className={`w-full ${className}`}>
       <AdSenseAd
@@ -115,10 +90,7 @@ export function ResponsiveAd({ adSlot, className = "" }: { adSlot: string; class
   );
 }
 
-/**
- * 인라인 광고 컴포넌트 (본문 중간)
- */
-export function InlineAd({ adSlot, className = "" }: { adSlot: string; className?: string }) {
+export function InlineAd({ adSlot, className = "" }: AdSlotWrapperProps) {
   return (
     <div className={`my-8 flex justify-center ${className}`}>
       <AdSenseAd
@@ -132,10 +104,7 @@ export function InlineAd({ adSlot, className = "" }: { adSlot: string; className
   );
 }
 
-/**
- * 사이드바 광고 컴포넌트
- */
-export function SidebarAd({ adSlot, className = "" }: { adSlot: string; className?: string }) {
+export function SidebarAd({ adSlot, className = "" }: AdSlotWrapperProps) {
   return (
     <div className={`sticky top-4 ${className}`}>
       <AdSenseAd
@@ -149,10 +118,7 @@ export function SidebarAd({ adSlot, className = "" }: { adSlot: string; classNam
   );
 }
 
-/**
- * 배너 광고 컴포넌트 (상단/하단)
- */
-export function BannerAd({ adSlot, className = "" }: { adSlot: string; className?: string }) {
+export function BannerAd({ adSlot, className = "" }: AdSlotWrapperProps) {
   return (
     <div className={`w-full ${className}`}>
       <AdSenseAd
@@ -165,4 +131,3 @@ export function BannerAd({ adSlot, className = "" }: { adSlot: string; className
     </div>
   );
 }
-

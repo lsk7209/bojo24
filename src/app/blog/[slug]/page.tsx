@@ -4,6 +4,7 @@ import { Badge, Card, Button } from "@components/ui";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { InlineAd } from "@components/adsense-ad";
+import { AD_SLOTS } from "@lib/ads";
 import ReactMarkdown from "react-markdown";
 
 type PageParams = {
@@ -150,7 +151,7 @@ export default async function BlogPostPage({ params }: PageParams) {
 
             {/* 중간 광고 (본문 중간) */}
             <div className="my-12">
-                <InlineAd adSlot="1234567890" />
+                <InlineAd adSlot={AD_SLOTS.blogInline} />
             </div>
 
             {/* 관련 링크 카드 */}
