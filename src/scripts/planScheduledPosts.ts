@@ -376,8 +376,6 @@ const schedulePosts = async (plans: TitlePlan[], options: CliOptions) => {
       content,
       excerpt: createExcerpt(plan),
       tags: [plan.benefit.category, plan.intent, plan.category].filter(Boolean),
-      seo_keywords: [plan.mainKeyword, ...plan.expandedKeywords],
-      meta_description: createExcerpt(plan),
       published_at: publishAt.toISOString(),
       is_published: true,
     };
