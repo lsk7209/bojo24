@@ -65,12 +65,12 @@ export const Footer = () => {
               <p className="font-semibold text-slate-900">운영 정보</p>
               <p>문의: {CONTACT_EMAIL}</p>
               <p>데이터 출처: 행정안전부 보조24</p>
-              <p className="text-xs text-slate-400">© 2026 보조24. All rights reserved.</p>
+              <p className="text-xs text-slate-600">© 2026 보조24. All rights reserved.</p>
             </div>
           </div>
         </div>
 
-        <div className="mt-8 border-t border-slate-100 pt-8 text-xs text-slate-400">
+        <div className="mt-8 border-t border-slate-100 pt-8 text-xs text-slate-600">
           <p className="mb-2">
             본 사이트는 공공데이터포털의 공공서비스 정보를 활용하여 제공합니다. 정확한 정보는 반드시 해당
             기관의 공식 웹사이트를 통해 확인하시기 바랍니다.

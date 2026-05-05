@@ -4,12 +4,15 @@
 
 ## 핵심 페이지
 
-- https://www.bojo24.kr/ : 정부 지원금 탐색 홈
-- https://www.bojo24.kr/benefit : 지원금 검색 및 목록
-- https://www.bojo24.kr/blog : 정부 혜택 정보마당
-- https://www.bojo24.kr/about : 서비스 소개
-- https://www.bojo24.kr/editorial-policy : 콘텐츠 운영 원칙
-- https://www.bojo24.kr/contact : 문의 및 정정 요청
+- [정부 지원금 탐색 홈](https://www.bojo24.kr/)
+- [지원금 검색 및 목록](https://www.bojo24.kr/benefit)
+- [정부 혜택 정보마당](https://www.bojo24.kr/blog)
+- [서비스 소개](https://www.bojo24.kr/about)
+- [콘텐츠 운영 원칙](https://www.bojo24.kr/editorial-policy)
+- [문의 및 정정 요청](https://www.bojo24.kr/contact)
+- [전체 LLM 안내](https://www.bojo24.kr/llms-full.txt)
+- [사이트맵](https://www.bojo24.kr/sitemap.xml)
+- [RSS](https://www.bojo24.kr/rss.xml)
 
 ## 데이터와 운영
 

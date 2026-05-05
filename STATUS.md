@@ -1,12 +1,12 @@
 # Status | 마지막: 2026-05-06
 ## 현재 작업
-검색엔진 후속 제출 및 AdSense 상태 재확인 완료
+애드센스 검수 품질 보강 및 Lighthouse 재검증 완료
 ## 최근 변경 (최근 5개만)
+- 05-06: 모바일 Lighthouse 접근성 100, SEO 100, Agentic Browsing 100 확인
+- 05-06: 푸터 작은 안내문 대비 개선, `llms.txt` 핵심 링크를 Markdown 링크로 정리
 - 05-06: GSC에 `https://www.bojo24.kr/sitemap.xml` 재제출, 오류/경고 0건 확인
 - 05-06: Bing/Naver IndexNow에 현재 사이트맵 URL 1,075개 제출 성공
 - 05-06: AdSense API 재확인, `bojo24.kr`은 아직 `GETTING_READY`
-- 05-06: Next 15.5.15 업그레이드 및 보안 취약점 0건 검증
-- 05-06: 블로그 목록/RSS/사이트맵 URL에 post id 포함, 중복 slug SEO 문제 방지
 ## TODO
 - [ ] GSC가 새 사이트맵을 다시 읽은 뒤 발견 URL 수 반영 확인
 - [ ] AdSense `bojo24.kr` GETTING_READY 해소 확인
