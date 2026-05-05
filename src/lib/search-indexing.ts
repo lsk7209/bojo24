@@ -29,7 +29,6 @@ export async function notifySearchEngines(
   const body = {
     host,
     key,
-    keyLocation: `${resolveSiteUrl()}/${key}.txt`,
     urlList: normalizedUrls,
   };
 
