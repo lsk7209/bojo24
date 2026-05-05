@@ -6,14 +6,16 @@ import Link from "next/link";
 import { Badge } from "@components/ui";
 import type { BenefitListItem } from "./benefit-list-types";
 
+const hasPublicSupabaseEnv = Boolean(
+  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
 // 클라이언트 사이드 Supabase 클라이언트 생성
 const getClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  
+
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("Supabase 환경 변수가 설정되지 않았습니다.");
-    console.error("💡 .env 파일에 NEXT_PUBLIC_SUPABASE_URL과 NEXT_PUBLIC_SUPABASE_ANON_KEY를 추가하고 개발 서버를 재시작하세요.");
     throw new Error("Supabase 환경 변수가 설정되지 않았습니다.");
   }
   
@@ -40,12 +42,14 @@ const formatDate = (value?: string | null) => {
 export function BenefitListClient({ initialBenefits, initialSearchParams }: BenefitListClientProps) {
   const [benefits, setBenefits] = useState<BenefitListItem[]>(initialBenefits);
   const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(initialBenefits.length === ITEMS_PER_PAGE);
+  const [hasMore, setHasMore] = useState(
+    hasPublicSupabaseEnv && initialBenefits.length === ITEMS_PER_PAGE
+  );
   const [page, setPage] = useState(1);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   const loadMore = useCallback(async () => {
-    if (loading || !hasMore) return;
+    if (loading || !hasMore || !hasPublicSupabaseEnv) return;
 
     setLoading(true);
     try {
@@ -80,8 +84,7 @@ export function BenefitListClient({ initialBenefits, initialSearchParams }: Bene
       } else {
         setHasMore(false);
       }
-    } catch (err) {
-      console.error("추가 데이터 로드 실패:", err);
+    } catch {
       setHasMore(false);
     } finally {
       setLoading(false);

@@ -10,6 +10,7 @@ export function AnalyticsTracker() {
     useEffect(() => {
         // 로컬 개발 환경에서는 로깅 제외 (원하면 주석 해제)
         if (process.env.NODE_ENV === "development") return;
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return;
 
         const logView = async () => {
             try {
@@ -18,9 +19,8 @@ export function AnalyticsTracker() {
                     path: pathname,
                     user_agent: window.navigator.userAgent,
                 });
-            } catch (e) {
+            } catch {
                 // 로깅 실패는 조용히 무시
-                console.error("Analytics Error", e);
             }
         };
 
