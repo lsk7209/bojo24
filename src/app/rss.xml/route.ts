@@ -5,12 +5,15 @@ const BASE_URL = publicEnv.NEXT_PUBLIC_SITE_URL || "https://www.bojo24.kr";
 
 export async function GET() {
     const supabase = getAnonClient();
+    const now = new Date().toISOString();
 
     // 최신 포스트 20개 조회
     const { data: posts } = await supabase
         .from("posts")
-        .select("id, title, slug, excerpt, created_at, updated_at")
-        .order("created_at", { ascending: false })
+        .select("id, title, slug, excerpt, created_at, updated_at, published_at")
+        .eq("is_published", true)
+        .or(`published_at.is.null,published_at.lte.${now}`)
+        .order("published_at", { ascending: false, nullsFirst: false })
         .limit(20);
 
     // 최신 보조금 10개 조회 (RSS에 포함)
@@ -42,7 +45,7 @@ export async function GET() {
 
     // 블로그 포스트 아이템 생성
     const postItems = posts?.map((post) => {
-        const pubDate = post.updated_at || post.created_at;
+        const pubDate = post.updated_at || post.published_at || post.created_at;
         return `
     <item>
       <title><![CDATA[${post.title}]]></title>

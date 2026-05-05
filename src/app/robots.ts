@@ -9,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
             {
                 userAgent: "*",
                 allow: "/",
-                disallow: ["/api/", "/private/", "/admin/"],
+                disallow: ["/api/", "/admin/"],
             },
             {
                 userAgent: [
@@ -25,7 +25,7 @@ export default function robots(): MetadataRoute.Robots {
                     "Google-Extended",
                 ],
                 allow: "/",
-                disallow: ["/api/", "/private/", "/admin/"],
+                disallow: ["/api/", "/admin/"],
             },
             {
                 userAgent: "Bytespider",

@@ -18,6 +18,7 @@ type BlogPostDetail = {
     content: string;
     tags: string[];
     created_at: string;
+    published_at: string | null;
     benefit_id: string | null;
 };
 
@@ -28,10 +29,13 @@ type RelatedBenefit = {
 
 const fetchPost = async (slug: string) => {
     const supabase = getAnonClient();
+    const now = new Date().toISOString();
     const { data } = await supabase
         .from("posts")
         .select("*")
         .eq("slug", slug)
+        .eq("is_published", true)
+        .or(`published_at.is.null,published_at.lte.${now}`)
         .single();
     return data as BlogPostDetail | null;
 };
@@ -62,7 +66,7 @@ export const generateMetadata = async ({ params }: PageParams): Promise<Metadata
             url: buildCanonicalUrl(`/blog/${params.slug}`),
             type: "article",
             locale: "ko_KR",
-            publishedTime: post.created_at,
+            publishedTime: post.published_at || post.created_at,
         },
     };
 };
@@ -108,7 +112,7 @@ export default async function BlogPostPage({ params }: PageParams) {
                             </div>
                             <div>
                                 <div className="font-bold text-slate-900 text-sm">보조24</div>
-                                <div className="text-xs text-slate-500">{new Date(post.created_at).toLocaleDateString()} · 3분 읽기</div>
+                                <div className="text-xs text-slate-500">{new Date(post.published_at || post.created_at).toLocaleDateString()} · 3분 읽기</div>
                             </div>
                         </div>
                     </div>

@@ -20,16 +20,20 @@ type BlogPost = {
     excerpt: string;
     tags: string[];
     created_at: string;
+    published_at: string | null;
     benefit_id: string | null;
 };
 
 const fetchPosts = async () => {
     try {
         const supabase = getAnonClient();
+        const now = new Date().toISOString();
         const { data, error } = await supabase
             .from("posts")
-            .select("id, title, slug, excerpt, tags, created_at")
-            .order("created_at", { ascending: false })
+            .select("id, title, slug, excerpt, tags, created_at, published_at")
+            .eq("is_published", true)
+            .or(`published_at.is.null,published_at.lte.${now}`)
+            .order("published_at", { ascending: false, nullsFirst: false })
             .limit(20);
 
         if (error) {
@@ -78,7 +82,7 @@ export default async function BlogListPage() {
                                     {post.excerpt}
                                 </p>
                                 <div className="text-xs text-slate-400">
-                                    {new Date(post.created_at).toLocaleDateString()} · 보조24
+                                    {new Date(post.published_at || post.created_at).toLocaleDateString()} · 보조24
                                 </div>
                             </Card>
                         </Link>
