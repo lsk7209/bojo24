@@ -3,10 +3,11 @@ import Link from "next/link";
 import { Badge, Card } from "@components/ui";
 import { SectionHeader } from "@components/section-header";
 import { buildCanonicalUrl } from "@lib/site";
+import { buildPostPath } from "@lib/postRouting";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "정보마당 | 보조24",
+    title: "정보마당",
     description: "정부 혜택과 관련된 유용한 정보와 신청 전 확인할 내용을 살펴보세요.",
     alternates: {
         canonical: buildCanonicalUrl("/blog"),
@@ -66,7 +67,7 @@ export default async function BlogListPage() {
             ) : (
                 <div className="grid gap-6 sm:grid-cols-2">
                     {posts.map((post) => (
-                        <Link key={post.id} href={`/blog/${post.slug}`} className="group">
+                        <Link key={post.id} href={buildPostPath(post)} className="group">
                             <Card className="h-full transition-all hover:-translate-y-1 hover:shadow-md">
                                 <div className="flex flex-wrap gap-2 mb-3">
                                     {post.tags?.slice(0, 2).map((tag) => (

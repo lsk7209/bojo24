@@ -1,6 +1,7 @@
 import { getAnonClient } from "@lib/supabaseClient";
 import { MetadataRoute } from "next";
 import { publicEnv } from "@lib/env";
+import { buildPostPath } from "@lib/postRouting";
 
 const BASE_URL = publicEnv.NEXT_PUBLIC_SITE_URL || "https://www.bojo24.kr";
 const STATIC_LAST_MODIFIED = "2026-05-05";
@@ -44,15 +45,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const now = new Date().toISOString();
     const { data: posts } = await supabase
         .from("posts")
-        .select("slug, created_at, updated_at, published_at")
+        .select("id, slug, created_at, published_at")
         .eq("is_published", true)
         .or(`published_at.is.null,published_at.lte.${now}`)
         .order("published_at", { ascending: false, nullsFirst: false });
 
     const postRoutes =
         posts?.map((post) => ({
-            url: `${BASE_URL}/blog/${post.slug}`,
-            lastModified: post.updated_at || post.published_at || post.created_at,
+            url: `${BASE_URL}${buildPostPath(post)}`,
+            lastModified: post.published_at || post.created_at,
             changeFrequency: "monthly" as const,
             priority: 0.7,
         })) ?? [];

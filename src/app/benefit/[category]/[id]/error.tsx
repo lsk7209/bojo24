@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export default function BenefitError({
   error,
   reset
@@ -23,12 +25,12 @@ export default function BenefitError({
         >
           다시 시도
         </button>
-        <a
+        <Link
           className="rounded border px-4 py-2 text-sm font-semibold text-slate-700"
           href="/"
         >
           홈으로
-        </a>
+        </Link>
       </div>
     </main>
   );

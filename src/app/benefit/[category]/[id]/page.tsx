@@ -17,7 +17,7 @@ import Link from "next/link";
 import { SectionHeader } from "@components/section-header";
 
 type PageParams = {
-  params: { category: string; id: string };
+  params: Promise<{ category: string; id: string }>;
 };
 
 const fetchBenefit = async (id: string) => {
@@ -33,7 +33,8 @@ const fetchBenefit = async (id: string) => {
 export const generateMetadata = async ({
   params
 }: PageParams): Promise<Metadata> => {
-  const benefit = await fetchBenefit(params.id);
+  const { category: routeCategory, id } = await params;
+  const benefit = await fetchBenefit(id);
   if (!benefit) {
     return {
       title: "보조금 정보를 찾을 수 없습니다",
@@ -42,7 +43,7 @@ export const generateMetadata = async ({
   }
 
   const BASE_URL = resolveSiteUrl();
-  const canonicalUrl = `${BASE_URL}/benefit/${params.category}/${params.id}`;
+  const canonicalUrl = `${BASE_URL}/benefit/${routeCategory}/${id}`;
   
   // SEO 최적화된 제목 (키워드 포함)
   const titleBase = benefit.name;
@@ -169,7 +170,8 @@ export const generateMetadata = async ({
 };
 
 export default async function BenefitDetailPage({ params }: PageParams) {
-  const benefit = await fetchBenefit(params.id);
+  const { category: routeCategory, id } = await params;
+  const benefit = await fetchBenefit(id);
   if (!benefit) notFound();
 
   const detail = benefit.detail_json as {
@@ -189,7 +191,7 @@ export default async function BenefitDetailPage({ params }: PageParams) {
   );
   
   // 모든 구조화 데이터 생성 (공공데이터 기반 FAQ 포함)
-  const structuredData = buildAllStructuredData(benefit, params.category, optimizedContent.faqs);
+  const structuredData = buildAllStructuredData(benefit, routeCategory, optimizedContent.faqs);
   
   // Zero-click 스니펫 최적화 데이터
   const structuredAnswers = buildStructuredAnswers(benefit);

@@ -1,7 +1,10 @@
 /* eslint-disable no-console */
-import "dotenv/config";
-import { getServiceClient } from "@lib/supabaseClient";
+import dotenv from "dotenv";
+import crypto from "crypto";
 import type { BenefitRecord } from "@/types/benefit";
+
+dotenv.config({ path: ".env.local" });
+dotenv.config();
 
 // 📢 Google SEO Title Strategy:
 // 1. [지역명] + [서비스명] 전진 배치
@@ -18,7 +21,8 @@ const TITLE_TEMPLATES = [
 const generateSlug = (title: string, id: string) => {
     // URL은 짧고 명확하게 (ID 일부 포함하여 충돌 방지)
     // 실제로는 영문 변환이 좋지만, 여기서는 난수 대신 ID 활용
-    return `${id.substring(0, 8)}-blog-post`;
+    const hash = crypto.createHash("sha1").update(`${id}:${title}`).digest("hex").slice(0, 8);
+    return `${id.substring(0, 8)}-blog-post-${hash}-${Date.now().toString(36)}`;
 };
 
 // 🤖 Google Algorithm Friendly Content Generator
@@ -128,6 +132,7 @@ A. **${contact}** 또는 관할 주민센터로 문의하시면 친절하게 안
 };
 
 const fetchRandomBenefit = async () => {
+    const { getServiceClient } = await import("@lib/supabaseClient");
     const supabase = getServiceClient();
     const { data } = await supabase.from("benefits").select("*").limit(200);
     if (!data || data.length === 0) return null;
@@ -148,6 +153,7 @@ const createPost = async () => {
     const slug = generateSlug(title, benefit.id);
     const markdown = generatePostContent(benefit);
 
+    const { getServiceClient } = await import("@lib/supabaseClient");
     const supabase = getServiceClient();
     const { error } = await supabase.from("posts").insert({
         benefit_id: benefit.id,

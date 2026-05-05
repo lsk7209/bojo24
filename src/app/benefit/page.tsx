@@ -61,10 +61,11 @@ export const metadata: Metadata = {
 export default async function BenefitListPage({
   searchParams
 }: {
-  searchParams: SearchParams;
+  searchParams: Promise<SearchParams>;
 }) {
-  const q = searchParams.q || "";
-  const category = searchParams.category || "all";
+  const resolvedSearchParams = await searchParams;
+  const q = resolvedSearchParams.q || "";
+  const category = resolvedSearchParams.category || "all";
   const benefits = await fetchBenefits({ q, category });
   const hasData = benefits.length > 0;
 

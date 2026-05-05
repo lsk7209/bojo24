@@ -1,15 +1,16 @@
 import { notFound } from "next/navigation";
 
 type RouteParams = {
-  params: {
+  params: Promise<{
     indexnowKey: string;
-  };
+  }>;
 };
 
-export function GET(_request: Request, { params }: RouteParams) {
+export async function GET(_request: Request, { params }: RouteParams) {
   const key = process.env.INDEXNOW_KEY?.trim();
+  const { indexnowKey } = await params;
 
-  if (!key || params.indexnowKey !== `${key}.txt`) {
+  if (!key || indexnowKey !== `${key}.txt`) {
     notFound();
   }
 

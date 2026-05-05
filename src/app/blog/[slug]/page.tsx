@@ -6,14 +6,16 @@ import type { Metadata } from "next";
 import { InlineAd } from "@components/adsense-ad";
 import { AD_SLOTS } from "@lib/ads";
 import { buildCanonicalUrl } from "@lib/site";
+import { buildPostPath, parsePostRouteSlug } from "@lib/postRouting";
 import ReactMarkdown from "react-markdown";
 
 type PageParams = {
-    params: { slug: string };
+    params: Promise<{ slug: string }>;
 };
 
 type BlogPostDetail = {
     id: string;
+    slug: string;
     title: string;
     content: string;
     tags: string[];
@@ -27,16 +29,20 @@ type RelatedBenefit = {
     category: string | null;
 };
 
-const fetchPost = async (slug: string) => {
+const fetchPost = async (routeSlug: string) => {
     const supabase = getAnonClient();
     const now = new Date().toISOString();
-    const { data } = await supabase
+    const parsed = parsePostRouteSlug(routeSlug);
+    const query = supabase
         .from("posts")
         .select("*")
-        .eq("slug", slug)
         .eq("is_published", true)
-        .or(`published_at.is.null,published_at.lte.${now}`)
-        .single();
+        .or(`published_at.is.null,published_at.lte.${now}`);
+
+    const { data } = parsed.id
+        ? await query.eq("id", parsed.id).maybeSingle()
+        : await query.eq("slug", parsed.slug).order("created_at", { ascending: true }).limit(1).maybeSingle();
+
     return data as BlogPostDetail | null;
 };
 
@@ -51,19 +57,20 @@ const fetchRelatedBenefit = async (id: string): Promise<RelatedBenefit | null> =
 };
 
 export const generateMetadata = async ({ params }: PageParams): Promise<Metadata> => {
-    const post = await fetchPost(params.slug);
+    const { slug } = await params;
+    const post = await fetchPost(slug);
     if (!post) return {};
     const description = post.content.substring(0, 120).replace(/\n/g, " ");
     return {
         title: post.title,
         description,
         alternates: {
-            canonical: buildCanonicalUrl(`/blog/${params.slug}`),
+            canonical: buildCanonicalUrl(buildPostPath(post)),
         },
         openGraph: {
             title: post.title,
             description,
-            url: buildCanonicalUrl(`/blog/${params.slug}`),
+            url: buildCanonicalUrl(buildPostPath(post)),
             type: "article",
             locale: "ko_KR",
             publishedTime: post.published_at || post.created_at,
@@ -72,7 +79,8 @@ export const generateMetadata = async ({ params }: PageParams): Promise<Metadata
 };
 
 export default async function BlogPostPage({ params }: PageParams) {
-    const post = await fetchPost(params.slug);
+    const { slug } = await params;
+    const post = await fetchPost(slug);
     if (!post) notFound();
     const relatedBenefit = post.benefit_id
         ? await fetchRelatedBenefit(post.benefit_id)
