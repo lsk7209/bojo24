@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { InlineAd } from "@components/adsense-ad";
 import { AD_SLOTS } from "@lib/ads";
+import { buildCanonicalUrl } from "@lib/site";
 import ReactMarkdown from "react-markdown";
 
 type PageParams = {
@@ -20,6 +21,11 @@ type BlogPostDetail = {
     benefit_id: string | null;
 };
 
+type RelatedBenefit = {
+    id: string;
+    category: string | null;
+};
+
 const fetchPost = async (slug: string) => {
     const supabase = getAnonClient();
     const { data } = await supabase
@@ -30,18 +36,46 @@ const fetchPost = async (slug: string) => {
     return data as BlogPostDetail | null;
 };
 
+const fetchRelatedBenefit = async (id: string): Promise<RelatedBenefit | null> => {
+    const supabase = getAnonClient();
+    const { data } = await supabase
+        .from("benefits")
+        .select("id, category")
+        .eq("id", id)
+        .maybeSingle();
+    return data as RelatedBenefit | null;
+};
+
 export const generateMetadata = async ({ params }: PageParams): Promise<Metadata> => {
     const post = await fetchPost(params.slug);
     if (!post) return {};
+    const description = post.content.substring(0, 120).replace(/\n/g, " ");
     return {
         title: post.title,
-        description: post.content.substring(0, 150).replace(/\n/g, " "),
+        description,
+        alternates: {
+            canonical: buildCanonicalUrl(`/blog/${params.slug}`),
+        },
+        openGraph: {
+            title: post.title,
+            description,
+            url: buildCanonicalUrl(`/blog/${params.slug}`),
+            type: "article",
+            locale: "ko_KR",
+            publishedTime: post.created_at,
+        },
     };
 };
 
 export default async function BlogPostPage({ params }: PageParams) {
     const post = await fetchPost(params.slug);
     if (!post) notFound();
+    const relatedBenefit = post.benefit_id
+        ? await fetchRelatedBenefit(post.benefit_id)
+        : null;
+    const relatedBenefitHref = relatedBenefit
+        ? `/benefit/${encodeURIComponent(relatedBenefit.category || "기타")}/${relatedBenefit.id}`
+        : "/benefit";
 
     return (
         <main className="mx-auto max-w-3xl pb-24 pt-8 px-4">
@@ -165,7 +199,7 @@ export default async function BlogPostPage({ params }: PageParams) {
                             <h4 className="font-bold text-xl text-slate-900 mb-2">이 정책, 나에게 맞는지 확인해볼까요?</h4>
                             <p className="text-slate-600">신청 대상, 구비 서류, 접수 기간 등<br className="hidden sm:block" />더 정확한 공식 데이터를 지금 바로 확인하세요.</p>
                         </div>
-                        <Link href={`/benefit/view/${post.benefit_id}`} className="w-full sm:w-auto">
+                        <Link href={relatedBenefitHref} className="w-full sm:w-auto">
                             <Button size="lg" className="w-full sm:w-auto shadow-lg shadow-blue-200">
                                 상세 조건 보러가기 👉
                             </Button>

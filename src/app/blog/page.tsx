@@ -2,11 +2,15 @@ import { getAnonClient } from "@lib/supabaseClient";
 import Link from "next/link";
 import { Badge, Card } from "@components/ui";
 import { SectionHeader } from "@components/section-header";
+import { buildCanonicalUrl } from "@lib/site";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
     title: "정보마당 | 보조24",
-    description: "정부 혜택과 관련된 유용한 정보와 꿀팁을 확인하세요."
+    description: "정부 혜택과 관련된 유용한 정보와 신청 전 확인할 내용을 살펴보세요.",
+    alternates: {
+        canonical: buildCanonicalUrl("/blog"),
+    },
 };
 
 type BlogPost = {
@@ -46,6 +50,7 @@ export default async function BlogListPage() {
         <main className="mx-auto flex max-w-4xl flex-col gap-8 pb-16 pt-6">
             <SectionHeader
                 eyebrow="BLOG"
+                as="h1"
                 title="정보마당"
                 description="놓치기 쉬운 혜택 정보, 알기 쉽게 정리해드립니다."
             />

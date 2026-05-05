@@ -13,6 +13,11 @@ export async function DynamicHead() {
     if (!scriptContent) return null;
 
     return (
-        <div dangerouslySetInnerHTML={{ __html: scriptContent }} />
+        <script
+            id="admin-head-script"
+            dangerouslySetInnerHTML={{
+                __html: scriptContent.replace(/<\/?script[^>]*>/gi, ""),
+            }}
+        />
     );
 }

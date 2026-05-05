@@ -3,6 +3,7 @@ import { MetadataRoute } from "next";
 import { publicEnv } from "@lib/env";
 
 const BASE_URL = publicEnv.NEXT_PUBLIC_SITE_URL || "https://www.bojo24.kr";
+const STATIC_LAST_MODIFIED = "2026-05-05";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const supabase = getAnonClient();
@@ -12,17 +13,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         { path: "", priority: 1.0, changeFrequency: "daily" as const },
         { path: "/benefit", priority: 0.9, changeFrequency: "daily" as const },
         { path: "/blog", priority: 0.9, changeFrequency: "daily" as const },
+        { path: "/about", priority: 0.6, changeFrequency: "monthly" as const },
+        { path: "/contact", priority: 0.5, changeFrequency: "monthly" as const },
+        { path: "/editorial-policy", priority: 0.5, changeFrequency: "monthly" as const },
         { path: "/privacy", priority: 0.3, changeFrequency: "yearly" as const },
         { path: "/terms", priority: 0.3, changeFrequency: "yearly" as const },
     ].map((route) => ({
         url: `${BASE_URL}${route.path}`,
-        lastModified: new Date().toISOString(),
+        lastModified: STATIC_LAST_MODIFIED,
         changeFrequency: route.changeFrequency,
         priority: route.priority,
     }));
 
     // 2. 보조금 상세 페이지 (최대 10,000개 - sitemap 제한 고려)
-    const { data: benefits, count: benefitCount } = await supabase
+    const { data: benefits } = await supabase
         .from("benefits")
         .select("id, category, last_updated_at", { count: "exact" })
         .order("last_updated_at", { ascending: false })
@@ -51,20 +55,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         })) ?? [];
 
     const allRoutes = [...staticRoutes, ...benefitRoutes, ...postRoutes];
-
-    // 로그 출력 (개발 환경에서만)
-    if (process.env.NODE_ENV === "development") {
-        // eslint-disable-next-line no-console
-        console.log(`📊 Sitemap 생성 완료:`);
-        // eslint-disable-next-line no-console
-        console.log(`  - 정적 페이지: ${staticRoutes.length}개`);
-        // eslint-disable-next-line no-console
-        console.log(`  - 보조금 페이지: ${benefitRoutes.length}개`);
-        // eslint-disable-next-line no-console
-        console.log(`  - 블로그 포스트: ${postRoutes.length}개`);
-        // eslint-disable-next-line no-console
-        console.log(`  - 총 URL: ${allRoutes.length}개`);
-    }
 
     return allRoutes;
 }

@@ -22,6 +22,29 @@ export const qualityPrinciples = [
   "문의·정정 요청 경로를 노출해 잘못된 정보가 오래 남지 않게 관리합니다.",
 ] as const;
 
+export const popularCategories = [
+  {
+    title: "생활안정",
+    description: "생계, 의료, 긴급복지처럼 바로 확인해야 하는 지원 정보를 모았습니다.",
+    href: "/benefit?category=생활안정",
+  },
+  {
+    title: "임신·출산",
+    description: "임신, 출산, 영유아 돌봄과 관련된 지원 대상과 신청 경로를 확인합니다.",
+    href: "/benefit?category=임신·출산",
+  },
+  {
+    title: "보육·교육",
+    description: "자녀 교육, 돌봄, 학습 지원처럼 가구 상황에 따라 필요한 제도를 찾습니다.",
+    href: "/benefit?category=보육·교육",
+  },
+  {
+    title: "주거·자립",
+    description: "주거비, 자립 준비, 취약계층 생활 기반 지원 정보를 살펴봅니다.",
+    href: "/benefit?category=주거·자립",
+  },
+] as const;
+
 export const processSteps = [
   {
     eyebrow: "1",
@@ -58,5 +81,10 @@ export const faqItems = [
     question: "광고가 콘텐츠보다 먼저 보이지 않나요?",
     answer:
       "실제 슬롯이 설정되지 않은 페이지에서는 광고 상자를 노출하지 않습니다. 광고가 켜져도 본문과 구분된 위치와 라벨을 유지합니다.",
+  },
+  {
+    question: "댓글 기능은 운영하나요?",
+    answer:
+      "현재 댓글 기능은 운영하지 않습니다. 정정 요청과 문의는 공개된 이메일 채널로 받고, 확인 가능한 근거가 있을 때 본문을 수정합니다.",
   },
 ] as const;

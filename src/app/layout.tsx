@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR } from "next/font/google";
-import Script from "next/script";
 import { Header, Footer } from "@components/layout-common";
 import { AnalyticsTracker } from "@components/analytics-tracker";
 import { DynamicHead } from "@components/dynamic-head";
 import { GoogleAnalytics } from "@components/google-analytics";
+import { ADSENSE_CLIENT } from "@lib/ads";
 import { SITE_DESCRIPTION, SITE_NAME, resolveSiteUrl } from "@lib/site";
 import "./globals.css";
 
@@ -45,7 +45,10 @@ export const metadata: Metadata = {
     types: {
       "application/rss+xml": [{ url: `${siteUrl}/rss.xml` }],
     },
-  }
+  },
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -58,11 +61,10 @@ export default function RootLayout({
       <head>
         <GoogleAnalytics />
         {/* 구글 애드센스 스크립트 */}
-        <Script
+        <script
           async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3050601904412736"
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
           crossOrigin="anonymous"
-          strategy="afterInteractive"
         />
         {/* 관리자 설정 동적 스크립트 */}
         <DynamicHead />

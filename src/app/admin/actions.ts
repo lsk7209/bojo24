@@ -4,6 +4,8 @@ import { getServiceClient } from "@lib/supabaseClient";
 import type { BenefitRecord } from "@/types/benefit";
 import { revalidatePath } from "next/cache";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { notifySearchEngines } from "@lib/search-indexing";
+import { buildCanonicalUrl } from "@lib/site";
 
 // Gemini API 설정
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
@@ -103,6 +105,11 @@ export async function generateSinglePost(password: string) {
         if (error) throw error;
 
         revalidatePath("/");
+        revalidatePath("/blog");
+        revalidatePath("/sitemap.xml");
+        revalidatePath("/rss.xml");
+        await notifySearchEngines([buildCanonicalUrl(`/blog/${slug}`)]);
+
         return { success: true, message: `[AI] 발행 완료: ${title}` };
 
     } catch (e: any) {

@@ -1,52 +1,92 @@
 import Link from "next/link";
-import { BannerAd } from "@components/adsense-ad";
+import type { Metadata } from "next";
 import { Badge, Card } from "@components/ui";
 import { SectionHeader } from "@components/section-header";
-import { AD_SLOTS } from "@lib/ads";
+import { buildCanonicalUrl, SITE_DESCRIPTION, SITE_NAME } from "@lib/site";
 import {
   faqItems,
+  popularCategories,
   processSteps,
   qualityPrinciples,
   userCases,
 } from "@lib/home-content";
 
+export const metadata: Metadata = {
+  title: "정부 지원금 찾기",
+  description: "보조24 공공데이터 기반으로 정부 지원금 대상, 신청 방법, 서류, 공식 링크를 쉽게 확인하세요.",
+  alternates: {
+    canonical: buildCanonicalUrl("/"),
+  },
+  openGraph: {
+    title: `${SITE_NAME} - 정부 지원금 찾기`,
+    description: SITE_DESCRIPTION,
+    url: buildCanonicalUrl("/"),
+    locale: "ko_KR",
+    type: "website",
+  },
+};
+
 export default function HomePage() {
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: SITE_NAME,
+    url: buildCanonicalUrl("/"),
+    description: SITE_DESCRIPTION,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${buildCanonicalUrl("/benefit")}?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  };
+
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqItems.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
+
   return (
-    <main className="flex flex-col gap-16 pb-20 pt-4">
-      <header className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.18),_transparent_38%),linear-gradient(135deg,_#ffffff_0%,_#f8fafc_45%,_#eff6ff_100%)] p-8 shadow-sm sm:p-12">
-        <div className="relative z-10 grid gap-8 lg:grid-cols-[1.35fr,0.95fr] lg:items-start">
+    <main className="flex flex-col gap-14 pb-20 pt-2">
+      <header className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-7 shadow-sm sm:p-10">
+        <div className="relative z-10 grid gap-8 lg:grid-cols-[1.25fr,0.95fr] lg:items-start">
           <div className="max-w-3xl">
-            <Badge className="mb-5 bg-blue-100 text-blue-700 hover:bg-blue-100">
+            <Badge className="mb-5 bg-blue-50 text-blue-700 hover:bg-blue-50">
               공공데이터 기반 안내 서비스
             </Badge>
-            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
-              보조24에서
-              <br />
-              받을 수 있는 정부 지원금을
-              <span className="block text-blue-600">읽기 쉽게 다시 정리합니다</span>
+            <h1 className="text-3xl font-extrabold leading-tight text-slate-950 sm:text-5xl">
+              정부 지원금,
+              <span className="block text-blue-700">신청 전에 필요한 정보만 먼저 확인하세요</span>
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-              정책명만 나열된 목록 대신 신청 대상, 준비 서류, 접수 방식, 공식 확인 경로를 한 화면에서
-              파악할 수 있게 구성했습니다. 광고보다 정보가 먼저 보이도록 화면 구조도 함께 다듬고 있습니다.
+            <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
+              보조24는 행정안전부 공공데이터를 바탕으로 신청 대상, 지원 내용, 준비 서류,
+              접수 방법, 공식 확인 경로를 한 화면에서 읽기 쉽게 정리합니다.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/benefit"
-                className="inline-flex h-12 items-center justify-center rounded-full bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm shadow-blue-200 transition hover:bg-blue-700"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm shadow-blue-200 transition hover:bg-blue-700"
               >
                 지원금 바로 찾기
               </Link>
               <Link
-                href="/about"
-                className="inline-flex h-12 items-center justify-center rounded-full border border-slate-300 bg-white px-6 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                href="/editorial-policy"
+                className="inline-flex h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-6 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
               >
-                서비스 소개 보기
+                운영 원칙 보기
               </Link>
             </div>
           </div>
 
-          <Card className="border-slate-200 bg-white/90 p-6 shadow-lg shadow-blue-100/40">
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-blue-600">신뢰 체크포인트</p>
+          <Card className="border-slate-200 bg-slate-50 p-6 shadow-none">
+            <p className="text-xs font-bold uppercase text-blue-700">검수 준비 기준</p>
             <div className="mt-5 space-y-4">
               {qualityPrinciples.map((item) => (
                 <div key={item} className="flex gap-3">
@@ -57,16 +97,29 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
-            <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
-              운영 정책, 문의 채널, 데이터 출처를 공개해 광고 검수와 검색 품질 평가에서 필요한 기본
-              신뢰 요소를 분리해 제공합니다.
+            <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
+              애드센스는 자동광고 방식으로 운영하며, 승인 전 빈 광고 영역이 본문보다 먼저 보이지 않게 구성합니다.
             </div>
           </Card>
         </div>
-
-        <div className="pointer-events-none absolute -right-20 -top-16 h-60 w-60 rounded-full bg-blue-100/70 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-0 left-0 h-32 w-32 rounded-full bg-amber-100/60 blur-2xl" />
       </header>
+
+      <section aria-labelledby="popular-categories" className="space-y-6">
+        <SectionHeader
+          title="많이 찾는 지원 분야"
+          description="처음 방문한 사용자가 바로 탐색할 수 있도록 생활 상황별 진입점을 먼저 배치했습니다."
+        />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {popularCategories.map((item) => (
+            <Link key={item.title} href={item.href} className="group">
+              <Card className="h-full border-slate-200 bg-white transition group-hover:border-blue-300 group-hover:shadow-md">
+                <h2 className="text-lg font-bold text-slate-900">{item.title}</h2>
+                <p className="mt-3 text-sm leading-7 text-slate-600">{item.description}</p>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       <section aria-labelledby="user-cases" className="space-y-6">
         <SectionHeader
@@ -82,8 +135,6 @@ export default function HomePage() {
           ))}
         </div>
       </section>
-
-      <BannerAd adSlot={AD_SLOTS.homeBanner} />
 
       <section aria-labelledby="content-process" className="space-y-6">
         <SectionHeader
@@ -128,11 +179,11 @@ export default function HomePage() {
         </Card>
 
         <Card className="border-slate-200 bg-slate-900 text-white">
-          <p className="text-xs font-bold uppercase tracking-[0.25em] text-blue-200">Review Ready</p>
-          <h2 className="mt-3 text-2xl font-bold">광고보다 콘텐츠가 먼저 보이도록</h2>
+          <p className="text-xs font-bold uppercase text-blue-200">Auto Ads Ready</p>
+          <h2 className="mt-3 text-2xl font-bold text-white">자동광고는 승인 이후에 자연스럽게 노출</h2>
           <p className="mt-4 text-sm leading-7 text-slate-200">
-            실제 슬롯이 준비되지 않은 페이지에서는 빈 광고 상자를 노출하지 않습니다. 광고가 활성화되더라도
-            본문과 구분된 위치, 별도 라벨, 충분한 설명 텍스트를 유지합니다.
+            현재 페이지는 콘텐츠와 신뢰 정보를 먼저 보여주도록 구성되어 있습니다. 애드센스 승인 뒤 자동광고가 켜져도
+            본문 탐색을 방해하지 않도록 빈 수동 슬롯 의존도를 낮춥니다.
           </p>
         </Card>
       </section>
@@ -152,6 +203,14 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {[websiteJsonLd, faqJsonLd].map((data, index) => (
+        <script
+          key={index}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+        />
+      ))}
     </main>
   );
 }

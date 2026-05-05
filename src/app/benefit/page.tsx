@@ -4,16 +4,20 @@ import { Button, Card } from "@components/ui";
 import { InlineAd } from "@components/adsense-ad";
 import { AD_SLOTS } from "@lib/ads";
 import { BenefitListClient } from "@components/benefit-list-client";
+import { buildCanonicalUrl } from "@lib/site";
 import Link from "next/link";
 import type { Metadata } from "next";
 import type { BenefitListItem } from "@components/benefit-list-types";
 
 const CATEGORIES = [
-  "육아/교육",
-  "일자리",
-  "주거",
+  "보육·교육",
+  "고용·창업",
+  "주거·자립",
   "생활안정",
-  "창업/경영",
+  "보건·의료",
+  "임신·출산",
+  "보호·돌봄",
+  "행정·안전",
   "기타"
 ] as const;
 
@@ -48,7 +52,10 @@ const fetchBenefits = async ({
 
 export const metadata: Metadata = {
   title: "지원금 목록",
-  description: "수집된 보조24 지원금 목록을 한눈에 확인하세요."
+  description: "수집된 보조24 지원금 목록을 한눈에 확인하세요.",
+  alternates: {
+    canonical: buildCanonicalUrl("/benefit"),
+  },
 };
 
 export default async function BenefitListPage({
@@ -65,6 +72,7 @@ export default async function BenefitListPage({
     <main className="flex flex-col gap-8 pb-12">
       <SectionHeader
         eyebrow="Government Benefits"
+        as="h1"
         title="지원금 찾기"
         description="나에게 필요한 정부 혜택을 검색해보세요. AI가 요약한 정보를 확인할 수 있습니다."
         action={

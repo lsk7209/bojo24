@@ -23,6 +23,10 @@ type AdSlotWrapperProps = {
   className?: string;
 };
 
+export function AutoAdsNotice() {
+  return null;
+}
+
 export function AdSenseAd({
   adSlot,
   format = "auto",
