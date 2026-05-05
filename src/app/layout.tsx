@@ -35,7 +35,10 @@ export const metadata: Metadata = {
     type: "website",
   },
   verification: {
-    google: "wsoEFYnqrAkhjBrkV4Q9iWCOzfZBySwWZZhRVQbI04M",
+    google: [
+      "wsoEFYnqrAkhjBrkV4Q9iWCOzfZBySwWZZhRVQbI04M",
+      "vnWEJOwroGT64YZ1DiNVGx27dG2YDLCYJr5vro19Lz8",
+    ],
     other: {
       "naver-site-verification": "2e4e153be51c48838641e6e87c005fa0a8663b3d",
     },

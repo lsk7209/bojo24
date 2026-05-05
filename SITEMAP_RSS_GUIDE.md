@@ -1,177 +1,89 @@
 # 사이트맵 & RSS 가이드
 
-## 📋 현재 설정 상태
+## 현재 기준
 
-### 도메인
-- **프로덕션 도메인**: `https://bojo24.kr`
-- 모든 파일에서 도메인 통일 완료
+- 정규 도메인: `https://www.bojo24.kr`
+- 사이트맵: `https://www.bojo24.kr/sitemap.xml`
+- RSS: `https://www.bojo24.kr/rss.xml`
+- robots.txt: `https://www.bojo24.kr/robots.txt`
 
-## 🗺️ 사이트맵 (Sitemap)
+`https://bojo24.kr` 요청은 실서비스에서 `https://www.bojo24.kr`로 리다이렉트됩니다. 검색엔진 제출과 문서 표기는 모두 `www` 기준으로 맞춥니다.
 
-### 접근 URL
-- **메인 사이트맵**: `https://bojo24.kr/sitemap.xml`
-- **자동 생성**: Next.js App Router의 `sitemap.ts` 사용
+## 사이트맵 구성
 
-### 포함 내용
+사이트맵은 Next.js App Router의 [src/app/sitemap.ts](src/app/sitemap.ts)에서 자동 생성합니다.
 
-#### 1. 정적 페이지
-- `/` (홈) - Priority: 1.0, Daily
-- `/benefit` (보조금 목록) - Priority: 0.9, Daily
-- `/blog` (블로그 목록) - Priority: 0.9, Daily
-- `/privacy` (개인정보처리방침) - Priority: 0.3, Yearly
-- `/terms` (이용약관) - Priority: 0.3, Yearly
+포함 대상:
 
-#### 2. 보조금 상세 페이지
-- **최대 10,000개** 포함
-- URL 형식: `/benefit/{category}/{id}`
-- Priority: 0.8, Weekly
-- 최신 업데이트된 순서로 정렬
+- `/`
+- `/benefit`
+- `/blog`
+- `/about`
+- `/contact`
+- `/editorial-policy`
+- `/privacy`
+- `/terms`
+- 공개 가능한 보조금 상세 페이지
+- 공개 시간이 지난 블로그 글
 
-#### 3. 블로그 포스트
-- 모든 게시된 블로그 포스트
-- URL 형식: `/blog/{slug}`
-- Priority: 0.7, Monthly
+예약 발행 글은 `published_at`이 현재 시각보다 미래이면 상세 페이지, sitemap, RSS에 노출하지 않습니다.
 
-### 사이트맵 제한
-- Google 제한: 최대 50,000 URL, 50MB
-- 현재 설정: 최대 10,000개 보조금 + 블로그 포스트
-- 필요 시 사이트맵 인덱스로 분할 가능
+## RSS 구성
 
-### robots.txt 연동
-- `robots.txt`에 자동으로 사이트맵 URL 포함
-- 접근: `https://bojo24.kr/robots.txt`
+RSS는 [src/app/rss.xml/route.ts](src/app/rss.xml/route.ts)에서 생성합니다.
 
-## 📡 RSS 피드
+포함 대상:
 
-### 접근 URL
-- **RSS 피드**: `https://bojo24.kr/rss.xml`
-- **형식**: RSS 2.0
+- 최신 공개 블로그 글
+- 최신 보조금 정보
+- 정규 URL은 `https://www.bojo24.kr` 사용
+- 캐시 기준은 라우트 설정을 따름
 
-### 포함 내용
-
-#### 1. 블로그 포스트
-- 최신 20개 포스트
-- 제목, 링크, 설명, 발행일 포함
-
-#### 2. 최신 보조금
-- 최신 업데이트된 보조금 10개
-- 제목, 링크, 카테고리, 설명 포함
-
-### RSS 메타데이터
-- **제목**: 보조금24 - 정부 혜택 정보
-- **설명**: 행정안전부 보조금24 정보를 AI로 요약하고 쉽게 찾을 수 있는 플랫폼입니다.
-- **언어**: ko-KR
-- **웹마스터**: contact@bojo24.kr
-- **이미지**: 사이트 파비콘
-
-### 캐싱
-- **캐시 시간**: 1시간 (3600초)
-- **Stale-while-revalidate**: 캐시 만료 후에도 이전 버전 제공
-
-## 🔍 검색 엔진 등록
+## 검색엔진 제출
 
 ### Google Search Console
-1. [Google Search Console](https://search.google.com/search-console) 접속
-2. 속성 추가: `https://bojo24.kr`
-3. 사이트맵 제출: `https://bojo24.kr/sitemap.xml`
-4. RSS 피드도 제출 가능 (선택)
 
-### 네이버 서치어드바이저
-1. [네이버 서치어드바이저](https://searchadvisor.naver.com/) 접속
-2. 사이트 등록: `https://bojo24.kr`
-3. 사이트맵 제출: `https://bojo24.kr/sitemap.xml`
+- 권장 속성: `sc-domain:bojo24.kr` 또는 `https://www.bojo24.kr/`
+- 현재 확인된 소유 속성: `https://bojo24.kr/`
+- 제출 URL: `https://www.bojo24.kr/sitemap.xml`
+- 일반 블로그 글은 Google Indexing API 직접 제출 대상이 아니므로 sitemap/GSC 기반으로 발견되게 둡니다.
+
+### Naver Search Advisor
+
+- 사이트: `https://www.bojo24.kr`
+- 사이트맵: `https://www.bojo24.kr/sitemap.xml`
+- RSS: `https://www.bojo24.kr/rss.xml`
+- 신규 공개 글은 IndexNow로 Naver에도 제출합니다.
 
 ### Bing Webmaster Tools
-1. [Bing Webmaster Tools](https://www.bing.com/webmasters) 접속
-2. 사이트 추가: `https://bojo24.kr`
-3. 사이트맵 제출: `https://bojo24.kr/sitemap.xml`
 
-## ✅ 검증 방법
+- 사이트: `https://www.bojo24.kr`
+- 사이트맵: `https://www.bojo24.kr/sitemap.xml`
+- 신규 공개 글은 IndexNow로 Bing에도 제출합니다.
 
-### 사이트맵 검증
+### Daum
+
+- Daum 웹마스터도구에 사이트와 RSS를 수동 등록합니다.
+- Daum은 현재 코드에서 직접 push 알림을 보내지 않고 sitemap/RSS 기반으로 노출을 유도합니다.
+
+## 검증 명령
+
 ```bash
-# 브라우저에서 직접 확인
-https://bojo24.kr/sitemap.xml
-
-# Google Search Console에서 검증
-# Search Console > Sitemaps > 사이트맵 제출 후 상태 확인
+curl -I https://www.bojo24.kr/sitemap.xml
+curl -I https://www.bojo24.kr/rss.xml
+curl -I https://www.bojo24.kr/robots.txt
 ```
 
-### RSS 피드 검증
-```bash
-# 브라우저에서 직접 확인
-https://bojo24.kr/rss.xml
+확인할 항목:
 
-# RSS 검증 도구 사용
-# https://validator.w3.org/feed/
-```
+- `sitemap.xml` 응답 200
+- `rss.xml` 응답 200
+- robots.txt 안의 `Sitemap:`이 `https://www.bojo24.kr/sitemap.xml`
+- 미래 예약 글 URL이 sitemap/RSS에 포함되지 않음
 
-### robots.txt 확인
-```bash
-# 브라우저에서 직접 확인
-https://bojo24.kr/robots.txt
+## 운영 메모
 
-# 사이트맵 URL이 포함되어 있는지 확인
-# Sitemap: https://bojo24.kr/sitemap.xml
-```
-
-## 🔄 자동 업데이트
-
-### 사이트맵
-- **자동 업데이트**: 데이터 변경 시 자동 반영
-- **재생성 주기**: 페이지 요청 시마다 최신 데이터로 생성
-- **캐싱**: Next.js 자동 캐싱
-
-### RSS 피드
-- **자동 업데이트**: 새 포스트/보조금 추가 시 자동 반영
-- **캐시 시간**: 1시간
-- **실시간 반영**: 캐시 만료 후 자동 갱신
-
-## 📊 모니터링
-
-### Google Search Console
-- 사이트맵 상태 모니터링
-- 인덱싱된 페이지 수 확인
-- 오류 페이지 확인
-
-### 로그 확인
-- 개발 환경에서 사이트맵 생성 로그 확인
-- 생성된 URL 수 확인
-
-## 🛠️ 문제 해결
-
-### 사이트맵이 너무 큰 경우
-- 사이트맵 인덱스로 분할
-- 보조금 페이지 제한 조정 (현재 10,000개)
-
-### RSS 피드가 업데이트 안 되는 경우
-- 캐시 시간 확인 (1시간)
-- Supabase 데이터 확인
-- 서버 재시작
-
-### 검색 엔진에 노출 안 되는 경우
-1. 사이트맵 제출 확인
-2. robots.txt 확인
-3. Search Console에서 크롤링 상태 확인
-4. 인덱싱 요청
-
-## 📝 참고 사항
-
-### 사이트맵 우선순위
-- 홈페이지: 1.0 (최우선)
-- 주요 페이지: 0.9
-- 보조금 상세: 0.8
-- 블로그: 0.7
-- 정책 페이지: 0.3
-
-### 변경 빈도
-- **Daily**: 홈, 목록 페이지
-- **Weekly**: 보조금 상세 (데이터 업데이트 주기)
-- **Monthly**: 블로그 포스트
-- **Yearly**: 정책 페이지
-
----
-
-**최종 업데이트**: 2025-01-27
-**도메인**: https://bojo24.kr
-
+- 사이트맵 날짜는 페이지 데이터와 발행 시각을 기준으로 자동 갱신됩니다.
+- 새 글 공개 후 Bing/Naver에는 IndexNow 알림을 보냅니다.
+- Google은 sitemap과 Search Console 재크롤링으로 반영됩니다.
+- Search Console에서 `www` URL-prefix 속성 소유권이 확인되면 해당 속성에도 사이트맵을 제출합니다.
