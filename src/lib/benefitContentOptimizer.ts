@@ -7,6 +7,12 @@
 
 import { enhanceTarget } from "./geminiEnhancer";
 
+const debugLog = (...args: unknown[]) => {
+  if (process.env.NODE_ENV === "development") {
+    globalThis.console.log(...args);
+  }
+};
+
 export interface BenefitDetail {
   detail?: Record<string, string>;
   list?: Record<string, string>;
@@ -97,7 +103,7 @@ export async function optimizeBenefitContent(
     const isAllowed = allowedIds.includes(benefitId);
     const hasApiKey = !!process.env.GEMINI_API_KEY;
     
-    console.log(`[Gemini Debug] benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey}, section: 핵심 요약`);
+    debugLog(`[Gemini Debug] benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey}, section: 핵심 요약`);
     
     const { enhanceSummary } = await import("./geminiEnhancer");
     const deadline = detailData["신청기간"] || detailData["접수기간"] || detailData["신청 기간"] || null;
@@ -120,9 +126,9 @@ export async function optimizeBenefitContent(
     );
     if (enhanced) {
       summary = enhanced;
-      console.log(`✅ 핵심 요약 Gemini 보완 완료: ${summary.length}자`);
+      debugLog(`✅ 핵심 요약 Gemini 보완 완료: ${summary.length}자`);
     } else {
-      console.log(`⚠️ Gemini 핵심 요약 보완 실패 또는 비활성화 (benefitId: ${benefitId})`);
+      debugLog(`⚠️ Gemini 핵심 요약 보완 실패 또는 비활성화 (benefitId: ${benefitId})`);
     }
   }
   
@@ -145,8 +151,8 @@ export async function optimizeBenefitContent(
     
     // 프로덕션에서도 디버그 로그 출력 (문제 진단용)
     // Vercel Deployments 로그에서 확인 가능
-    console.log(`[Gemini Debug] benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey}, allowedIds: [${allowedIds.join(", ")}]`);
-    console.log(`[Gemini Debug] GEMINI_ENHANCEMENT_ALLOWED_IDS 값: "${process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS || "없음"}"`);
+    debugLog(`[Gemini Debug] benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey}, allowedIds: [${allowedIds.join(", ")}]`);
+    debugLog(`[Gemini Debug] GEMINI_ENHANCEMENT_ALLOWED_IDS 값: "${process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS || "없음"}"`);
     
     const enhanced = await enhanceTarget(
       benefitName,
@@ -159,13 +165,13 @@ export async function optimizeBenefitContent(
       // enhanced가 이미 100~150자로 최적화되어 있음
       // 공공데이터와 병합된 경우도 있으므로 그대로 사용
       targetContent = enhanced;
-      console.log(`✅ 지원 대상 Gemini 보완 완료: ${targetContent.length}자`);
+      debugLog(`✅ 지원 대상 Gemini 보완 완료: ${targetContent.length}자`);
     } else {
-      console.log(`⚠️ Gemini 지원 대상 보완 실패 또는 비활성화 (benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey})`);
+      debugLog(`⚠️ Gemini 지원 대상 보완 실패 또는 비활성화 (benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey})`);
     }
   } else {
     // 조건이 맞지 않는 경우도 로그 출력
-    console.log(`[Gemini Debug] 보완 조건 불만족 - benefitId: ${benefitId}, targetContent 길이: ${targetContent?.length || 0}, 조건: ${benefitId && targetContent && targetContent !== "정보 없음" && targetContent.length < 150}`);
+    debugLog(`[Gemini Debug] 보완 조건 불만족 - benefitId: ${benefitId}, targetContent 길이: ${targetContent?.length || 0}, 조건: ${benefitId && targetContent && targetContent !== "정보 없음" && targetContent.length < 150}`);
   }
   
   // 3. 지원 내용 섹션
@@ -186,7 +192,7 @@ export async function optimizeBenefitContent(
     const isAllowed = allowedIds.includes(benefitId);
     const hasApiKey = !!process.env.GEMINI_API_KEY;
     
-    console.log(`[Gemini Debug] benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey}, section: 지원 내용`);
+    debugLog(`[Gemini Debug] benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey}, section: 지원 내용`);
     
     const { enhanceBenefit } = await import("./geminiEnhancer");
     const enhanced = await enhanceBenefit(
@@ -200,9 +206,9 @@ export async function optimizeBenefitContent(
     );
     if (enhanced) {
       benefitContent = enhanced;
-      console.log(`✅ 지원 내용 Gemini 보완 완료: ${benefitContent.length}자`);
+      debugLog(`✅ 지원 내용 Gemini 보완 완료: ${benefitContent.length}자`);
     } else {
-      console.log(`⚠️ Gemini 지원 내용 보완 실패 또는 비활성화 (benefitId: ${benefitId})`);
+      debugLog(`⚠️ Gemini 지원 내용 보완 실패 또는 비활성화 (benefitId: ${benefitId})`);
     }
   }
   
@@ -224,7 +230,7 @@ export async function optimizeBenefitContent(
     const isAllowed = allowedIds.includes(benefitId);
     const hasApiKey = !!process.env.GEMINI_API_KEY;
     
-    console.log(`[Gemini Debug] benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey}, section: 신청 방법`);
+    debugLog(`[Gemini Debug] benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey}, section: 신청 방법`);
     
     const { enhanceApply } = await import("./geminiEnhancer");
     const enhanced = await enhanceApply(
@@ -238,9 +244,9 @@ export async function optimizeBenefitContent(
     );
     if (enhanced) {
       applyMethod = enhanced;
-      console.log(`✅ 신청 방법 Gemini 보완 완료: ${applyMethod.length}자`);
+      debugLog(`✅ 신청 방법 Gemini 보완 완료: ${applyMethod.length}자`);
     } else {
-      console.log(`⚠️ Gemini 신청 방법 보완 실패 또는 비활성화 (benefitId: ${benefitId})`);
+      debugLog(`⚠️ Gemini 신청 방법 보완 실패 또는 비활성화 (benefitId: ${benefitId})`);
     }
   }
   
@@ -253,7 +259,7 @@ export async function optimizeBenefitContent(
     const isAllowed = allowedIds.includes(benefitId);
     const hasApiKey = !!process.env.GEMINI_API_KEY;
     
-    console.log(`[Gemini Debug] benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey}, section: 필요서류`);
+    debugLog(`[Gemini Debug] benefitId: ${benefitId}, isAllowed: ${isAllowed}, hasApiKey: ${hasApiKey}, section: 필요서류`);
     
     const { enhanceDocuments } = await import("./geminiEnhancer");
     const enhanced = await enhanceDocuments(
@@ -264,14 +270,14 @@ export async function optimizeBenefitContent(
     );
     if (enhanced && enhanced.length > 0) {
       documents = enhanced;
-      console.log(`✅ 필요서류 Gemini 보완 완료: ${documents.length}개 항목`);
+      debugLog(`✅ 필요서류 Gemini 보완 완료: ${documents.length}개 항목`);
     } else {
       // Gemini 보완 실패 시 기본 정리 로직 사용
       const { formatDocuments } = await import("./utils/documentFormatter");
       const formatted = formatDocuments(rawDocuments);
       if (formatted.length > 0) {
         documents = formatted;
-        console.log(`✅ 필요서류 기본 정리 완료: ${documents.length}개 항목`);
+        debugLog(`✅ 필요서류 기본 정리 완료: ${documents.length}개 항목`);
       }
     }
   }

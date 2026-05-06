@@ -13,6 +13,23 @@ import { buildDocumentsEnhancementPrompt } from "./prompts/documentsEnhancement"
 import { calculateTargetLength } from "./utils/contentLengthCalculator";
 import { cleanDocumentText } from "./utils/documentFormatter";
 
+const isDevelopment = () => process.env.NODE_ENV === "development";
+const debugLog = (...args: unknown[]) => {
+  if (isDevelopment()) {
+    globalThis.console.log(...args);
+  }
+};
+const debugWarn = (...args: unknown[]) => {
+  if (isDevelopment()) {
+    globalThis.console.warn(...args);
+  }
+};
+const debugError = (...args: unknown[]) => {
+  if (isDevelopment()) {
+    globalThis.console.error(...args);
+  }
+};
+
 // Gemini API 초기화 (환경 변수 확인)
 let genAI: GoogleGenerativeAI | null = null;
 let model: ReturnType<typeof GoogleGenerativeAI.prototype.getGenerativeModel> | null = null;
@@ -41,7 +58,7 @@ function initGemini() {
   if (!process.env.GEMINI_API_KEY) {
     // 개발 환경에서만 로그 출력
     if (process.env.NODE_ENV === "development") {
-      console.warn("⚠️ GEMINI_API_KEY가 설정되지 않았습니다. 공공데이터만 사용됩니다.");
+      debugWarn("⚠️ GEMINI_API_KEY가 설정되지 않았습니다. 공공데이터만 사용됩니다.");
     }
     return null;
   }
@@ -52,7 +69,7 @@ function initGemini() {
     model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
     // 개발 환경에서만 로그 출력
     if (process.env.NODE_ENV === "development") {
-      console.log("✅ Gemini 모델 초기화 완료: gemini-2.5-flash-lite");
+      debugLog("✅ Gemini 모델 초기화 완료: gemini-2.5-flash-lite");
     }
   }
   return model;
@@ -86,7 +103,7 @@ export async function enhanceSummaryLegacy(
   // Gemini 보완이 활성화되지 않았으면 null 반환
   if (!isGeminiEnhancementEnabled(benefitId)) {
     if (process.env.NODE_ENV === "development") {
-      console.log(`⏸️ Gemini 보완 비활성화됨 (benefitId: ${benefitId || "unknown"})`);
+      debugLog(`⏸️ Gemini 보완 비활성화됨 (benefitId: ${benefitId || "unknown"})`);
     }
     return null;
   }
@@ -137,7 +154,7 @@ ${publicDataSummary}
     // 공공데이터와 자연스럽게 병합
     return `${publicDataSummary}\n\n${enhanced}`;
   } catch (error) {
-    console.error("Gemini 요약 보완 실패:", error);
+    debugError("Gemini 요약 보완 실패:", error);
     return null; // 실패 시 원본 반환
   }
 }
@@ -154,20 +171,20 @@ export async function enhanceTarget(
 ): Promise<string | null> {
   // Gemini 보완이 활성화되지 않았으면 null 반환
   const isEnabled = isGeminiEnhancementEnabled(benefitId);
-  console.log(`[Gemini Debug] enhanceTarget - benefitId: ${benefitId}, isEnabled: ${isEnabled}`);
+  debugLog(`[Gemini Debug] enhanceTarget - benefitId: ${benefitId}, isEnabled: ${isEnabled}`);
   
   if (!isEnabled) {
-    console.log(`[Gemini Debug] enhanceTarget - 비활성화됨. GEMINI_ENHANCEMENT_ALLOWED_IDS: ${process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS || "없음"}`);
+    debugLog(`[Gemini Debug] enhanceTarget - 비활성화됨. GEMINI_ENHANCEMENT_ALLOWED_IDS: ${process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS || "없음"}`);
     return null;
   }
   
   const geminiModel = initGemini();
   if (!geminiModel) {
-    console.log(`[Gemini Debug] enhanceTarget - Gemini 모델 초기화 실패`);
+    debugLog(`[Gemini Debug] enhanceTarget - Gemini 모델 초기화 실패`);
     return null;
   }
   
-  console.log(`[Gemini Debug] enhanceTarget - Gemini API 호출 시작`);
+  debugLog(`[Gemini Debug] enhanceTarget - Gemini API 호출 시작`);
 
   try {
     const criteria = detail["선정기준"] || detail["선정 기준"] || "";
@@ -247,14 +264,14 @@ export async function enhanceTarget(
     // Gemini가 생성한 내용 반환 (150~220자 범위)
     // 예시가 포함되었는지 확인 (없으면 경고)
     if (!enhanced.includes("예를 들어") && !enhanced.includes("예시") && !enhanced.includes("예를")) {
-      console.log(`⚠️ [Gemini Debug] 예시 섹션이 포함되지 않았습니다. 내용: ${enhanced.substring(0, 100)}...`);
+      debugLog(`⚠️ [Gemini Debug] 예시 섹션이 포함되지 않았습니다. 내용: ${enhanced.substring(0, 100)}...`);
     }
     
     return enhanced;
   } catch (error: any) {
     // 개발 환경에서만 에러 로그 출력
     if (process.env.NODE_ENV === "development") {
-      console.error("Gemini 지원 대상 보완 실패:", error?.message || error);
+      debugError("Gemini 지원 대상 보완 실패:", error?.message || error);
     }
     return null;
   }
@@ -274,20 +291,20 @@ export async function enhanceBenefit(
 ): Promise<string | null> {
   // Gemini 보완이 활성화되지 않았으면 null 반환
   const isEnabled = isGeminiEnhancementEnabled(benefitId);
-  console.log(`[Gemini Debug] enhanceBenefit - benefitId: ${benefitId}, isEnabled: ${isEnabled}`);
+  debugLog(`[Gemini Debug] enhanceBenefit - benefitId: ${benefitId}, isEnabled: ${isEnabled}`);
   
   if (!isEnabled) {
-    console.log(`[Gemini Debug] enhanceBenefit - 비활성화됨. GEMINI_ENHANCEMENT_ALLOWED_IDS: ${process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS || "없음"}`);
+    debugLog(`[Gemini Debug] enhanceBenefit - 비활성화됨. GEMINI_ENHANCEMENT_ALLOWED_IDS: ${process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS || "없음"}`);
     return null;
   }
   
   const geminiModel = initGemini();
   if (!geminiModel) {
-    console.log(`[Gemini Debug] enhanceBenefit - Gemini 모델 초기화 실패`);
+    debugLog(`[Gemini Debug] enhanceBenefit - Gemini 모델 초기화 실패`);
     return null;
   }
   
-  console.log(`[Gemini Debug] enhanceBenefit - Gemini API 호출 시작`);
+  debugLog(`[Gemini Debug] enhanceBenefit - Gemini API 호출 시작`);
 
   try {
     const currentLength = publicDataBenefit.length;
@@ -351,14 +368,14 @@ export async function enhanceBenefit(
     // Gemini가 생성한 내용 반환 (200~330자 범위)
     // 예시가 포함되었는지 확인 (없으면 경고)
     if (!enhanced.includes("예를 들어") && !enhanced.includes("예시") && !enhanced.includes("예를")) {
-      console.log(`⚠️ [Gemini Debug] 예시 섹션이 포함되지 않았습니다. 내용: ${enhanced.substring(0, 100)}...`);
+      debugLog(`⚠️ [Gemini Debug] 예시 섹션이 포함되지 않았습니다. 내용: ${enhanced.substring(0, 100)}...`);
     }
     
     return enhanced;
   } catch (error: any) {
     // 개발 환경에서만 에러 로그 출력
     if (process.env.NODE_ENV === "development") {
-      console.error("Gemini 지원 내용 보완 실패:", error?.message || error);
+      debugError("Gemini 지원 내용 보완 실패:", error?.message || error);
     }
     return null;
   }
@@ -377,7 +394,7 @@ export async function enhanceApply(
   benefitId?: string
 ): Promise<string | null> {
   const isEnabled = isGeminiEnhancementEnabled(benefitId);
-  console.log(`[Gemini Debug] enhanceApply - benefitId: ${benefitId}, isEnabled: ${isEnabled}`);
+  debugLog(`[Gemini Debug] enhanceApply - benefitId: ${benefitId}, isEnabled: ${isEnabled}`);
 
   if (!isEnabled) {
     return null;
@@ -418,7 +435,7 @@ export async function enhanceApply(
       : enhanced;
   } catch (error: unknown) {
     if (process.env.NODE_ENV === "development") {
-      console.error("Gemini 신청 방법 보완 실패:", error);
+      debugError("Gemini 신청 방법 보완 실패:", error);
     }
     return null;
   }
@@ -434,7 +451,7 @@ export async function enhanceDocuments(
   benefitId?: string
 ): Promise<string[] | null> {
   const isEnabled = isGeminiEnhancementEnabled(benefitId);
-  console.log(`[Gemini Debug] enhanceDocuments - benefitId: ${benefitId}, isEnabled: ${isEnabled}`);
+  debugLog(`[Gemini Debug] enhanceDocuments - benefitId: ${benefitId}, isEnabled: ${isEnabled}`);
 
   if (!isEnabled) {
     return null;
@@ -466,7 +483,7 @@ export async function enhanceDocuments(
     return documents.length > 0 ? documents : null;
   } catch (error: unknown) {
     if (process.env.NODE_ENV === "development") {
-      console.error("Gemini 필요서류 보완 실패:", error);
+      debugError("Gemini 필요서류 보완 실패:", error);
     }
     return null;
   }
@@ -489,20 +506,20 @@ export async function enhanceSummary(
 ): Promise<string | null> {
   // Gemini 보완이 활성화되지 않았으면 null 반환
   const isEnabled = isGeminiEnhancementEnabled(benefitId);
-  console.log(`[Gemini Debug] enhanceSummary - benefitId: ${benefitId}, isEnabled: ${isEnabled}`);
+  debugLog(`[Gemini Debug] enhanceSummary - benefitId: ${benefitId}, isEnabled: ${isEnabled}`);
   
   if (!isEnabled) {
-    console.log(`[Gemini Debug] enhanceSummary - 비활성화됨. GEMINI_ENHANCEMENT_ALLOWED_IDS: ${process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS || "없음"}`);
+    debugLog(`[Gemini Debug] enhanceSummary - 비활성화됨. GEMINI_ENHANCEMENT_ALLOWED_IDS: ${process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS || "없음"}`);
     return null;
   }
   
   const geminiModel = initGemini();
   if (!geminiModel) {
-    console.log(`[Gemini Debug] enhanceSummary - Gemini 모델 초기화 실패`);
+    debugLog(`[Gemini Debug] enhanceSummary - Gemini 모델 초기화 실패`);
     return null;
   }
   
-  console.log(`[Gemini Debug] enhanceSummary - Gemini API 호출 시작`);
+  debugLog(`[Gemini Debug] enhanceSummary - Gemini API 호출 시작`);
 
   try {
     // 재사용 가능한 프롬프트 사용 (동적 글자수)
@@ -571,7 +588,7 @@ export async function enhanceSummary(
   } catch (error: any) {
     // 개발 환경에서만 에러 로그 출력
     if (process.env.NODE_ENV === "development") {
-      console.error("Gemini 핵심 요약 보완 실패:", error?.message || error);
+      debugError("Gemini 핵심 요약 보완 실패:", error?.message || error);
     }
     return null;
   }
