@@ -16,7 +16,6 @@
     "content:plan": "tsx src/scripts/planScheduledPosts.ts --dry-run --posts 200",
     "content:schedule": "tsx src/scripts/planScheduledPosts.ts --posts 200 --interval-hours 5",
     "content:audit": "tsx src/scripts/auditScheduledPosts.ts --posts 200",
-    "content:verify-visibility": "tsx src/scripts/verifyPostVisibility.ts",
     "content:notify-due": "tsx src/scripts/notifyDuePosts.ts",
     "validate-env": "tsx src/scripts/validateEnv.ts",
     "check:data": "tsx src/scripts/checkDataStatus.ts",

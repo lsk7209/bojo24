@@ -163,15 +163,7 @@ DROP POLICY IF EXISTS "Admin full access seo_metadata" ON seo_metadata;
 
 -- 정책 재생성
 CREATE POLICY "Public read benefits" ON benefits FOR SELECT USING (true);
-CREATE POLICY "Public read posts" ON posts
-  FOR SELECT
-  USING (
-    is_published = true
-    AND (
-      published_at IS NULL
-      OR published_at <= NOW()
-    )
-  );
+CREATE POLICY "Public read posts" ON posts FOR SELECT USING (is_published = true);
 CREATE POLICY "Public read seo_metadata" ON seo_metadata FOR SELECT USING (true);
 CREATE POLICY "Public insert page_views" ON page_views FOR INSERT WITH CHECK (true);
 CREATE POLICY "Admin full access benefits" ON benefits USING (true);
