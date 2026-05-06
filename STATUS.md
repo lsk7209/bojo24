@@ -1,16 +1,14 @@
 # Status | 마지막: 2026-05-06
 ## 현재 작업
-운영 웹 공공데이터 자동 수집/반영 복구 진행 중: Vercel Turso env 추가, GitHub Actions 복구 준비
+운영 웹 공공데이터 자동 수집/반영 복구 완료: Vercel Turso env, GitHub Actions, 운영 라우트 확인
 ## 최근 변경 (최근 5개만)
-- 05-06: Vercel Production/Development에 `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` 추가
-- 05-06: GitHub Secrets에 Turso/Gemini 키 추가, data-sync workflow Turso 대응
+- 05-06: 운영 `/benefit` 최신 날짜(2026-05-05), `/api/benefits`, `/disclaimer`, sitemap 반영 확인
+- 05-06: Data Sync workflow 재활성화 및 수동 실행 성공, Turso/Gemini secrets 추가
 - 05-06: 면책조항/404 추가, 글 30개 생성, 블로그 상세 링크·schema·가독성 보강
 - 05-06: sitemap/RSS DB 장애 fallback, RSS favicon 경로 정리
 - 05-06: Turso 호환 DB 클라이언트와 SQLite 스키마 초기화 스크립트 추가
 ## TODO
-- [ ] 변경사항 커밋/푸시 후 Vercel 운영 배포 확인
-- [ ] `Data Sync (Scheduled)` workflow enable + 수동 실행 확인
-- [ ] 운영 `/benefit`, `/api/benefits`, `/sitemap.xml`, `/disclaimer` 최신 반영 확인
+- [ ] Preview 환경 Turso env는 필요 시 브랜치 지정 방식으로 별도 추가
 ## 결정사항
 - DB: 운영 웹과 자동 수집은 Turso env가 있으면 Turso 우선 사용
 - 수집 주기: GitHub Actions에서 매일 02:00 KST 증분 수집
