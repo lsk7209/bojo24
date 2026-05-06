@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import "dotenv/config";
+import "./loadScriptEnv";
 import { getServiceClient } from "@lib/supabaseClient";
 import { buildCanonicalUrl } from "@lib/site";
 import { validateEnv } from "@lib/env";
@@ -8,6 +8,7 @@ type PostRecord = {
   id: string;
   title: string;
   slug: string;
+  benefit_id: string | null;
   content: string | null;
   excerpt: string | null;
   published_at: string | null;
@@ -104,7 +105,8 @@ const fetchPosts = async () => {
   const supabase = getServiceClient();
   const { data, error } = await supabase
     .from("posts")
-    .select("id, title, slug, content, excerpt, published_at")
+    .select("id, title, slug, benefit_id, content, excerpt, published_at")
+    .eq("is_published", true)
     .order("created_at", { ascending: true });
 
   if (error) throw error;
@@ -127,6 +129,12 @@ const collectDuplicateTitles = (posts: PostRecord[]) => {
   return new Set([...counts].filter(([, count]) => count > 1).map(([title]) => title));
 };
 
+const collectDuplicateValues = (values: string[]) => {
+  const counts = new Map<string, number>();
+  values.filter(Boolean).forEach((value) => counts.set(value, (counts.get(value) ?? 0) + 1));
+  return new Set([...counts].filter(([, count]) => count > 1).map(([value]) => value));
+};
+
 const findFirstFutureSlug = (posts: PostRecord[]) =>
   posts.find((post) => new Date(post.published_at ?? 0) > new Date())?.slug;
 
@@ -137,9 +145,18 @@ async function main() {
   const posts = await fetchPosts();
   const scheduledPosts = selectScheduledBatch(posts, batchSize);
   const duplicateTitles = collectDuplicateTitles(posts);
+  const duplicateSlugs = collectDuplicateValues(posts.map((post) => post.slug));
+  const duplicatePublishTimes = collectDuplicateValues(scheduledPosts.map((post) => post.published_at ?? ""));
   const failedItems = scheduledPosts
     .map((post) => {
       const result = scorePost(post, duplicateTitles, getNearestSimilarity(post, posts));
+      addPenalty(result, duplicateSlugs.has(post.slug), 40, "slug 중복");
+      addPenalty(
+        result,
+        Boolean(post.published_at && duplicatePublishTimes.has(post.published_at)),
+        12,
+        "예약 시각 중복"
+      );
       return { slug: post.slug, title: post.title, score: result.score, issues: result.issues };
     })
     .filter((item) => item.score < MIN_SCORE);

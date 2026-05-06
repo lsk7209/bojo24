@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import "dotenv/config";
+import "./loadScriptEnv";
 import crypto from "crypto";
 import { getServiceClient } from "@lib/supabaseClient";
 import { buildCanonicalUrl } from "@lib/site";
@@ -26,6 +26,20 @@ type CliOptions = {
   posts: number;
   intervalHours: number;
   startDelayHours: number;
+};
+
+type ExistingPost = {
+  title: string;
+  slug: string;
+  benefit_id: string | null;
+  published_at: string | null;
+  created_at: string;
+  is_published: boolean | null;
+};
+
+type QualityResult = {
+  score: number;
+  issues: string[];
 };
 
 const TARGET_GROUPS = [
@@ -172,7 +186,8 @@ const buildTitlePlan = (
   benefits: BenefitRecord[],
   existingTitles: string[],
   existingBenefitIds: Set<string>,
-  total: number
+  total: number,
+  startIndex: number
 ) => {
   const groupCounts = new Map<string, number>();
   const plannedTitles = new Set<string>();
@@ -208,7 +223,7 @@ const buildTitlePlan = (
     plans.push({
       benefit,
       title: candidate.title,
-      slug: createSlug(benefit.id, intent, plans.length),
+      slug: createSlug(benefit.id, intent, startIndex + plans.length),
       category: group,
       intent,
       mainKeyword: benefit.name,
@@ -222,6 +237,61 @@ const buildTitlePlan = (
   }
 
   return plans;
+};
+
+const countMatches = (content: string, pattern: RegExp) => content.match(pattern)?.length ?? 0;
+
+const hasMojibake = (content: string) => /[�]|[?]{2,}|ì|ë|ê|í|ð/.test(content);
+
+const addPenalty = (result: QualityResult, condition: boolean, penalty: number, issue: string) => {
+  if (!condition) return;
+  result.score -= penalty;
+  result.issues.push(issue);
+};
+
+const scorePlannedArticle = (plan: TitlePlan, content: string): QualityResult => {
+  const result: QualityResult = { score: Math.min(100, plan.qualityScore), issues: [] };
+
+  addPenalty(result, plan.maxExistingSimilarity >= 0.72, 25, `제목 유사도 높음 ${plan.maxExistingSimilarity}`);
+  addPenalty(result, plan.title.length < 20 || plan.title.length > 60, 10, `제목 길이 ${plan.title.length}자`);
+  addPenalty(result, !plan.title.includes(compact(plan.mainKeyword, 12)), 10, "제목 메인 키워드 부족");
+  addPenalty(result, content.length < 1500, 18, `본문 길이 ${content.length}자`);
+  addPenalty(result, !content.includes("2026년 5월 기준"), 5, "기준일 문구 없음");
+  addPenalty(result, !content.includes("핵심 요약"), 8, "핵심 요약 없음");
+  addPenalty(result, !/\|.+\|/.test(content), 8, "확인 표 없음");
+  addPenalty(result, countMatches(content, /^\*\*Q\d\./gm) < 5, 10, "FAQ 5개 미만");
+  addPenalty(result, countMatches(content, /^## /gm) < 4, 8, "H2 섹션 4개 미만");
+  addPenalty(result, !content.includes("gov.kr"), 10, "공식 출처 링크 없음");
+  addPenalty(result, !content.includes("/benefit/"), 6, "내부 혜택 상세 링크 없음");
+  addPenalty(result, hasMojibake(`${plan.title}\n${content}`), 30, "문자 깨짐 의심");
+
+  return { score: Math.max(0, result.score), issues: result.issues };
+};
+
+const buildQualitySupplement = (plan: TitlePlan, issues: string[]) => `
+
+## 신청 전 최종 체크
+
+이 글의 핵심 키워드는 ${plan.mainKeyword}입니다. 함께 확인할 확장 키워드는 ${plan.expandedKeywords.join(", ")}이며, 신청 전에는 아래 순서로 다시 점검하는 편이 안전합니다.
+
+- 대상 조건과 제외 조건을 공식 안내에서 다시 확인
+- 신청 기한, 접수기관, 문의처를 따로 저장
+- 구비서류 원본과 추가 증빙 가능성을 함께 확인
+- 유사한 지원금을 받고 있다면 중복 제한 여부 확인
+
+보완 기준: ${issues.join(", ")}
+`;
+
+const createQualifiedArticle = (plan: TitlePlan, publishAt: Date) => {
+  let content = createArticle(plan, publishAt);
+  let result = scorePlannedArticle(plan, content);
+
+  for (let attempt = 1; attempt <= 3 && result.score < 85; attempt += 1) {
+    content = `${content}${buildQualitySupplement(plan, result.issues)}`;
+    result = scorePlannedArticle(plan, content);
+  }
+
+  return { content, quality: result };
 };
 
 const createArticle = (plan: TitlePlan, publishAt: Date) => {
@@ -344,30 +414,57 @@ const fetchExistingPosts = async () => {
   const supabase = getServiceClient();
   const { data, error } = await supabase
     .from("posts")
-    .select("title, benefit_id");
+    .select("title, slug, benefit_id, published_at, created_at, is_published");
 
   if (error) throw error;
 
-  return {
-    titles: (data ?? []).map((item) => item.title as string).filter(Boolean),
-    benefitIds: new Set((data ?? []).map((item) => item.benefit_id as string | null).filter(Boolean) as string[]),
-  };
+  return (data ?? []) as ExistingPost[];
 };
 
-const schedulePosts = async (plans: TitlePlan[], options: CliOptions) => {
+const selectRecentScheduledPosts = (posts: ExistingPost[], batchSize: number) =>
+  posts
+    .filter((post) => post.is_published && post.published_at)
+    .sort((a, b) => new Date(b.published_at ?? 0).getTime() - new Date(a.published_at ?? 0).getTime())
+    .slice(0, batchSize);
+
+const getLatestPublishTime = (posts: ExistingPost[]) =>
+  posts.reduce((latest, post) => {
+    const value = post.published_at ? new Date(post.published_at).getTime() : 0;
+    return Number.isFinite(value) && value > latest ? value : latest;
+  }, 0);
+
+const buildExistingIndex = (posts: ExistingPost[]) => ({
+  titles: posts.map((item) => item.title).filter(Boolean),
+  benefitIds: new Set(posts.map((item) => item.benefit_id).filter(Boolean) as string[]),
+});
+
+const schedulePosts = async (plans: TitlePlan[], options: CliOptions, existingPosts: ExistingPost[]) => {
   const supabase = getServiceClient();
-  const now = Date.now();
+  const existingSlugs = new Set(existingPosts.map((post) => post.slug).filter(Boolean));
+  const latestPublishTime = getLatestPublishTime(existingPosts);
+  const firstPublishTime = latestPublishTime
+    ? latestPublishTime + options.intervalHours * 60 * 60 * 1000
+    : Date.now() + options.startDelayHours * 60 * 60 * 1000;
 
   for (let index = 0; index < plans.length; index += 1) {
     const plan = plans[index];
-    const publishAt = new Date(
-      now + (options.startDelayHours + index * options.intervalHours) * 60 * 60 * 1000
-    );
-    const content = createArticle(plan, publishAt);
+    const publishAt = new Date(firstPublishTime + index * options.intervalHours * 60 * 60 * 1000);
+    const { content, quality } = createQualifiedArticle(plan, publishAt);
+
+    if (quality.score < 85) {
+      console.error(`품질 기준 미달: ${plan.title} / ${quality.score}점 / ${quality.issues.join(", ")}`);
+      continue;
+    }
+
     const contentHash = crypto
       .createHash("sha256")
       .update(`${plan.title}\n${content.slice(0, 1000)}\n${plan.benefit.id}`)
       .digest("hex");
+
+    if (existingSlugs.has(plan.slug)) {
+      console.error(`slug 중복으로 건너뜀: ${plan.slug}`);
+      continue;
+    }
 
     const payload = {
       benefit_id: plan.benefit.id,
@@ -388,9 +485,26 @@ const schedulePosts = async (plans: TitlePlan[], options: CliOptions) => {
           slug: plan.slug,
           publishAt: publishAt.toISOString(),
           qualityScore: plan.qualityScore,
+          articleQualityScore: quality.score,
           maxExistingSimilarity: plan.maxExistingSimilarity,
         })
       );
+      continue;
+    }
+
+    const { data: duplicateHash, error: duplicateHashError } = await supabase
+      .from("content_duplicates")
+      .select("content_id")
+      .eq("content_hash", contentHash)
+      .maybeSingle();
+
+    if (duplicateHashError) {
+      console.error(`해시 중복 조회 실패: ${plan.slug} / ${duplicateHashError.message}`);
+      continue;
+    }
+
+    if (duplicateHash) {
+      console.error(`본문 해시 중복으로 건너뜀: ${plan.slug} / existing=${duplicateHash.content_id}`);
       continue;
     }
 
@@ -418,21 +532,48 @@ async function main() {
   validateEnv(["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]);
 
   const options = parseCli();
-  const [benefits, existing] = await Promise.all([
-    fetchBenefits(Math.max(options.posts * 8, 1000)),
-    fetchExistingPosts(),
-  ]);
-  const plans = buildTitlePlan(benefits, existing.titles, existing.benefitIds, options.posts);
+  const existingPosts = await fetchExistingPosts();
+  const recentScheduledPosts = selectRecentScheduledPosts(existingPosts, options.posts);
+  const missingCount = Math.max(options.posts - recentScheduledPosts.length, 0);
 
-  console.log(`제목 계획: ${plans.length}/${options.posts}개 생성`);
-  const minScore = Math.min(...plans.map((plan) => plan.qualityScore));
+  console.log(
+    JSON.stringify(
+      {
+        requested: options.posts,
+        existingScheduledCohort: recentScheduledPosts.length,
+        missingCount,
+        action: missingCount === 0 ? "no_new_posts_required" : "create_missing_posts_only",
+      },
+      null,
+      2
+    )
+  );
+
+  if (missingCount === 0) {
+    return;
+  }
+
+  const [benefits, existing] = await Promise.all([
+    fetchBenefits(Math.max(missingCount * 8, 1000)),
+    Promise.resolve(buildExistingIndex(existingPosts)),
+  ]);
+  const plans = buildTitlePlan(
+    benefits,
+    existing.titles,
+    existing.benefitIds,
+    missingCount,
+    existingPosts.length
+  );
+
+  console.log(`제목 계획: ${plans.length}/${missingCount}개 생성`);
+  const minScore = plans.length > 0 ? Math.min(...plans.map((plan) => plan.qualityScore)) : 0;
   console.log(`최저 제목 품질 점수: ${minScore}`);
 
-  if (plans.length < options.posts) {
+  if (plans.length < missingCount) {
     console.warn(`요청 수량보다 적게 생성됐습니다. 생성 가능: ${plans.length}`);
   }
 
-  await schedulePosts(plans, options);
+  await schedulePosts(plans, options, existingPosts);
 }
 
 main().catch((error) => {
