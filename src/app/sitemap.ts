@@ -19,12 +19,18 @@ type PostSitemapRow = {
     published_at: string | null;
 };
 
+type StartupSitemapRow = {
+    id: string;
+    updated_at: string | null;
+    published_at: string | null;
+};
+
 const fetchSitemapRows = async () => {
     try {
         const db = getAnonClient();
         const now = new Date().toISOString();
 
-        const [{ data: benefits }, { data: posts }] = await Promise.all([
+        const [{ data: benefits }, { data: posts }, { data: startupItems }] = await Promise.all([
             db
                 .from("benefits")
                 .select("id, category, last_updated_at", { count: "exact" })
@@ -36,14 +42,20 @@ const fetchSitemapRows = async () => {
                 .eq("is_published", true)
                 .or(`published_at.is.null,published_at.lte.${now}`)
                 .order("published_at", { ascending: false, nullsFirst: false }),
+            db
+                .from("startup_items")
+                .select("id, updated_at, published_at")
+                .order("updated_at", { ascending: false })
+                .limit(1000),
         ]);
 
         return {
             benefits: (benefits ?? []) as BenefitSitemapRow[],
             posts: (posts ?? []) as PostSitemapRow[],
+            startupItems: (startupItems ?? []) as StartupSitemapRow[],
         };
     } catch {
-        return { benefits: [], posts: [] };
+        return { benefits: [], posts: [], startupItems: [] };
     }
 };
 
@@ -52,6 +64,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const staticRoutes = [
         { path: "", lastModified: UPDATED_AT, priority: 1.0, changeFrequency: "daily" as const },
         { path: "/benefit", lastModified: UPDATED_AT, priority: 0.9, changeFrequency: "daily" as const },
+        { path: "/startup", lastModified: UPDATED_AT, priority: 0.85, changeFrequency: "daily" as const },
         { path: "/blog", lastModified: UPDATED_AT, priority: 0.9, changeFrequency: "daily" as const },
         { path: "/about", lastModified: "2026-05-05", priority: 0.6, changeFrequency: "monthly" as const },
         { path: "/contact", lastModified: "2026-05-05", priority: 0.5, changeFrequency: "monthly" as const },
@@ -66,7 +79,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: route.priority,
     }));
 
-    const { benefits, posts } = await fetchSitemapRows();
+    const { benefits, posts, startupItems } = await fetchSitemapRows();
 
     const benefitRoutes =
         benefits.map((item) => ({
@@ -85,7 +98,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: 0.7,
         }));
 
-    const allRoutes = [...staticRoutes, ...benefitRoutes, ...postRoutes];
+    const startupRoutes = startupItems
+        .filter((item) => item.id)
+        .map((item) => ({
+            url: `${BASE_URL}/startup/${encodeURIComponent(item.id)}`,
+            lastModified: item.updated_at || item.published_at || UPDATED_AT,
+            changeFrequency: "daily" as const,
+            priority: 0.75,
+        }));
+
+    const allRoutes = [...staticRoutes, ...benefitRoutes, ...postRoutes, ...startupRoutes];
 
     return allRoutes;
 }

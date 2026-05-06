@@ -107,6 +107,29 @@ const statements = [
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(benefit_content_id, section_type)
   )`,
+  `CREATE TABLE IF NOT EXISTS startup_items (
+    id TEXT PRIMARY KEY,
+    source TEXT NOT NULL,
+    source_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    category TEXT,
+    organization TEXT,
+    status TEXT,
+    start_date TEXT,
+    end_date TEXT,
+    published_at TEXT,
+    updated_at TEXT,
+    url TEXT,
+    summary TEXT,
+    raw_json TEXT NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    synced_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(source, source_id)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_startup_items_source ON startup_items(source)`,
+  `CREATE INDEX IF NOT EXISTS idx_startup_items_title ON startup_items(title)`,
+  `CREATE INDEX IF NOT EXISTS idx_startup_items_updated ON startup_items(updated_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_startup_items_dates ON startup_items(start_date, end_date)`,
 ];
 
 async function main() {

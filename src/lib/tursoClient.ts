@@ -37,6 +37,7 @@ const JSON_COLUMNS = new Set([
   "tags",
   "metadata",
   "variables",
+  "raw_json",
 ]);
 
 const UPSERT_CONFLICTS: Record<string, string[]> = {
@@ -47,6 +48,7 @@ const UPSERT_CONFLICTS: Record<string, string[]> = {
   benefit_content: ["benefit_id", "content_type"],
   content_sections: ["benefit_content_id", "section_type"],
   seo_metadata: ["page_type", "page_id"],
+  startup_items: ["source", "source_id"],
 };
 
 const quoteIdent = (value: string) => `"${value.replace(/"/g, '""')}"`;

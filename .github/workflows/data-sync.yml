@@ -37,6 +37,19 @@ jobs:
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: npm run fetch:benefits:incremental
 
+      - name: Fetch Startup Data
+        continue-on-error: true
+        env:
+          PUBLICDATA_SERVICE_KEY_ENC: ${{ secrets.PUBLICDATA_SERVICE_KEY_ENC }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          STARTUP_FETCH_MAX_PAGES: "5"
+        run: |
+          npm run db:init:turso
+          npm run fetch:startup
+
   generate-gemini:
     name: Generate Gemini Summaries
     runs-on: ubuntu-latest

@@ -12,6 +12,7 @@
     "fetch:benefits:incremental": "tsx src/scripts/fetchBenefitsIncremental.ts",
     "fetch:welfare": "tsx src/scripts/fetchWelfareBenefits.ts",
     "fetch:welfare:private": "tsx src/scripts/fetchPrivateWelfareBenefits.ts",
+    "fetch:startup": "tsx src/scripts/fetchStartupData.ts",
     "db:init:turso": "tsx src/scripts/initTursoSchema.ts",
     "gen:gemini": "tsx src/scripts/geminiGenerate.ts",
     "gen:post": "tsx src/scripts/generateUniquePost.ts",
