@@ -123,7 +123,15 @@ DROP POLICY IF EXISTS "Admin full access page_views" ON page_views;
 
 -- 공개 읽기 정책
 CREATE POLICY "Public read benefits" ON benefits FOR SELECT USING (true);
-CREATE POLICY "Public read posts" ON posts FOR SELECT USING (is_published = true);
+CREATE POLICY "Public read posts" ON posts
+  FOR SELECT
+  USING (
+    is_published = true
+    AND (
+      published_at IS NULL
+      OR published_at <= NOW()
+    )
+  );
 CREATE POLICY "Public read seo_metadata" ON seo_metadata FOR SELECT USING (true);
 
 -- 공개 쓰기 정책 (페이지뷰 등)
