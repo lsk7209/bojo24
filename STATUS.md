@@ -1,6 +1,6 @@
 # Status | 마지막: 2026-05-06
 ## 현재 작업
-기업마당 CSV 97,794건 Turso 적재 완료. 사용자 승인으로 git/Vercel 배포 진행 중.
+기업마당 CSV 97,794건 Turso 적재 및 Vercel 배포 완료. 운영 필터/상세/콘솔 확인 완료.
 ## 최근 변경 (최근 5개만)
 - 05-06: 기업마당 CSV(`bizinfo_support`) 로컬 수집기 추가 및 로컬 화면 검증
 - 05-06: K-Startup/MSS 수집 정상화, XML/JSON 필드 정규화, 상세 페이지 정리형 UI로 변경
@@ -8,7 +8,6 @@
 - 05-06: `/startup`, `/api/startup`, `startup_items`, `fetch:startup` 추가 후 프로덕션 배포 확인
 - 05-06: 운영 `/benefit`, `/api/benefits`, `/disclaimer`, sitemap 반영 확인
 ## TODO
-- [ ] 기업마당 CSV 연동 배포 후 운영 `/startup?source=bizinfo_support` 확인
 - [ ] Preview 환경 Turso env가 필요하면 브랜치 지정 방식으로 별도 추가
 ## 결정사항
 - DB: 운영 읽기와 자동 수집은 Turso env가 있으면 Turso 우선 사용
