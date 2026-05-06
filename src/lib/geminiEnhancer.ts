@@ -34,7 +34,7 @@ function isGeminiEnhancementEnabled(benefitId?: string): boolean {
     : [];
   
   // 전역 활성화 또는 특정 ID에 포함된 경우만 활성화
-  return Boolean(globalEnabled || (benefitId && allowedIds.includes(benefitId)));
+  return Boolean(globalEnabled && (allowedIds.length === 0 || (benefitId && allowedIds.includes(benefitId))));
 }
 
 function initGemini() {

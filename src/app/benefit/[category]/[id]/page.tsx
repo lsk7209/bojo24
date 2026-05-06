@@ -15,12 +15,15 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { SectionHeader } from "@components/section-header";
+import { unstable_cache } from "next/cache";
 
 type PageParams = {
   params: Promise<{ category: string; id: string }>;
 };
 
-const fetchBenefit = async (id: string) => {
+export const revalidate = 86400;
+
+const fetchBenefit = unstable_cache(async (id: string) => {
   const supabase = getServiceClient();
   const { data } = await supabase
     .from("benefits")
@@ -28,7 +31,11 @@ const fetchBenefit = async (id: string) => {
     .eq("id", id)
     .maybeSingle();
   return data as BenefitRecord | null;
-};
+}, ["benefit-detail"], { revalidate: 86400 });
+
+const getOptimizedContent = unstable_cache(optimizeBenefitContent, ["benefit-optimized-content"], {
+  revalidate: 86400,
+});
 
 export const generateMetadata = async ({
   params
@@ -182,7 +189,7 @@ export default async function BenefitDetailPage({ params }: PageParams) {
   
   // 공공데이터 기반 최적화된 컨텐츠 구조 생성
   // 특정 보조금 ID에 대해서만 Gemini 보완 가능 (환경 변수로 제어)
-  const optimizedContent = await optimizeBenefitContent(
+  const optimizedContent = await getOptimizedContent(
     benefit.name,
     benefit.category || "정부 지원금",
     benefit.governing_org || "정부 기관",
