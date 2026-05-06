@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR } from "next/font/google";
-import Script from "next/script";
 import { Header, Footer } from "@components/layout-common";
 import { AnalyticsTracker } from "@components/analytics-tracker";
 import { DynamicHead } from "@components/dynamic-head";
@@ -64,12 +63,11 @@ export default function RootLayout({
     <html lang="ko" className={notoSansKr.className}>
       <head>
         <GoogleAnalytics />
-        <Script
+        <script
           id="adsense-loader"
           async
           src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
           crossOrigin="anonymous"
-          strategy="afterInteractive"
         />
         {/* 관리자 설정 동적 스크립트 */}
         <DynamicHead />
