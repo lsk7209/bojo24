@@ -1,5 +1,6 @@
 export type StartupSource =
   | "mss_biz"
+  | "bizinfo_support"
   | "kstartup_announcement"
   | "kstartup_business"
   | "kstartup_content"

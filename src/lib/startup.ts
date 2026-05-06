@@ -3,6 +3,7 @@ import type { StartupItem, StartupSource } from "@/types/startup";
 
 export const STARTUP_SOURCE_LABELS: Record<StartupSource, string> = {
   mss_biz: "중소벤처기업부 사업공고",
+  bizinfo_support: "기업마당 지원사업",
   kstartup_announcement: "K-Startup 사업공고",
   kstartup_business: "K-Startup 사업소개",
   kstartup_content: "K-Startup 콘텐츠",
@@ -75,6 +76,8 @@ export const stableStartupId = (source: StartupSource, raw: Record<string, unkno
     "pbanc_sn",
     "itemId",
     "item_id",
+    "pblancId",
+    "번호",
     "pbancSn",
     "contentId",
     "businessId",

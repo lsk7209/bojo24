@@ -14,6 +14,7 @@ type SearchParams = {
 const SOURCES: { value: "all" | StartupSource; label: string }[] = [
   { value: "all", label: "전체" },
   { value: "mss_biz", label: "중기부 사업공고" },
+  { value: "bizinfo_support", label: "기업마당 지원사업" },
   { value: "kstartup_announcement", label: "K-Startup 공고" },
   { value: "kstartup_business", label: "K-Startup 사업소개" },
   { value: "kstartup_content", label: "K-Startup 콘텐츠" },

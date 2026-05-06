@@ -79,8 +79,8 @@ const detailRows = (item: StartupItem) => {
   return [
     ["신청 대상", getRawText(raw, ["aply_trgt_ctnt", "aply_trgt", "biz_supt_trgt_info", "dataContents"])],
     ["지원 내용", getRawText(raw, ["biz_supt_ctnt", "supt_biz_intrd_info", "pbanc_ctnt", "ctnt", "dataContents"]) || item.summary || ""],
-    ["신청 방법", getRawText(raw, ["aply_mthd_onli_rcpt_istc", "biz_aply_url", "viewUrl", "detl_pg_url"])],
-    ["담당 부서", getRawText(raw, ["biz_prch_dprt_nm", "writerPosition", "pbanc_ntrp_nm", "sprv_inst"]) || item.organization || ""],
+    ["신청 방법", getRawText(raw, ["aply_mthd_onli_rcpt_istc", "biz_aply_url", "viewUrl", "detl_pg_url", "상세URL"])],
+    ["담당 부서", getRawText(raw, ["biz_prch_dprt_nm", "writerPosition", "pbanc_ntrp_nm", "sprv_inst", "소관기관", "수행기관"]) || item.organization || ""],
     ["문의처", getRawText(raw, ["prch_cnpl_no", "writerPhone", "writerEmail"])],
     ["지원 지역", getRawText(raw, ["supt_regin"])],
   ].filter((entry): entry is [string, string] => Boolean(entry[1]));

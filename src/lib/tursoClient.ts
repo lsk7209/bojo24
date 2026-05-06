@@ -358,26 +358,30 @@ class TursoQueryBuilder<T = unknown> implements PromiseLike<QueryResult<T>> {
     const client = getClient();
     const inserted: Record<string, unknown>[] = [];
 
-    for (const row of values) {
-      const columns = Object.keys(row);
-      const args = columns.map((column) => serializeValue(row[column]));
-      const conflict = UPSERT_CONFLICTS[this.table];
-      const updateSql =
-        mutation.type === "upsert" && conflict
-          ? ` ON CONFLICT (${conflict.map(quoteIdent).join(", ")}) DO UPDATE SET ${columns
-              .filter((column) => !conflict.includes(column))
-              .map((column) => `${quoteIdent(column)} = excluded.${quoteIdent(column)}`)
-              .join(", ")}`
-          : "";
-      const verb = mutation.type === "upsert" && !conflict ? "INSERT OR REPLACE" : "INSERT";
-      await client.execute({
-        sql: `${verb} INTO ${quoteIdent(this.table)} (${columns.map(quoteIdent).join(", ")}) VALUES (${columns
-          .map(() => "?")
-          .join(", ")})${updateSql}`,
-        args,
-      });
-      inserted.push(row);
-    }
+    const columns = Array.from(new Set(values.flatMap((row) => Object.keys(row))));
+    const args = values.flatMap((row) => columns.map((column) => serializeValue(row[column])));
+    const conflict = UPSERT_CONFLICTS[this.table];
+    const updateColumns = columns.filter((column) => !conflict?.includes(column));
+    const updateSql =
+      mutation.type === "upsert" && conflict
+        ? ` ON CONFLICT (${conflict.map(quoteIdent).join(", ")}) ${
+            updateColumns.length > 0
+              ? `DO UPDATE SET ${updateColumns
+                  .map((column) => `${quoteIdent(column)} = excluded.${quoteIdent(column)}`)
+                  .join(", ")}`
+              : "DO NOTHING"
+          }`
+        : "";
+    const verb = mutation.type === "upsert" && !conflict ? "INSERT OR REPLACE" : "INSERT";
+    const valueSql = values
+      .map(() => `(${columns.map(() => "?").join(", ")})`)
+      .join(", ");
+
+    await client.execute({
+      sql: `${verb} INTO ${quoteIdent(this.table)} (${columns.map(quoteIdent).join(", ")}) VALUES ${valueSql}${updateSql}`,
+      args,
+    });
+    inserted.push(...values);
 
     if (this.wantsSingle) return { data: inserted[0] as T, error: null };
     return { data: inserted as T, error: null };

@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import "./loadScriptEnv";
+import { existsSync, readFileSync } from "node:fs";
 import { getServiceClient } from "@lib/supabaseClient";
 import { env, validateEnv } from "@lib/env";
 import { findFirstString, stableStartupId } from "@lib/startup";
@@ -21,6 +22,8 @@ type SourceConfig = {
 const serviceKey = decodeURIComponent(env.PUBLICDATA_SERVICE_KEY_ENC);
 const delayMs = Number(process.env.STARTUP_FETCH_DELAY_MS || 600);
 const defaultMaxPages = Number(process.env.STARTUP_FETCH_MAX_PAGES || 5);
+const defaultBizinfoCsvPath = "D:\\다운로드\\중소벤처기업부_중소기업지원사업목록_20250331.csv";
+const bizinfoCsvPath = process.env.BIZINFO_SUPPORT_CSV_PATH || defaultBizinfoCsvPath;
 
 const sources: SourceConfig[] = [
   {
@@ -87,6 +90,64 @@ const decodeXml = (value: string) =>
     .replace(/&#39;/g, "'");
 
 const stripTags = (value: string) => decodeXml(value).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+
+const parseCsv = (content: string) => {
+  const rows: string[][] = [];
+  let field = "";
+  let row: string[] = [];
+  let inQuotes = false;
+
+  for (let index = 0; index < content.length; index += 1) {
+    const char = content[index];
+    const next = content[index + 1];
+
+    if (char === '"' && inQuotes && next === '"') {
+      field += '"';
+      index += 1;
+      continue;
+    }
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+    if (char === "," && !inQuotes) {
+      row.push(field.trim());
+      field = "";
+      continue;
+    }
+    if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && next === "\n") index += 1;
+      row.push(field.trim());
+      if (row.some(Boolean)) rows.push(row);
+      row = [];
+      field = "";
+      continue;
+    }
+    field += char;
+  }
+
+  row.push(field.trim());
+  if (row.some(Boolean)) rows.push(row);
+  return rows;
+};
+
+const rowsFromCsv = (filePath: string) => {
+  if (!existsSync(filePath)) {
+    console.log(`bizinfo_support: CSV file not found, skipped (${filePath})`);
+    return [];
+  }
+
+  const content = new TextDecoder("euc-kr").decode(readFileSync(filePath));
+  const [headers, ...records] = parseCsv(content);
+  if (!headers) return [];
+
+  return records.map((record) => {
+    const row = Object.fromEntries(headers.map((header, index) => [header, record[index] || ""]));
+    const url = row["상세URL"] || "";
+    const pblancId = url.match(/[?&]pblancId=([^&]+)/)?.[1];
+    return pblancId ? { ...row, pblancId } : row;
+  });
+};
 
 const parseXmlItems = (xml: string) => {
   const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
@@ -166,28 +227,31 @@ const normalizeRow = (source: StartupSource, raw: Record<string, unknown>): Star
     "intg_pbanc_biz_nm",
     "supt_biz_titl_nm",
     "titl_nm",
+    "사업명",
     "사업공고명",
     "통합공고사업명",
     "제목명",
     "공고명",
-    "사업명",
   ]);
   if (!title) return null;
 
   const { id, sourceId } = stableStartupId(source, raw);
-  const startDate = pickDate(raw, ["startDate", "pbancRcptBgngDt", "pbanc_rcpt_bgng_dt", "receptStartDt", "공고접수시작일시", "공고시작일"]);
-  const endDate = pickDate(raw, ["endDate", "pbancRcptEndDt", "pbanc_rcpt_end_dt", "receptEndDt", "공고접수종료일시", "공고종료일"]);
-  const publishedAt = pickDate(raw, ["createdAt", "regDt", "fstm_reg_dt", "creatPnttm", "writngDe", "등록일시", "작성일"]);
+  const startDate = pickDate(raw, ["startDate", "pbancRcptBgngDt", "pbanc_rcpt_bgng_dt", "receptStartDt", "신청시작일자", "공고접수시작일시", "공고시작일"]);
+  const endDate = pickDate(raw, ["endDate", "pbancRcptEndDt", "pbanc_rcpt_end_dt", "receptEndDt", "신청종료일자", "공고접수종료일시", "공고종료일"]);
+  const publishedAt = pickDate(raw, ["createdAt", "regDt", "fstm_reg_dt", "creatPnttm", "writngDe", "등록일자", "등록일시", "작성일"]);
   const updatedAt = pickDate(raw, ["updatedAt", "modDt", "last_mdfcn_dt", "updtPnttm", "수정일시", "변경일"]);
+  const now = new Date();
+  const end = endDate ? new Date(endDate) : null;
+  const derivedStatus = end && !Number.isNaN(end.getTime()) ? (end < now ? "마감" : "모집중") : null;
 
   return {
     id,
     source,
     source_id: sourceId,
     title,
-    category: findFirstString(raw, ["category", "bizCategory", "suptBizClsfc", "supt_biz_clsfc", "biz_category_cd", "clss_cd", "지원사업분류", "구분코드"]) || null,
-    organization: findFirstString(raw, ["organization", "jrsdInsttNm", "suptInsttNm", "pbanc_ntrp_nm", "biz_prch_dprt_nm", "sprv_inst", "agency", "수행기관", "소관기관명", "작성자"]) || null,
-    status: findFirstString(raw, ["status", "recruitStatus", "rcrt_prgs_yn", "pbancSttsCd", "모집 진행 여부", "신청상태"]) || null,
+    category: findFirstString(raw, ["category", "bizCategory", "suptBizClsfc", "supt_biz_clsfc", "biz_category_cd", "clss_cd", "분야", "지원사업분류", "구분코드"]) || null,
+    organization: findFirstString(raw, ["organization", "jrsdInsttNm", "suptInsttNm", "pbanc_ntrp_nm", "biz_prch_dprt_nm", "sprv_inst", "agency", "소관기관", "수행기관", "소관기관명", "작성자"]) || null,
+    status: findFirstString(raw, ["status", "recruitStatus", "rcrt_prgs_yn", "pbancSttsCd", "모집 진행 여부", "신청상태"]) || derivedStatus,
     start_date: startDate || null,
     end_date: endDate || null,
     published_at: publishedAt || null,
@@ -234,9 +298,28 @@ async function runSource(source: SourceConfig) {
   return { source: source.source, collected: collected.length, saved };
 }
 
+async function runBizinfoCsv() {
+  const rows = rowsFromCsv(bizinfoCsvPath);
+  const collected = rows
+    .map((row) => normalizeRow("bizinfo_support", row))
+    .filter((item): item is StartupItem => item !== null);
+  const saved = await upsertRows(collected);
+  console.log(`bizinfo_support: ${collected.length} rows`);
+  return { source: "bizinfo_support" as StartupSource, collected: collected.length, saved };
+}
+
 async function main() {
   const results = [];
   const errors = [];
+
+  try {
+    results.push(await runBizinfoCsv());
+  } catch (error) {
+    errors.push({
+      source: "bizinfo_support",
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
 
   for (const source of sources) {
     try {
