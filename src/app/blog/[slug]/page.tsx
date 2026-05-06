@@ -45,6 +45,20 @@ const buildDescription = (content: string) => {
 const estimateReadMinutes = (content: string) =>
   Math.max(3, Math.ceil(stripMarkdown(content).length / 650));
 
+const extractFaqItems = (content: string) => {
+  const faqSection =
+    content.match(/##\s+[^\n]*(?:FAQ|자주 묻는 질문)[^\n]*\n([\s\S]*?)(?=\n##\s+|$)/i)?.[1] ?? "";
+  if (!faqSection) return [];
+
+  return [...faqSection.matchAll(/\*\*Q\d+\.\s*(.*?)\*\*\s*(?: {2})?\r?\n([\s\S]*?)(?=\r?\n\*\*Q\d+\.|$)/g)]
+    .map((match) => ({
+      question: stripMarkdown(match[1] ?? ""),
+      answer: stripMarkdown(match[2] ?? ""),
+    }))
+    .filter((item) => item.question && item.answer)
+    .slice(0, 5);
+};
+
 const fetchPost = async (routeSlug: string) => {
   const supabase = getAnonClient();
   const now = new Date().toISOString();
@@ -165,6 +179,22 @@ export default async function BlogPostPage({ params }: PageParams) {
       { "@type": "ListItem", position: 3, name: post.title, item: canonicalUrl },
     ],
   };
+  const faqItems = extractFaqItems(post.content);
+  const faqJsonLd = faqItems.length
+    ? {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: faqItems.map((item) => ({
+          "@type": "Question",
+          name: item.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: item.answer,
+          },
+        })),
+      }
+    : null;
+  const structuredData = [articleJsonLd, breadcrumbJsonLd, faqJsonLd].filter(Boolean);
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-24 pt-8">
@@ -289,7 +319,7 @@ export default async function BlogPostPage({ params }: PageParams) {
         </Link>
       </div>
 
-      {[articleJsonLd, breadcrumbJsonLd].map((data, index) => (
+      {structuredData.map((data, index) => (
         <script
           key={index}
           type="application/ld+json"
