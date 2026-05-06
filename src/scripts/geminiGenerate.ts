@@ -9,6 +9,8 @@ import type { BenefitRecord } from "@/types/benefit";
 validateEnv(['GEMINI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']);
 
 const BATCH_LIMIT = 20;
+const GEMINI_RETRIES = Number(process.env.GEMINI_RETRIES || 3);
+const GEMINI_RETRY_DELAY_MS = Number(process.env.GEMINI_RETRY_DELAY_MS || 3000);
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 // Gemini 2.5 Flash Lite 모델 사용 (최신 모델, 빠르고 효율적)
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
@@ -67,6 +69,31 @@ const parseResponse = (text: string) => {
   }
 };
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const isRetryableError = (error: unknown) => {
+  const status = typeof error === "object" && error !== null && "status" in error
+    ? Number((error as { status?: number }).status)
+    : 0;
+  const message = error instanceof Error ? error.message : String(error);
+  return status === 429 || status === 500 || status === 503 || /high demand|unavailable|rate/i.test(message);
+};
+
+const generateContentWithRetry = async (prompt: string) => {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= GEMINI_RETRIES; attempt += 1) {
+    try {
+      return await model.generateContent(prompt);
+    } catch (error) {
+      lastError = error;
+      if (attempt >= GEMINI_RETRIES || !isRetryableError(error)) break;
+      console.warn(`Gemini retry ${attempt + 1}/${GEMINI_RETRIES} after transient error`);
+      await sleep(GEMINI_RETRY_DELAY_MS * (attempt + 1));
+    }
+  }
+  throw lastError;
+};
+
 const fetchTargets = async () => {
   const supabase = getServiceClient();
   const { data, error } = await supabase
@@ -87,7 +114,7 @@ const updateGemini = async (rows: BenefitRecord[]) => {
   for (const row of rows) {
     try {
       const prompt = buildPrompt(row);
-      const result = await model.generateContent(prompt);
+      const result = await generateContentWithRetry(prompt);
       const text = result.response.text() ?? "";
       const parsed = parseResponse(text);
 
@@ -112,7 +139,7 @@ const updateGemini = async (rows: BenefitRecord[]) => {
       console.error(`[실패] ${row.id}`, err);
     }
     // Rate Limit 방지용 딜레이
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await sleep(1500);
   }
   return { success, failed };
 };

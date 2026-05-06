@@ -48,6 +48,8 @@ jobs:
           # 빌드 시 필요한 최소 환경 변수 (실제 값은 사용하지 않음)
           SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://placeholder.supabase.co' }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'placeholder' }}
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL || '' }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN || '' }}
           NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL || 'https://bojo24.vercel.app' }}
 
   # Vercel 배포는 Vercel GitHub Integration을 통해 자동으로 처리됩니다.
