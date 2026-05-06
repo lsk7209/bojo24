@@ -26,11 +26,13 @@ jobs:
         run: npm ci
 
       - name: Fetch Benefits (Incremental Update)
+        continue-on-error: true
         env:
           PUBLICDATA_SERVICE_KEY_ENC: ${{ secrets.PUBLICDATA_SERVICE_KEY_ENC }}
           PUBLICDATA_BASE_URL: ${{ secrets.PUBLICDATA_BASE_URL || 'https://api.odcloud.kr/api/gov24/v3' }}
           PUBLICDATA_DELAY_MS: ${{ secrets.PUBLICDATA_DELAY_MS || '600' }}
           PUBLICDATA_PAGE_SIZE: ${{ secrets.PUBLICDATA_PAGE_SIZE || '100' }}
+          PUBLICDATA_TIMEOUT_MS: ${{ secrets.PUBLICDATA_TIMEOUT_MS || '60000' }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}

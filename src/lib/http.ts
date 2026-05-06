@@ -20,12 +20,14 @@ type FetchOptions = {
 const withTimeout = async (url: string, timeoutMs = 15000) => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
-  const res = await fetch(url, {
-    headers: { Accept: "application/json" },
-    signal: controller.signal
-  });
-  clearTimeout(timer);
-  return res;
+  try {
+    return await fetch(url, {
+      headers: { Accept: "application/json" },
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(timer);
+  }
 };
 
 export const fetchJson = async <T>(

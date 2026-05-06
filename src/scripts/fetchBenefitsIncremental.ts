@@ -17,6 +17,7 @@ const BASE_URL = env.PUBLICDATA_BASE_URL;
 const SERVICE_KEY = decodeURIComponent(env.PUBLICDATA_SERVICE_KEY_ENC);
 const PAGE_SIZE = env.PUBLICDATA_PAGE_SIZE;
 const FETCH_DELAY = env.PUBLICDATA_DELAY_MS;
+const FETCH_TIMEOUT_MS = Number(process.env.PUBLICDATA_TIMEOUT_MS || 60000);
 const DETAIL_BATCH_SIZE = 30;
 const UPSERT_BATCH_SIZE = 200;
 
@@ -44,7 +45,8 @@ const fetchServiceList = async (page: number): Promise<ApiEnvelope<ServiceListIt
   const url = buildUrl("serviceList", { page, perPage: PAGE_SIZE });
   return fetchJson<ApiEnvelope<ServiceListItem>>(url, {
     delayMs: FETCH_DELAY,
-    retries: 2,
+    timeoutMs: FETCH_TIMEOUT_MS,
+    retries: 4,
   });
 };
 
@@ -56,7 +58,8 @@ const fetchServiceDetail = async (serviceId: string): Promise<ServiceDetailItem 
   });
   const res = await fetchJson<ApiEnvelope<ServiceDetailItem>>(url, {
     delayMs: FETCH_DELAY,
-    retries: 2,
+    timeoutMs: FETCH_TIMEOUT_MS,
+    retries: 4,
   });
   return res.data?.[0] ?? null;
 };
@@ -69,7 +72,8 @@ const fetchSupportConditions = async (serviceId: string): Promise<SupportConditi
   });
   const res = await fetchJson<ApiEnvelope<SupportConditionsItem>>(url, {
     delayMs: FETCH_DELAY,
-    retries: 2,
+    timeoutMs: FETCH_TIMEOUT_MS,
+    retries: 4,
   });
   return res.data?.[0] ?? null;
 };
