@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * 특정 보조금 페이지들을 Gemini로 재생성하는 스크립트
  * 

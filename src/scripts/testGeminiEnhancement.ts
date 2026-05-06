@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Gemini 보완 기능 테스트 스크립트
  * 특정 보조금의 공공데이터를 Gemini로 보완하여 확인
