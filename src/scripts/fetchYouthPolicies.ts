@@ -50,6 +50,7 @@ const API_URL = "https://www.youthcenter.go.kr/go/ythip/getPlcy";
 const PAGE_SIZE = Number(process.env.YOUTHCENTER_PAGE_SIZE || 100);
 const MAX_PAGES = Number(process.env.YOUTHCENTER_MAX_PAGES || 30);
 const DELAY_MS = Number(process.env.YOUTHCENTER_DELAY_MS || 400);
+const FETCH_RETRIES = Number(process.env.YOUTHCENTER_FETCH_RETRIES || 4);
 const UPSERT_BATCH_SIZE = 200;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -91,21 +92,35 @@ const buildUrl = (apiKey: string, pageNum: number) => {
   return url;
 };
 
-const fetchPage = async (apiKey: string, pageNum: number) => {
-  const response = await fetch(buildUrl(apiKey, pageNum), {
-    headers: { Accept: "application/json" },
-  });
-  const text = await response.text();
+const fetchPageOnce = async (apiKey: string, pageNum: number) => {
+  const response = await fetch(buildUrl(apiKey, pageNum), { headers: { Accept: "application/json" } });
+  const body = await response.text();
 
   if (!response.ok) {
-    throw new Error(`YouthCenter API ${response.status}: ${text.slice(0, 200)}`);
+    throw new Error(`YouthCenter API ${response.status}: ${body.slice(0, 200)}`);
   }
 
-  const payload = JSON.parse(text) as YouthPolicyResponse;
+  const payload = JSON.parse(body) as YouthPolicyResponse;
   if (payload.resultCode && Number(payload.resultCode) !== 200) {
     throw new Error(`YouthCenter API error ${payload.resultCode}: ${payload.resultMessage || "unknown"}`);
   }
   return payload;
+};
+
+const fetchPage = async (apiKey: string, pageNum: number) => {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= FETCH_RETRIES; attempt += 1) {
+    try {
+      return await fetchPageOnce(apiKey, pageNum);
+    } catch (error) {
+      lastError = error;
+      if (attempt >= FETCH_RETRIES) break;
+      const backoffMs = DELAY_MS * (attempt + 2);
+      console.warn(`youthcenter: retry ${attempt + 1}/${FETCH_RETRIES} for page ${pageNum}`);
+      await sleep(backoffMs);
+    }
+  }
+  throw lastError;
 };
 
 const toBenefitRecord = (policy: YouthPolicy): BenefitRecord | null => {
@@ -194,13 +209,19 @@ const upsertRecords = async (records: BenefitRecord[]) => {
 
 async function main() {
   const apiKey = requireApiKey();
-  const records: BenefitRecord[] = [];
   const firstPage = await fetchPage(apiKey, 1);
   const totalCount = firstPage.result?.pagging?.totCount ?? 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
   const pagesToFetch = Math.min(Math.max(totalPages, 1), MAX_PAGES);
+  let fetched = 0;
+  let saved = 0;
 
-  records.push(...(firstPage.result?.youthPolicyList ?? []).map(toBenefitRecord).filter((item): item is BenefitRecord => item !== null));
+  const firstRecords = (firstPage.result?.youthPolicyList ?? [])
+    .map(toBenefitRecord)
+    .filter((item): item is BenefitRecord => item !== null);
+  fetched += firstRecords.length;
+  saved += await upsertRecords(firstRecords);
+  console.log(`youthcenter: 1/${pagesToFetch} page, ${firstRecords.length} rows`);
 
   for (let page = 2; page <= pagesToFetch; page += 1) {
     await sleep(DELAY_MS);
@@ -208,12 +229,12 @@ async function main() {
     const pageRecords = (payload.result?.youthPolicyList ?? [])
       .map(toBenefitRecord)
       .filter((item): item is BenefitRecord => item !== null);
-    records.push(...pageRecords);
+    fetched += pageRecords.length;
+    saved += await upsertRecords(pageRecords);
     console.log(`youthcenter: ${page}/${pagesToFetch} page, ${pageRecords.length} rows`);
   }
 
-  const saved = await upsertRecords(records);
-  console.log(JSON.stringify({ source: "youthcenter", totalCount, fetched: records.length, saved }, null, 2));
+  console.log(JSON.stringify({ source: "youthcenter", totalCount, fetched, saved }, null, 2));
 }
 
 main().catch((error) => {
