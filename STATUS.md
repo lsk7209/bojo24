@@ -1,16 +1,17 @@
 # Status | 마지막: 2026-05-06
 ## 현재 작업
-200개 예약 글 중복 방지·품질 감사 자동화 보강 완료
+Turso 사용 지적 반영, 잘못된 Supabase RLS 작업 롤백 완료
 ## 최근 변경 (최근 5개만)
+- 05-06: Supabase RLS 수정 커밋은 Turso 실제 사용 지적에 따라 롤백
 - 05-06: 예약 글 200개 코호트 확인, 부족분만 생성하도록 스크립트 보강
 - 05-06: `.env.local` 자동 로딩과 제목/본문 품질 감사 기준 강화
 - 05-06: 실행용 스크립트 `console` 출력은 CLI 용도로 명시하고 lint warning 0건 확인
 - 05-06: Gemini/혜택 콘텐츠 런타임 로그를 개발 환경에서만 출력하도록 정리
-- 05-06: 사이트맵 1,076개 URL 전체 200 확인, 중복 URL 0건
 ## TODO
 - [ ] GSC가 새 사이트맵을 다시 읽은 뒤 발견 URL 수 반영 확인
 - [ ] AdSense `bojo24.kr` GETTING_READY 해소 확인
 - [ ] AdSense 결제 계정 확인 알림 처리
+- [ ] Turso 연결 정보와 현재 Supabase 의존 코드 정합성 확인
 ## 결정사항
 - 정규 도메인: `https://www.bojo24.kr/` 사용, 주요 서비스가 www로 리다이렉트되기 때문
 - 검색 알림: 일반 글은 sitemap/GSC + IndexNow 중심, Google Indexing API는 지원 범위 제한
