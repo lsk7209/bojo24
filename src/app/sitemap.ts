@@ -6,6 +6,8 @@ import { buildPostPath } from "@lib/postRouting";
 const BASE_URL = publicEnv.NEXT_PUBLIC_SITE_URL || "https://www.bojo24.kr";
 const UPDATED_AT = "2026-05-06";
 
+export const revalidate = 3600;
+
 type BenefitSitemapRow = {
     id: string;
     category: string | null;
@@ -45,7 +47,7 @@ const fetchSitemapRows = async () => {
             db
                 .from("startup_items")
                 .select("id, updated_at, published_at")
-                .order("updated_at", { ascending: false })
+                .order("updated_at", { ascending: false, nullsFirst: false })
                 .limit(1000),
         ]);
 

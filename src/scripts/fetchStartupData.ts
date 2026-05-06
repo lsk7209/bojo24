@@ -86,7 +86,7 @@ const decodeXml = (value: string) =>
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'");
 
-const stripTags = (value: string) => decodeXml(value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+const stripTags = (value: string) => decodeXml(value).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
 const parseXmlItems = (xml: string) => {
   const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
@@ -128,6 +128,8 @@ const buildUrl = (source: SourceConfig, page: number) => {
   url.searchParams.set(source.sizeParam, String(source.pageSize));
   if (source.format === "json") {
     url.searchParams.set("returnType", "JSON");
+  } else {
+    url.searchParams.set("_type", "xml");
   }
   return url;
 };
@@ -160,6 +162,10 @@ const normalizeRow = (source: StartupSource, raw: Record<string, unknown>): Star
     "contentTitle",
     "ttl",
     "subject",
+    "biz_pbanc_nm",
+    "intg_pbanc_biz_nm",
+    "supt_biz_titl_nm",
+    "titl_nm",
     "사업공고명",
     "통합공고사업명",
     "제목명",
@@ -169,25 +175,25 @@ const normalizeRow = (source: StartupSource, raw: Record<string, unknown>): Star
   if (!title) return null;
 
   const { id, sourceId } = stableStartupId(source, raw);
-  const startDate = pickDate(raw, ["startDate", "pbancRcptBgngDt", "receptStartDt", "공고접수시작일시", "공고시작일"]);
-  const endDate = pickDate(raw, ["endDate", "pbancRcptEndDt", "receptEndDt", "공고접수종료일시", "공고종료일"]);
-  const publishedAt = pickDate(raw, ["createdAt", "regDt", "creatPnttm", "writngDe", "등록일시", "작성일"]);
-  const updatedAt = pickDate(raw, ["updatedAt", "modDt", "updtPnttm", "수정일시", "변경일"]);
+  const startDate = pickDate(raw, ["startDate", "pbancRcptBgngDt", "pbanc_rcpt_bgng_dt", "receptStartDt", "공고접수시작일시", "공고시작일"]);
+  const endDate = pickDate(raw, ["endDate", "pbancRcptEndDt", "pbanc_rcpt_end_dt", "receptEndDt", "공고접수종료일시", "공고종료일"]);
+  const publishedAt = pickDate(raw, ["createdAt", "regDt", "fstm_reg_dt", "creatPnttm", "writngDe", "등록일시", "작성일"]);
+  const updatedAt = pickDate(raw, ["updatedAt", "modDt", "last_mdfcn_dt", "updtPnttm", "수정일시", "변경일"]);
 
   return {
     id,
     source,
     source_id: sourceId,
     title,
-    category: findFirstString(raw, ["category", "bizCategory", "suptBizClsfc", "지원사업분류", "구분코드"]) || null,
-    organization: findFirstString(raw, ["organization", "jrsdInsttNm", "suptInsttNm", "agency", "수행기관", "소관기관명", "작성자"]) || null,
-    status: findFirstString(raw, ["status", "recruitStatus", "pbancSttsCd", "모집 진행 여부", "신청상태"]) || null,
+    category: findFirstString(raw, ["category", "bizCategory", "suptBizClsfc", "supt_biz_clsfc", "biz_category_cd", "clss_cd", "지원사업분류", "구분코드"]) || null,
+    organization: findFirstString(raw, ["organization", "jrsdInsttNm", "suptInsttNm", "pbanc_ntrp_nm", "biz_prch_dprt_nm", "sprv_inst", "agency", "수행기관", "소관기관명", "작성자"]) || null,
+    status: findFirstString(raw, ["status", "recruitStatus", "rcrt_prgs_yn", "pbancSttsCd", "모집 진행 여부", "신청상태"]) || null,
     start_date: startDate || null,
     end_date: endDate || null,
     published_at: publishedAt || null,
-    updated_at: updatedAt || publishedAt || new Date().toISOString(),
-    url: findFirstString(raw, ["url", "detailUrl", "pblancUrl", "atchFileUrl", "공고상세URL", "상세URL"]) || null,
-    summary: findFirstString(raw, ["summary", "description", "bizSummary", "supportContent", "사업개요", "지원내용", "신청대상내용"]) || null,
+    updated_at: updatedAt || publishedAt || startDate || endDate || null,
+    url: findFirstString(raw, ["url", "detailUrl", "detl_pg_url", "pblancUrl", "atchFileUrl", "biz_gdnc_url", "biz_aply_url", "공고상세URL", "상세URL"]) || null,
+    summary: findFirstString(raw, ["summary", "description", "bizSummary", "pbanc_ctnt", "biz_supt_ctnt", "supt_biz_intrd_info", "ctnt", "supportContent", "사업개요", "지원내용", "신청대상내용"]) || null,
     raw_json: raw,
   };
 };

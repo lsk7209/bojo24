@@ -34,7 +34,9 @@ const fetchStartupItems = async ({ q, source }: SearchParams): Promise<StartupIt
     const query = db
       .from("startup_items")
       .select("id, source, source_id, title, category, organization, status, start_date, end_date, published_at, updated_at, url, summary, raw_json")
-      .order("updated_at", { ascending: false })
+      .order("updated_at", { ascending: false, nullsFirst: false })
+      .order("end_date", { ascending: false, nullsFirst: false })
+      .order("start_date", { ascending: false, nullsFirst: false })
       .limit(30);
 
     if (q) query.ilike("title", `%${q}%`);

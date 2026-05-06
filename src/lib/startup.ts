@@ -16,6 +16,28 @@ const DATE_KEYS = [
   "start_date",
 ] as const;
 
+const decodeHtmlEntity = (entity: string) => {
+  if (entity.startsWith("#x")) return String.fromCodePoint(Number.parseInt(entity.slice(2), 16));
+  if (entity.startsWith("#")) return String.fromCodePoint(Number.parseInt(entity.slice(1), 10));
+
+  const namedEntities: Record<string, string> = {
+    amp: "&",
+    gt: ">",
+    lt: "<",
+    quot: '"',
+    apos: "'",
+    nbsp: " ",
+  };
+  return namedEntities[entity] ?? `&${entity};`;
+};
+
+export const cleanStartupText = (value: string) =>
+  value
+    .replace(/&(#x?[0-9A-Fa-f]+|[A-Za-z]+);/g, (_match, entity: string) => decodeHtmlEntity(entity))
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
 export const buildStartupPath = (item: Pick<StartupItem, "id">) =>
   `/startup/${encodeURIComponent(item.id)}`;
 
@@ -50,6 +72,9 @@ export const stableStartupId = (source: StartupSource, raw: Record<string, unkno
     "pblanc_id",
     "announcementId",
     "bizPbancSn",
+    "pbanc_sn",
+    "itemId",
+    "item_id",
     "pbancSn",
     "contentId",
     "businessId",
@@ -65,7 +90,7 @@ export const stableStartupId = (source: StartupSource, raw: Record<string, unkno
 export const findFirstString = (raw: Record<string, unknown>, keys: string[]) => {
   for (const key of keys) {
     const value = raw[key];
-    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === "string" && value.trim()) return cleanStartupText(value);
     if (typeof value === "number") return String(value);
   }
   return "";

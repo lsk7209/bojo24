@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getAnonClient } from "@lib/supabaseClient";
 import { buildCanonicalUrl } from "@lib/site";
-import { formatStartupDate, latestStartupDate, sourceLabel } from "@lib/startup";
+import { cleanStartupText, formatStartupDate, latestStartupDate, sourceLabel } from "@lib/startup";
 import { Badge, Card } from "@components/ui";
 import type { StartupItem } from "@/types/startup";
 
@@ -11,6 +11,14 @@ type RouteParams = {
   params: Promise<{
     id: string;
   }>;
+};
+
+const decodeRouteId = (id: string) => {
+  try {
+    return decodeURIComponent(id);
+  } catch {
+    return id;
+  }
 };
 
 const fetchStartupItem = async (id: string) => {
@@ -27,7 +35,7 @@ const fetchStartupItem = async (id: string) => {
 
 export async function generateMetadata({ params }: RouteParams): Promise<Metadata> {
   const { id } = await params;
-  const item = await fetchStartupItem(id).catch(() => null);
+  const item = await fetchStartupItem(decodeRouteId(id)).catch(() => null);
   if (!item) {
     return {
       title: "창업지원 공고",
@@ -44,21 +52,43 @@ export async function generateMetadata({ params }: RouteParams): Promise<Metadat
   };
 }
 
-const rawEntries = (raw: StartupItem["raw_json"]) => {
-  if (!raw) return [];
+const rawRecord = (raw: StartupItem["raw_json"]) => {
+  if (!raw) return {};
   if (typeof raw === "string") {
     try {
-      return Object.entries(JSON.parse(raw) as Record<string, unknown>);
+      return JSON.parse(raw) as Record<string, unknown>;
     } catch {
-      return [["원문", raw]] as [string, unknown][];
+      return { 원문: raw };
     }
   }
-  return Object.entries(raw);
+  return raw;
+};
+
+const getRawText = (raw: Record<string, unknown>, keys: string[]) => {
+  for (const key of keys) {
+    const value = raw[key];
+    if (value === null || value === undefined) continue;
+    if (typeof value === "string" && value.trim()) return cleanStartupText(value);
+    if (typeof value === "number") return String(value);
+  }
+  return "";
+};
+
+const detailRows = (item: StartupItem) => {
+  const raw = rawRecord(item.raw_json);
+  return [
+    ["신청 대상", getRawText(raw, ["aply_trgt_ctnt", "aply_trgt", "biz_supt_trgt_info", "dataContents"])],
+    ["지원 내용", getRawText(raw, ["biz_supt_ctnt", "supt_biz_intrd_info", "pbanc_ctnt", "ctnt", "dataContents"]) || item.summary || ""],
+    ["신청 방법", getRawText(raw, ["aply_mthd_onli_rcpt_istc", "biz_aply_url", "viewUrl", "detl_pg_url"])],
+    ["담당 부서", getRawText(raw, ["biz_prch_dprt_nm", "writerPosition", "pbanc_ntrp_nm", "sprv_inst"]) || item.organization || ""],
+    ["문의처", getRawText(raw, ["prch_cnpl_no", "writerPhone", "writerEmail"])],
+    ["지원 지역", getRawText(raw, ["supt_regin"])],
+  ].filter((entry): entry is [string, string] => Boolean(entry[1]));
 };
 
 export default async function StartupDetailPage({ params }: RouteParams) {
   const { id } = await params;
-  const item = await fetchStartupItem(id).catch(() => null);
+  const item = await fetchStartupItem(decodeRouteId(id)).catch(() => null);
   if (!item) notFound();
 
   const dates = [
@@ -110,7 +140,7 @@ export default async function StartupDetailPage({ params }: RouteParams) {
             {item.status && (
               <div className="rounded-lg bg-slate-50 p-3">
                 <dt className="font-semibold text-slate-500">상태</dt>
-                <dd className="mt-1 text-slate-950">{item.status}</dd>
+                <dd className="mt-1 text-slate-950">{item.status === "Y" ? "모집중" : item.status === "N" ? "마감" : item.status}</dd>
               </div>
             )}
           </dl>
@@ -126,19 +156,19 @@ export default async function StartupDetailPage({ params }: RouteParams) {
           )}
         </Card>
 
-        <Card className="rounded-xl">
-          <h2 className="mb-4 text-lg font-bold text-slate-950">원문 데이터</h2>
-          <dl className="divide-y divide-slate-100 text-sm">
-            {rawEntries(item.raw_json).map(([key, value]) => (
-              <div key={key} className="grid gap-2 py-3 sm:grid-cols-[160px_1fr]">
-                <dt className="font-semibold text-slate-500">{key}</dt>
-                <dd className="whitespace-pre-wrap break-words text-slate-800">
-                  {typeof value === "string" ? value : JSON.stringify(value)}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </Card>
+        {detailRows(item).length > 0 && (
+          <Card className="rounded-xl">
+            <h2 className="mb-4 text-lg font-bold text-slate-950">상세 안내</h2>
+            <dl className="divide-y divide-slate-100 text-sm">
+              {detailRows(item).map(([label, value]) => (
+                <div key={label} className="grid gap-2 py-4 sm:grid-cols-[120px_1fr]">
+                  <dt className="font-semibold text-slate-500">{label}</dt>
+                  <dd className="whitespace-pre-wrap break-words leading-7 text-slate-800">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </Card>
+        )}
       </article>
     </main>
   );

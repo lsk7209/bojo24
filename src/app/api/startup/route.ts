@@ -24,7 +24,9 @@ export async function GET(request: Request) {
     const query = db
       .from("startup_items")
       .select("id, source, title, category, organization, status, start_date, end_date, updated_at")
-      .order("updated_at", { ascending: false })
+      .order("updated_at", { ascending: false, nullsFirst: false })
+      .order("end_date", { ascending: false, nullsFirst: false })
+      .order("start_date", { ascending: false, nullsFirst: false })
       .range(offset, offset + limit - 1);
 
     if (q) query.ilike("title", `%${q}%`);
