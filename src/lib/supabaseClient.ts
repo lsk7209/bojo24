@@ -1,7 +1,40 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { env } from "./env";
+import { createTursoCompatClient, isTursoConfigured } from "./tursoClient";
 
-export type DBClient = SupabaseClient<any, "public", any>;
+type QueryResponse = {
+  data: (any[] & Record<string, any>) | null;
+  error: any | null;
+  count?: number | null;
+};
+
+type SupabaseLikeQuery = PromiseLike<QueryResponse> & {
+  select: (columns?: string, options?: Record<string, unknown>) => SupabaseLikeQuery;
+  insert: (values: any) => SupabaseLikeQuery;
+  update: (values: any) => SupabaseLikeQuery;
+  upsert: (values: any, options?: Record<string, unknown>) => SupabaseLikeQuery;
+  eq: (column: string, value: unknown) => SupabaseLikeQuery;
+  neq: (column: string, value: unknown) => SupabaseLikeQuery;
+  gt: (column: string, value: unknown) => SupabaseLikeQuery;
+  gte: (column: string, value: unknown) => SupabaseLikeQuery;
+  lt: (column: string, value: unknown) => SupabaseLikeQuery;
+  lte: (column: string, value: unknown) => SupabaseLikeQuery;
+  is: (column: string, value: unknown) => SupabaseLikeQuery;
+  in: (column: string, values: unknown[]) => SupabaseLikeQuery;
+  not: (column: string, operator: string, value: unknown) => SupabaseLikeQuery;
+  or: (expression: string) => SupabaseLikeQuery;
+  match: (values: Record<string, unknown>) => SupabaseLikeQuery;
+  ilike: (column: string, value: string) => SupabaseLikeQuery;
+  order: (column: string, options?: Record<string, unknown>) => SupabaseLikeQuery;
+  limit: (value: number) => SupabaseLikeQuery;
+  range: (from: number, to: number) => SupabaseLikeQuery;
+  single: () => SupabaseLikeQuery;
+  maybeSingle: () => SupabaseLikeQuery;
+};
+
+export type DBClient = {
+  from: (table: string) => SupabaseLikeQuery;
+};
 
 /**
  * Supabase 클라이언트 옵션 (Vercel 환경 최적화)
@@ -35,7 +68,10 @@ const clientOptions = {
  * - 절대 클라이언트에 노출하지 말 것
  */
 export const getServiceClient = (): DBClient => {
-  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, clientOptions);
+  if (isTursoConfigured()) {
+    return createTursoCompatClient() as unknown as DBClient;
+  }
+  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, clientOptions) as unknown as DBClient;
 };
 
 /**
@@ -44,7 +80,10 @@ export const getServiceClient = (): DBClient => {
  * - 공개 데이터 조회에 사용
  */
 export const getAnonClient = (): DBClient => {
-  return createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, clientOptions);
+  if (isTursoConfigured()) {
+    return createTursoCompatClient() as unknown as DBClient;
+  }
+  return createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, clientOptions) as unknown as DBClient;
 };
 
 /**

@@ -9,6 +9,17 @@ export function formatDescription(text: string) {
 
     // 먼저 보기 좋게 전처리
     let cleaned = text
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/```[\s\S]*?```/g, "")
+        .split("\n")
+        .filter((line) => !/^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?\s*$/.test(line))
+        .map((line) =>
+            line
+                .replace(/^\s*\|\s*/, "")
+                .replace(/\s*\|\s*$/, "")
+                .replace(/\s*\|\s*/g, " · ")
+        )
+        .join("\n")
         .replace(/ - /g, "\n- ") // " - " -> 줄바꿈 + "- "
         .replace(/ ○/g, "\n○")   // " ○" -> 줄바꿈 + "○"
         .replace(/\. /g, ".\n"); // ". " -> 마침표 뒤 줄바꿈 (선택적)

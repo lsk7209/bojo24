@@ -172,6 +172,14 @@ const scoreTitle = (title: string, benefitName: string, maxSimilarity: number) =
   return Math.min(score, 100);
 };
 
+const titleIncludesMainKeyword = (title: string, keyword: string) => {
+  const normalizedTitle = normalize(title);
+  const normalizedKeyword = normalize(keyword);
+  if (!normalizedKeyword) return true;
+  const compactKeyword = normalizedKeyword.slice(0, Math.min(14, normalizedKeyword.length));
+  return normalizedTitle.includes(compactKeyword) || normalizedKeyword.includes(normalizedTitle.slice(0, 8));
+};
+
 const findNearestTitle = (title: string, existingTitles: string[]) => {
   return existingTitles.reduce(
     (nearest, existingTitle) => {
@@ -254,14 +262,14 @@ const scorePlannedArticle = (plan: TitlePlan, content: string): QualityResult =>
 
   addPenalty(result, plan.maxExistingSimilarity >= 0.72, 25, `제목 유사도 높음 ${plan.maxExistingSimilarity}`);
   addPenalty(result, plan.title.length < 20 || plan.title.length > 60, 10, `제목 길이 ${plan.title.length}자`);
-  addPenalty(result, !plan.title.includes(compact(plan.mainKeyword, 12)), 10, "제목 메인 키워드 부족");
+  addPenalty(result, !titleIncludesMainKeyword(plan.title, plan.mainKeyword), 10, "제목 메인 키워드 부족");
   addPenalty(result, content.length < 1500, 18, `본문 길이 ${content.length}자`);
   addPenalty(result, !content.includes("2026년 5월 기준"), 5, "기준일 문구 없음");
   addPenalty(result, !content.includes("핵심 요약"), 8, "핵심 요약 없음");
-  addPenalty(result, !/\|.+\|/.test(content), 8, "확인 표 없음");
+  addPenalty(result, !content.includes("신청 전 확인할 항목"), 8, "확인 목록 없음");
   addPenalty(result, countMatches(content, /^\*\*Q\d\./gm) < 5, 10, "FAQ 5개 미만");
   addPenalty(result, countMatches(content, /^## /gm) < 4, 8, "H2 섹션 4개 미만");
-  addPenalty(result, !content.includes("gov.kr"), 10, "공식 출처 링크 없음");
+  addPenalty(result, !/공식 상세 안내.+https?:\/\//.test(content), 10, "공식 출처 링크 없음");
   addPenalty(result, !content.includes("/benefit/"), 6, "내부 혜택 상세 링크 없음");
   addPenalty(result, hasMojibake(`${plan.title}\n${content}`), 30, "문자 깨짐 의심");
 
@@ -324,12 +332,12 @@ ${compact(content, 900)}
 
 금액이나 지원 방식이 명시된 경우에도 지급 시점, 지급 횟수, 예산 소진 여부에 따라 체감 혜택이 달라질 수 있습니다. 특히 현금성 지원, 서비스 이용권, 감면, 융자형 지원은 준비해야 할 서류와 처리 기간이 서로 다릅니다.
 
-| 확인 항목 | 신청 전 볼 내용 |
-| --- | --- |
-| 담당 기관 | ${benefit.governing_org || "공식 안내에서 확인"} |
-| 지원 분야 | ${benefit.category || "정부지원"} |
-| 신청 기한 | ${compact(deadline, 80)} |
-| 문의처 | ${compact(contact, 80)} |
+신청 전 확인할 항목은 다음과 같습니다.
+
+- 담당 기관: ${benefit.governing_org || "공식 안내에서 확인"}
+- 지원 분야: ${benefit.category || "정부지원"}
+- 신청 기한: ${compact(deadline, 80)}
+- 문의처: ${compact(contact, 80)}
 
 ## 신청방법과 필요서류는 어떻게 준비하나요?
 
@@ -381,12 +389,18 @@ const parseCli = (): CliOptions => {
     const value = Number(args[index + 1]);
     return Number.isFinite(value) && value > 0 ? value : fallback;
   };
+  const nonNegativeValueOf = (name: string, fallback: number) => {
+    const index = args.indexOf(name);
+    if (index === -1) return fallback;
+    const value = Number(args[index + 1]);
+    return Number.isFinite(value) && value >= 0 ? value : fallback;
+  };
 
   return {
     dryRun: args.includes("--dry-run"),
     posts: valueOf("--posts", valueOf("--limit", 200)),
-    intervalHours: valueOf("--interval-hours", 5),
-    startDelayHours: valueOf("--start-delay-hours", 5),
+    intervalHours: nonNegativeValueOf("--interval-hours", 5),
+    startDelayHours: nonNegativeValueOf("--start-delay-hours", 5),
   };
 };
 

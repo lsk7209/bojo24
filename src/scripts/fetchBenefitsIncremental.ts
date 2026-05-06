@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import "dotenv/config";
+import "./loadScriptEnv";
 import { fetchJson } from "@lib/http";
 import { getServiceClient } from "@lib/supabaseClient";
 import { env, validateEnv } from "@lib/env";
@@ -8,103 +8,114 @@ import type {
   BenefitRecord,
   ServiceDetailItem,
   ServiceListItem,
-  SupportConditionsItem
+  SupportConditionsItem,
 } from "@/types/benefit";
 
-// 환경 변수 검증
-validateEnv(['PUBLICDATA_SERVICE_KEY_ENC', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']);
+validateEnv(["PUBLICDATA_SERVICE_KEY_ENC", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]);
 
 const BASE_URL = env.PUBLICDATA_BASE_URL;
 const SERVICE_KEY = decodeURIComponent(env.PUBLICDATA_SERVICE_KEY_ENC);
 const PAGE_SIZE = env.PUBLICDATA_PAGE_SIZE;
 const FETCH_DELAY = env.PUBLICDATA_DELAY_MS;
+const DETAIL_BATCH_SIZE = 30;
+const UPSERT_BATCH_SIZE = 200;
+
+const SERVICE_ID = "서비스ID";
+const SERVICE_NAME = "서비스명";
+const SERVICE_CATEGORY = "서비스분야";
+const USER_TYPE = "사용자구분";
+const SUPPORT_TYPE = "지원유형";
+const ORG_NAME = "소관기관명";
+const DEPARTMENT_NAME = "부서명";
+const CREATED_AT = "등록일시";
+const UPDATED_AT = "수정일시";
 
 const buildUrl = (path: string, params: Record<string, string | number>) => {
   const url = new URL(`${BASE_URL.replace(/\/$/, "")}/${path}`);
   url.searchParams.set("serviceKey", SERVICE_KEY);
   url.searchParams.set("returnType", "JSON");
-  Object.entries(params).forEach(([key, value]) =>
-    url.searchParams.set(key, String(value))
-  );
+  Object.entries(params).forEach(([key, value]) => {
+    url.searchParams.set(key, String(value));
+  });
   return url;
 };
 
-const fetchServiceList = async (
-  page: number
-): Promise<ApiEnvelope<ServiceListItem>> => {
+const fetchServiceList = async (page: number): Promise<ApiEnvelope<ServiceListItem>> => {
   const url = buildUrl("serviceList", { page, perPage: PAGE_SIZE });
   return fetchJson<ApiEnvelope<ServiceListItem>>(url, {
     delayMs: FETCH_DELAY,
-    retries: 2
+    retries: 2,
   });
 };
 
-const fetchServiceDetail = async (
-  serviceId: string
-): Promise<ServiceDetailItem | null> => {
+const fetchServiceDetail = async (serviceId: string): Promise<ServiceDetailItem | null> => {
   const url = buildUrl("serviceDetail", {
     page: 1,
     perPage: 1,
-    "cond[서비스ID::EQ]": serviceId
+    "cond[서비스ID::EQ]": serviceId,
   });
   const res = await fetchJson<ApiEnvelope<ServiceDetailItem>>(url, {
     delayMs: FETCH_DELAY,
-    retries: 2
+    retries: 2,
   });
-  return res.data[0] || null;
+  return res.data?.[0] ?? null;
 };
 
-const fetchSupportConditions = async (
-  serviceId: string
-): Promise<SupportConditionsItem | null> => {
+const fetchSupportConditions = async (serviceId: string): Promise<SupportConditionsItem | null> => {
   const url = buildUrl("supportConditions", {
     page: 1,
     perPage: 1,
-    "cond[서비스ID::EQ]": serviceId
+    "cond[서비스ID::EQ]": serviceId,
   });
   const res = await fetchJson<ApiEnvelope<SupportConditionsItem>>(url, {
     delayMs: FETCH_DELAY,
-    retries: 2
+    retries: 2,
   });
-  return res.data[0] || null;
+  return res.data?.[0] ?? null;
 };
 
-// 변경된 데이터만 감지하여 업데이트
-const detectChanges = async (
+const chunk = <T>(items: T[], size: number) => {
+  const result: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    result.push(items.slice(index, index + size));
+  }
+  return result;
+};
+
+const toStringValue = (value: unknown) => (typeof value === "string" ? value.trim() : "");
+
+const getServiceId = (service: ServiceListItem) => toStringValue(service[SERVICE_ID]);
+
+const getUpdatedAt = (service: ServiceListItem, detail?: ServiceDetailItem | null) =>
+  toStringValue(detail?.[UPDATED_AT]) ||
+  toStringValue(service[UPDATED_AT]) ||
+  toStringValue(service[CREATED_AT]) ||
+  new Date().toISOString();
+
+const detectChanges = (
   apiServices: ServiceListItem[],
   existingRecords: Map<string, BenefitRecord>
-): Promise<{
-  newServices: ServiceListItem[];
-  updatedServices: ServiceListItem[];
-  unchangedServices: ServiceListItem[];
-}> => {
+) => {
   const newServices: ServiceListItem[] = [];
   const updatedServices: ServiceListItem[] = [];
   const unchangedServices: ServiceListItem[] = [];
 
   for (const service of apiServices) {
-    const serviceId = service["서비스ID"];
+    const serviceId = getServiceId(service);
+    if (!serviceId) continue;
+
     const existing = existingRecords.get(serviceId);
-    const apiUpdatedAt = service["수정일시"] || service["등록일시"];
+    const apiUpdatedAt = getUpdatedAt(service);
 
     if (!existing) {
-      // 새로운 서비스
       newServices.push(service);
-    } else if (apiUpdatedAt && existing.last_updated_at) {
-      // 수정일시 비교
-      const apiDate = new Date(apiUpdatedAt);
-      const dbDate = new Date(existing.last_updated_at);
-      
-      if (apiDate > dbDate) {
-        // API 데이터가 더 최신
-        updatedServices.push(service);
-      } else {
-        // 변경 없음
-        unchangedServices.push(service);
-      }
-    } else {
-      // 수정일시 정보가 없으면 안전하게 업데이트 대상으로 분류
+      continue;
+    }
+
+    if (!existing.last_updated_at || new Date(apiUpdatedAt) > new Date(existing.last_updated_at)) {
       updatedServices.push(service);
+    } else {
+      unchangedServices.push(service);
     }
   }
 
@@ -112,173 +123,129 @@ const detectChanges = async (
 };
 
 const processService = async (service: ServiceListItem): Promise<BenefitRecord | null> => {
+  const id = getServiceId(service);
+  if (!id) return null;
+
   try {
-    const id = service["서비스ID"];
-    const [detail, support] = await Promise.all([
+    const [detail, supportConditions] = await Promise.all([
       fetchServiceDetail(id),
-      fetchSupportConditions(id)
+      fetchSupportConditions(id),
     ]);
 
-    const governingOrg =
-      detail?.["소관기관명"] ??
-      service["소관기관명"] ??
-      service["부서명"] ??
-      "미상";
+    const name = toStringValue(service[SERVICE_NAME]) || toStringValue(detail?.[SERVICE_NAME]);
+    if (!name) return null;
 
     const category =
-      service["서비스분야"] ?? service["사용자구분"] ?? service["지원유형"] ?? "기타";
+      toStringValue(service[SERVICE_CATEGORY]) ||
+      toStringValue(service[USER_TYPE]) ||
+      toStringValue(service[SUPPORT_TYPE]) ||
+      "기타";
 
-    const lastUpdated =
-      detail?.["수정일시"] ??
-      service["수정일시"] ??
-      service["등록일시"] ??
-      new Date().toISOString();
+    const governingOrg =
+      toStringValue(detail?.[ORG_NAME]) ||
+      toStringValue(service[ORG_NAME]) ||
+      toStringValue(service[DEPARTMENT_NAME]) ||
+      "미상";
 
     return {
       id,
-      name: service["서비스명"],
+      name,
       category,
       governing_org: governingOrg,
       detail_json: {
+        source: "gov24",
         list: service,
         detail,
-        supportConditions: support
+        supportConditions,
       },
-      last_updated_at: lastUpdated
-    } as BenefitRecord;
-  } catch (err) {
-    console.error(`  - [실패] 서비스ID: ${service["서비스ID"]}`, err);
+      last_updated_at: getUpdatedAt(service, detail),
+    };
+  } catch (error) {
+    console.error(`상세 수집 실패: ${id}`, error);
     return null;
   }
 };
 
 const upsertRecords = async (records: BenefitRecord[]) => {
-  const supabase = getServiceClient();
+  const db = getServiceClient();
   let upserted = 0;
   let failed = 0;
-  
-  // 배치 단위로 처리 (200개씩)
-  const BATCH_SIZE = 200;
-  for (let i = 0; i < records.length; i += BATCH_SIZE) {
-    const batch = records.slice(i, i + BATCH_SIZE);
-    const { error, data } = await supabase
+
+  for (const batch of chunk(records, UPSERT_BATCH_SIZE)) {
+    const { error, data } = await db
       .from("benefits")
       .upsert(batch, { onConflict: "id" })
       .select("id");
-    
+
     if (error) {
       failed += batch.length;
-      console.error("업서트 실패", error);
+      console.error("DB 저장 실패", error);
     } else {
       upserted += data?.length ?? batch.length;
     }
   }
-  
+
   return { upserted, failed };
 };
 
-const main = async () => {
-  console.log("🔄 증분 업데이트 모드: 변경된 데이터만 수집합니다.\n");
+async function main() {
+  console.log("공공데이터포털 보조24 증분 업데이트 시작");
 
-  const supabase = getServiceClient();
-
-  // 1. 기존 데이터 조회 (ID와 수정일시만)
-  console.log("📊 기존 데이터 조회 중...");
-  const { data: existingData, error: fetchError } = await supabase
+  const db = getServiceClient();
+  const { data: existingData, error: existingError } = await db
     .from("benefits")
     .select("id, last_updated_at");
 
-  if (fetchError) {
-    console.error("기존 데이터 조회 실패:", fetchError);
-    process.exit(1);
-  }
+  if (existingError) throw existingError;
 
   const existingMap = new Map<string, BenefitRecord>();
-  existingData?.forEach((record) => {
-    existingMap.set(record.id, record as BenefitRecord);
+  existingData?.forEach((record: BenefitRecord) => {
+    existingMap.set(record.id, record);
   });
 
-  console.log(`✅ 기존 데이터: ${existingMap.size}개\n`);
-
-  // 2. API에서 전체 목록 가져오기
-  console.log("📡 공공데이터 API 목록 조회 중...");
   const firstPage = await fetchServiceList(1);
   const totalPages = Math.ceil(firstPage.totalCount / PAGE_SIZE);
+  const allServices = [...firstPage.data];
 
-  console.log(`총 ${totalPages} 페이지 (${firstPage.totalCount}건)`);
-
-  const allServices: ServiceListItem[] = [...firstPage.data];
   for (let page = 2; page <= totalPages; page += 1) {
     const res = await fetchServiceList(page);
     allServices.push(...res.data);
     if (page % 10 === 0) {
-      console.log(`  진행: ${page}/${totalPages} 페이지`);
+      console.log(`목록 수집 진행: ${page}/${totalPages}`);
     }
   }
 
-  console.log(`✅ 목록 수집 완료: ${allServices.length}건\n`);
+  const { newServices, updatedServices, unchangedServices } = detectChanges(allServices, existingMap);
+  const servicesToProcess = [...newServices, ...updatedServices];
 
-  // 3. 변경 감지
-  console.log("🔍 변경 사항 감지 중...");
-  const { newServices, updatedServices, unchangedServices } = await detectChanges(
-    allServices,
-    existingMap
-  );
+  console.log(`전체 ${allServices.length}개, 신규 ${newServices.length}개, 변경 ${updatedServices.length}개, 유지 ${unchangedServices.length}개`);
 
-  console.log(`  ✨ 신규: ${newServices.length}개`);
-  console.log(`  🔄 업데이트: ${updatedServices.length}개`);
-  console.log(`  ✅ 변경 없음: ${unchangedServices.length}개\n`);
-
-  if (newServices.length === 0 && updatedServices.length === 0) {
-    console.log("🎉 모든 데이터가 최신 상태입니다!");
+  if (servicesToProcess.length === 0) {
+    console.log("모든 보조24 데이터가 최신입니다.");
     return;
   }
 
-  // 4. 변경된 데이터만 처리
-  const servicesToProcess = [...newServices, ...updatedServices];
-  console.log(`📦 처리 대상: ${servicesToProcess.length}개\n`);
-
-  const BATCH_SIZE = 30;
-  const batches: ServiceListItem[][] = [];
-  for (let i = 0; i < servicesToProcess.length; i += BATCH_SIZE) {
-    batches.push(servicesToProcess.slice(i, i + BATCH_SIZE));
-  }
-
-  let totalProcessed = 0;
   let totalSuccess = 0;
   let totalFailed = 0;
+  let processed = 0;
 
-  for (let i = 0; i < batches.length; i++) {
-    const batch = batches[i];
-    console.log(`[${i + 1}/${batches.length}] 배치 처리 중...`);
+  for (const [index, batch] of chunk(servicesToProcess, DETAIL_BATCH_SIZE).entries()) {
+    const results = await Promise.all(batch.map(processService));
+    const validRecords = results.filter((record): record is BenefitRecord => record !== null);
+    const { upserted, failed } = await upsertRecords(validRecords);
 
-    const promises = batch.map(processService);
-    const results = await Promise.all(promises);
-    const validRecords = results.filter((r): r is BenefitRecord => r !== null);
-
-    if (validRecords.length > 0) {
-      const { upserted, failed } = await upsertRecords(validRecords);
-      totalSuccess += upserted;
-      totalFailed += failed;
-    }
-
-    totalProcessed += batch.length;
-    const progress = Math.round((totalProcessed / servicesToProcess.length) * 100);
-    console.log(`  완료: ${totalSuccess}건 저장 (${progress}%)\n`);
-
-    // Rate limit 방지
-    await new Promise((r) => setTimeout(r, 400));
+    totalSuccess += upserted;
+    totalFailed += failed;
+    processed += batch.length;
+    console.log(`[${index + 1}] ${processed}/${servicesToProcess.length} 처리, 저장 ${totalSuccess}개`);
   }
 
-  console.log("=== 최종 완료 ===");
-  console.log(`처리 대상: ${servicesToProcess.length}개`);
-  console.log(`저장 성공: ${totalSuccess}개`);
-  console.log(`실패: ${totalFailed}개`);
-  console.log(`변경 없음: ${unchangedServices.length}개`);
-};
+  console.log(`완료: 저장 ${totalSuccess}개, 실패 ${totalFailed}개, 변경 없음 ${unchangedServices.length}개`);
+}
 
-main().catch((err) => {
-  console.error("스크립트 실행 실패:", err);
-  process.exit(1);
-});
-
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error("공공데이터 수집 실패", error);
+    process.exit(1);
+  });

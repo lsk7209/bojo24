@@ -53,7 +53,7 @@ export const buildArticleJsonLd = (benefit: BenefitRecord, category: string) => 
       "url": BASE_URL,
       "logo": {
         "@type": "ImageObject",
-        "url": `${BASE_URL}/logo.png`
+        "url": `${BASE_URL}/opengraph-image`
       }
     },
     "mainEntityOfPage": {
@@ -116,7 +116,7 @@ export const buildOrganizationJsonLd = () => {
     "@type": "Organization",
     "name": "보조24",
     "url": BASE_URL,
-    "logo": `${BASE_URL}/logo.png`,
+    "logo": `${BASE_URL}/opengraph-image`,
     "description": "행정안전부 보조24 정보를 AI로 요약하고 쉽게 찾을 수 있는 플랫폼",
     "sameAs": [
       // 소셜 미디어 링크 추가 가능

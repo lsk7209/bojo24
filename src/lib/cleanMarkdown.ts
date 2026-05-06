@@ -7,6 +7,16 @@ export function cleanMarkdown(text: string): string {
   if (!text) return text;
 
   return text
+    .replace(/<br\s*\/?>/gi, " ")
+    .split("\n")
+    .filter((line) => !/^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?\s*$/.test(line))
+    .map((line) =>
+      line
+        .replace(/^\s*\|\s*/, "")
+        .replace(/\s*\|\s*$/, "")
+        .replace(/\s*\|\s*/g, " · ")
+    )
+    .join("\n")
     // 볼드 제거 (**텍스트** -> 텍스트)
     .replace(/\*\*([^*]+)\*\*/g, "$1")
     .replace(/\*([^*]+)\*/g, "$1")

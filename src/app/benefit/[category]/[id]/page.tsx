@@ -110,8 +110,7 @@ export const generateMetadata = async ({
     detail?: Record<string, string>;
   } | undefined;
 
-  // Open Graph 이미지 (향후 추가 가능)
-  const ogImage = `${BASE_URL}/api/og?title=${encodeURIComponent(benefit.name)}&category=${encodeURIComponent(category)}`;
+  const ogImage = `${BASE_URL}/opengraph-image`;
 
   // Zero-click 스니펫을 위한 추가 메타데이터
   const answerSnippet = snippet; // 구글 스니펫에 표시될 답변
@@ -284,7 +283,7 @@ export default async function BenefitDetailPage({ params }: PageParams) {
             className="text-base sm:text-lg leading-relaxed text-slate-900 whitespace-pre-line break-words"
             itemProp="text"
           >
-            {optimizedContent.summary}
+            {cleanMarkdown(optimizedContent.summary)}
           </div>
           <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-blue-200 pt-4">
             <div className="flex items-center gap-2 text-xs text-blue-600 font-semibold">
@@ -414,7 +413,7 @@ export default async function BenefitDetailPage({ params }: PageParams) {
                       단계 {index + 1}
                     </div>
                     <div className="text-slate-700 leading-relaxed text-base" itemProp="text">
-                      {step}
+                      {cleanMarkdown(step)}
                     </div>
                   </div>
                 </div>

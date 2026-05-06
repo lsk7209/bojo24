@@ -24,6 +24,7 @@ export async function GET() {
   }, {
     headers: {
       "Cache-Control": "no-store, no-cache, must-revalidate",
+      "X-Robots-Tag": "noindex, nofollow, noarchive",
     },
   });
 }

@@ -175,6 +175,10 @@ export default function HomePage() {
               <p className="font-semibold text-slate-900">문의하기</p>
               <p className="mt-2 text-sm text-slate-600">정정 요청과 운영 문의 채널을 제공합니다.</p>
             </Link>
+            <Link href="/disclaimer" className="rounded-2xl border border-slate-200 p-4 transition hover:border-blue-300 hover:bg-blue-50">
+              <p className="font-semibold text-slate-900">면책조항</p>
+              <p className="mt-2 text-sm text-slate-600">정보 제공 범위와 공식 확인 원칙을 안내합니다.</p>
+            </Link>
           </div>
         </Card>
 

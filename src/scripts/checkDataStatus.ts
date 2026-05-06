@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import "dotenv/config";
+import "./loadScriptEnv";
 import { getServiceClient } from "@lib/supabaseClient";
 import { validateEnv } from "@lib/env";
 

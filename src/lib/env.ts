@@ -19,6 +19,12 @@ const requiredEnvVars = {
   PUBLICDATA_SERVICE_KEY_ENC: process.env.PUBLICDATA_SERVICE_KEY_ENC,
 } as const;
 
+const hasTursoEnv = () =>
+  Boolean(
+    (process.env.TURSO_DATABASE_URL || process.env.LIBSQL_URL) &&
+      (process.env.TURSO_AUTH_TOKEN || process.env.LIBSQL_AUTH_TOKEN)
+  );
+
 const optionalEnvVars = {
   PUBLICDATA_BASE_URL: process.env.PUBLICDATA_BASE_URL || 'https://api.odcloud.kr/api/gov24/v3',
   PUBLICDATA_DELAY_MS: Number(process.env.PUBLICDATA_DELAY_MS || 600),
@@ -41,17 +47,20 @@ export function validateEnv(required: (keyof typeof requiredEnvVars)[] = Object.
   }
   
   const missing: string[] = [];
-  
+
   for (const key of required) {
+    if (key.startsWith("SUPABASE_") && hasTursoEnv()) {
+      continue;
+    }
     if (!requiredEnvVars[key]) {
       missing.push(key);
     }
   }
-  
+
   if (missing.length > 0) {
     throw new Error(
       `필수 환경 변수가 설정되지 않았습니다: ${missing.join(', ')}\n` +
-      `Vercel 대시보드 또는 .env 파일에서 설정해주세요.`
+      `Vercel 대시보드 또는 .env 파일에서 설정해주세요. Supabase 대신 Turso를 쓰면 TURSO_DATABASE_URL/TURSO_AUTH_TOKEN을 설정하세요.`
     );
   }
 }
@@ -62,7 +71,7 @@ export function validateEnv(required: (keyof typeof requiredEnvVars)[] = Object.
 export const env = {
   ...requiredEnvVars,
   ...optionalEnvVars,
-  
+
   // 타입 안전한 접근을 위한 getter
   get SUPABASE_URL(): string {
     if (!requiredEnvVars.SUPABASE_URL) {
@@ -70,7 +79,7 @@ export const env = {
     }
     return requiredEnvVars.SUPABASE_URL;
   },
-  
+
   get SUPABASE_SERVICE_ROLE_KEY(): string {
     if (!requiredEnvVars.SUPABASE_SERVICE_ROLE_KEY) {
       throw new Error('SUPABASE_SERVICE_ROLE_KEY 환경 변수가 설정되지 않았습니다.');

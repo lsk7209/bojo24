@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import { Card } from "@components/ui";
+import { buildCanonicalUrl } from "@lib/site";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "이용약관",
   description: "보조24 이용약관입니다.",
+  alternates: {
+    canonical: buildCanonicalUrl("/terms"),
+  },
   robots: {
     index: true,
     follow: true

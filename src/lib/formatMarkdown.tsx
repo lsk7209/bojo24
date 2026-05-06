@@ -7,13 +7,39 @@ import React from "react";
 export function formatMarkdown(text: string) {
   if (!text) return text;
 
+  const normalized = text
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/```[\s\S]*?```/g, "")
+    .trim();
+
   // 문단으로 분리 (빈 줄 기준)
-  const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim());
+  const paragraphs = normalized.split(/\n\s*\n/).filter(p => p.trim());
 
   return (
     <div className="space-y-4">
       {paragraphs.map((paragraph, pIdx) => {
         const lines = paragraph.split("\n").filter(l => l.trim());
+        const tableRows = parseMarkdownTable(lines);
+
+        if (tableRows.length > 0) {
+          return (
+            <div key={pIdx} className="overflow-hidden rounded-lg border border-slate-200">
+              {tableRows.map((row, rowIdx) => (
+                <div
+                  key={rowIdx}
+                  className="grid grid-cols-[minmax(90px,0.8fr)_minmax(0,1.2fr)] border-b border-slate-200 last:border-b-0"
+                >
+                  <div className="bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900">
+                    {formatInlineMarkdown(row[0] ?? "")}
+                  </div>
+                  <div className="px-4 py-3 text-sm leading-relaxed text-slate-700">
+                    {formatInlineMarkdown(row.slice(1).join(" / "))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        }
         
         return (
           <div key={pIdx} className="space-y-2">
@@ -83,5 +109,27 @@ function formatInlineMarkdown(text: string): React.ReactNode {
   }
 
   return parts.length > 0 ? <>{parts}</> : text;
+}
+
+function parseMarkdownTable(lines: string[]) {
+  const tableLines = lines
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("|") && line.endsWith("|"));
+
+  if (tableLines.length < 2) return [];
+
+  const rows = tableLines
+    .filter((line) => !/^\|\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?$/.test(line))
+    .map((line) =>
+      line
+        .replace(/^\|/, "")
+        .replace(/\|$/, "")
+        .split("|")
+        .map((cell) => cell.trim())
+    )
+    .filter((row) => row.some(Boolean));
+
+  if (rows.length < 2) return [];
+  return rows.slice(1);
 }
 

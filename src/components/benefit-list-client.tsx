@@ -1,26 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { Badge } from "@components/ui";
 import type { BenefitListItem } from "./benefit-list-types";
-
-const hasPublicSupabaseEnv = Boolean(
-  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
-
-// 클라이언트 사이드 Supabase 클라이언트 생성
-const getClient = () => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error("Supabase 환경 변수가 설정되지 않았습니다.");
-  }
-  
-  return createClient(supabaseUrl, supabaseAnonKey);
-};
 
 type BenefitListClientProps = {
   initialBenefits: BenefitListItem[];
@@ -42,45 +25,38 @@ const formatDate = (value?: string | null) => {
 export function BenefitListClient({ initialBenefits, initialSearchParams }: BenefitListClientProps) {
   const [benefits, setBenefits] = useState<BenefitListItem[]>(initialBenefits);
   const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(
-    hasPublicSupabaseEnv && initialBenefits.length === ITEMS_PER_PAGE
-  );
+  const [hasMore, setHasMore] = useState(initialBenefits.length === ITEMS_PER_PAGE);
   const [page, setPage] = useState(1);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   const loadMore = useCallback(async () => {
-    if (loading || !hasMore || !hasPublicSupabaseEnv) return;
+    if (loading || !hasMore) return;
 
     setLoading(true);
     try {
-      const supabase = getClient();
-      const nextPage = page + 1;
-      const offset = nextPage * ITEMS_PER_PAGE;
-
-      const query = supabase
-        .from("benefits")
-        .select("id, name, category, governing_org, last_updated_at")
-        .order("last_updated_at", { ascending: false })
-        .range(offset, offset + ITEMS_PER_PAGE - 1);
-
-      // 검색어 필터
+      const params = new URLSearchParams({
+        offset: String(page * ITEMS_PER_PAGE),
+        limit: String(ITEMS_PER_PAGE),
+      });
       if (initialSearchParams.q) {
-        query.ilike("name", `%${initialSearchParams.q}%`);
+        params.set("q", initialSearchParams.q);
       }
-
-      // 카테고리 필터
       if (initialSearchParams.category && initialSearchParams.category !== "all") {
-        query.eq("category", initialSearchParams.category);
+        params.set("category", initialSearchParams.category);
       }
 
-      const { data, error } = await query;
+      const response = await fetch(`/api/benefits?${params.toString()}`);
+      if (!response.ok) throw new Error("지원금 목록을 불러오지 못했습니다.");
+      const payload = (await response.json()) as {
+        benefits?: BenefitListItem[];
+        hasMore?: boolean;
+      };
+      const nextBenefits = payload.benefits ?? [];
 
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        setBenefits((prev) => [...prev, ...data]);
-        setPage(nextPage);
-        setHasMore(data.length === ITEMS_PER_PAGE);
+      if (nextBenefits.length > 0) {
+        setBenefits((prev) => [...prev, ...nextBenefits]);
+        setPage((prev) => prev + 1);
+        setHasMore(Boolean(payload.hasMore));
       } else {
         setHasMore(false);
       }

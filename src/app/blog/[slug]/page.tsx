@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { InlineAd } from "@components/adsense-ad";
 import { AD_SLOTS } from "@lib/ads";
-import { buildCanonicalUrl } from "@lib/site";
+import { buildCanonicalUrl, SITE_NAME } from "@lib/site";
 import { buildPostPath, parsePostRouteSlug } from "@lib/postRouting";
 import ReactMarkdown from "react-markdown";
 
@@ -28,6 +28,22 @@ type RelatedBenefit = {
     id: string;
     category: string | null;
 };
+
+const stripMarkdown = (value: string) =>
+    value
+        .replace(/```[\s\S]*?```/g, " ")
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+        .replace(/[#>*_`|~-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+const buildDescription = (content: string) => {
+    const text = stripMarkdown(content);
+    return text.length > 118 ? `${text.slice(0, 117)}…` : text;
+};
+
+const estimateReadMinutes = (content: string) =>
+    Math.max(3, Math.ceil(stripMarkdown(content).length / 650));
 
 const fetchPost = async (routeSlug: string) => {
     const supabase = getAnonClient();
@@ -60,20 +76,38 @@ export const generateMetadata = async ({ params }: PageParams): Promise<Metadata
     const { slug } = await params;
     const post = await fetchPost(slug);
     if (!post) return {};
-    const description = post.content.substring(0, 120).replace(/\n/g, " ");
+    const canonicalUrl = buildCanonicalUrl(buildPostPath(post));
+    const description = buildDescription(post.content);
     return {
         title: post.title,
         description,
         alternates: {
-            canonical: buildCanonicalUrl(buildPostPath(post)),
+            canonical: canonicalUrl,
         },
         openGraph: {
             title: post.title,
             description,
-            url: buildCanonicalUrl(buildPostPath(post)),
+            url: canonicalUrl,
             type: "article",
             locale: "ko_KR",
             publishedTime: post.published_at || post.created_at,
+            modifiedTime: post.published_at || post.created_at,
+            authors: [SITE_NAME],
+            tags: post.tags ?? [],
+            images: [
+                {
+                    url: buildCanonicalUrl("/opengraph-image"),
+                    width: 1200,
+                    height: 630,
+                    alt: post.title,
+                },
+            ],
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: post.title,
+            description,
+            images: [buildCanonicalUrl("/opengraph-image")],
         },
     };
 };
@@ -88,6 +122,45 @@ export default async function BlogPostPage({ params }: PageParams) {
     const relatedBenefitHref = relatedBenefit
         ? `/benefit/${encodeURIComponent(relatedBenefit.category || "기타")}/${relatedBenefit.id}`
         : "/benefit";
+    const canonicalUrl = buildCanonicalUrl(buildPostPath(post));
+    const publishedAt = post.published_at || post.created_at;
+    const readMinutes = estimateReadMinutes(post.content);
+    const articleJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        headline: post.title,
+        description: buildDescription(post.content),
+        url: canonicalUrl,
+        datePublished: publishedAt,
+        dateModified: publishedAt,
+        author: {
+            "@type": "Organization",
+            name: SITE_NAME,
+            url: buildCanonicalUrl("/about"),
+        },
+        publisher: {
+            "@type": "Organization",
+            name: SITE_NAME,
+            url: buildCanonicalUrl("/"),
+            logo: {
+                "@type": "ImageObject",
+                url: buildCanonicalUrl("/opengraph-image"),
+            },
+        },
+        mainEntityOfPage: {
+            "@type": "WebPage",
+            "@id": canonicalUrl,
+        },
+    };
+    const breadcrumbJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            { "@type": "ListItem", position: 1, name: "홈", item: buildCanonicalUrl("/") },
+            { "@type": "ListItem", position: 2, name: "정보마당", item: buildCanonicalUrl("/blog") },
+            { "@type": "ListItem", position: 3, name: post.title, item: canonicalUrl },
+        ],
+    };
 
     return (
         <main className="mx-auto max-w-3xl pb-24 pt-8 px-4">
@@ -115,19 +188,21 @@ export default async function BlogPostPage({ params }: PageParams) {
                     </h1>
                     <div className="flex items-center justify-between border-b border-slate-100 pb-6">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-xl">
-                                🤖
+                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700">
+                                보
                             </div>
                             <div>
-                                <div className="font-bold text-slate-900 text-sm">보조24</div>
-                                <div className="text-xs text-slate-500">{new Date(post.published_at || post.created_at).toLocaleDateString()} · 3분 읽기</div>
+                                <div className="font-bold text-slate-900 text-sm">보조24 편집팀</div>
+                                <div className="text-xs text-slate-500">
+                                    {new Date(publishedAt).toLocaleDateString()} · {readMinutes}분 읽기
+                                </div>
                             </div>
                         </div>
                     </div>
                 </header>
 
                 {/* 본문 렌더링 (커스텀 스타일링) */}
-                <div className="text-slate-700 leading-relaxed">
+                <div className="text-slate-700 leading-8">
                     <ReactMarkdown
                         components={{
                             // H2: 섹션 제목 스타일
@@ -178,7 +253,12 @@ export default async function BlogPostPage({ params }: PageParams) {
                             ),
                             // Link: 링크 스타일
                             a: ({ node, ...props }) => (
-                                <span className="text-blue-600 hover:text-blue-800 font-medium underline underline-offset-4 decoration-blue-200 hover:decoration-blue-500 transition-colors cursor-pointer" {...props} />
+                                <a
+                                    className="font-medium text-blue-700 underline decoration-blue-200 underline-offset-4 transition-colors hover:text-blue-900 hover:decoration-blue-500"
+                                    target={props.href?.startsWith("http") ? "_blank" : undefined}
+                                    rel={props.href?.startsWith("http") ? "noopener noreferrer" : undefined}
+                                    {...props}
+                                />
                             ),
                             // HR: 구분선
                             hr: ({ node, ...props }) => (
@@ -208,7 +288,7 @@ export default async function BlogPostPage({ params }: PageParams) {
                             <div className="inline-block px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full mb-3">
                                 공식 데이터 확인
                             </div>
-                            <h4 className="font-bold text-xl text-slate-900 mb-2">이 정책, 나에게 맞는지 확인해볼까요?</h4>
+                            <h2 className="font-bold text-xl text-slate-900 mb-2">이 정책, 나에게 맞는지 확인해볼까요?</h2>
                             <p className="text-slate-600">신청 대상, 구비 서류, 접수 기간 등<br className="hidden sm:block" />더 정확한 공식 데이터를 지금 바로 확인하세요.</p>
                         </div>
                         <Link href={relatedBenefitHref} className="w-full sm:w-auto">
@@ -225,6 +305,14 @@ export default async function BlogPostPage({ params }: PageParams) {
                     <Button variant="ghost" size="lg">목록으로 돌아가기</Button>
                 </Link>
             </div>
+
+            {[articleJsonLd, breadcrumbJsonLd].map((data, index) => (
+                <script
+                    key={index}
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+                />
+            ))}
         </main>
     );
 }

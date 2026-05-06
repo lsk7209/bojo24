@@ -1,4 +1,5 @@
 export interface ServiceListItem {
+  [key: string]: string | number | undefined;
   서비스ID: string;
   서비스명: string;
   서비스목적요약?: string;
@@ -23,6 +24,7 @@ export interface ServiceListItem {
 }
 
 export interface ServiceDetailItem {
+  [key: string]: string | number | undefined;
   서비스ID: string;
   서비스명: string;
   서비스목적?: string;
