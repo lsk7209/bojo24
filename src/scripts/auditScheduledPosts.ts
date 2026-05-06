@@ -20,9 +20,10 @@ type ScoreResult = {
 };
 
 const DEFAULT_BATCH_SIZE = 200;
-const MIN_SCORE = 85;
-const HARD_SIMILARITY = 0.92;
-const WARN_SIMILARITY = 0.85;
+const MIN_SCORE = 90;
+const HARD_SIMILARITY = 0.72;
+const WARN_SIMILARITY = 0.62;
+const MIN_CONTENT_LENGTH = 3500;
 
 const parseBatchSize = () => {
   const index = process.argv.indexOf("--posts");
@@ -71,31 +72,25 @@ const addPenalty = (result: ScoreResult, condition: boolean, penalty: number, is
 };
 
 const countMatches = (content: string, pattern: RegExp) => content.match(pattern)?.length ?? 0;
-
-const hasMojibake = (content: string) => /[�]|[?]{2,}|ì|ë|ê|í|ð/.test(content);
+const hasMojibake = (content: string) => /[�]|[?]{2,}|占|챙|챘|챗|챠|챨/.test(content);
 
 const scorePost = (post: PostRecord, duplicateTitles: Set<string>, maxSimilarity: number) => {
   const content = post.content ?? "";
   const result: ScoreResult = { score: 100, issues: [] };
-  const titleLengthInvalid = post.title.length < 20 || post.title.length > 60;
 
-  addPenalty(result, duplicateTitles.has(normalizeTitle(post.title)), 40, "제목 정규화 중복");
-  addPenalty(result, maxSimilarity >= HARD_SIMILARITY, 20, `유사 제목 위험 ${maxSimilarity.toFixed(3)}`);
-  addPenalty(
-    result,
-    maxSimilarity >= WARN_SIMILARITY && maxSimilarity < HARD_SIMILARITY,
-    8,
-    `유사 제목 주의 ${maxSimilarity.toFixed(3)}`
-  );
-  addPenalty(result, titleLengthInvalid, 10, `제목 길이 ${post.title.length}자`);
-  addPenalty(result, content.length < 1500, 18, `본문 길이 ${content.length}자`);
+  addPenalty(result, duplicateTitles.has(normalizeTitle(post.title)), 40, "정규화 제목 중복");
+  addPenalty(result, maxSimilarity >= HARD_SIMILARITY, 30, `제목 유사도 실패 ${maxSimilarity.toFixed(3)}`);
+  addPenalty(result, maxSimilarity >= WARN_SIMILARITY && maxSimilarity < HARD_SIMILARITY, 8, `제목 유사도 주의 ${maxSimilarity.toFixed(3)}`);
+  addPenalty(result, post.title.length < 20 || post.title.length > 60, 10, `제목 길이 ${post.title.length}자`);
+  addPenalty(result, content.length < MIN_CONTENT_LENGTH, 18, `본문 길이 ${content.length}자`);
   addPenalty(result, !content.includes("2026년 5월 기준"), 5, "기준일 문구 없음");
   addPenalty(result, !content.includes("핵심 요약"), 8, "핵심 요약 없음");
-  addPenalty(result, !/\|.+\|/.test(content), 8, "비교/확인 표 없음");
+  addPenalty(result, !content.includes("신청 전 확인할 항목"), 8, "신청 체크리스트 없음");
+  addPenalty(result, !/\|.+\|/.test(content), 8, "표 없음");
   addPenalty(result, countMatches(content, /^\*\*Q\d\./gm) < 5, 10, "FAQ 5개 미만");
-  addPenalty(result, countMatches(content, /^## /gm) < 4, 8, "H2 섹션 4개 미만");
-  addPenalty(result, !content.includes("gov.kr"), 10, "공식 출처 링크 없음");
-  addPenalty(result, !content.includes("/benefit/"), 6, "내부 혜택 상세 링크 없음");
+  addPenalty(result, countMatches(content, /^## /gm) < 5, 8, "H2 섹션 5개 미만");
+  addPenalty(result, !/공식 상세 안내.+https?:\/\//.test(content), 10, "공식 출처 링크 없음");
+  addPenalty(result, countMatches(content, /\]\(\/benefit\//g) < 2, 6, "내부 benefit 링크 2개 미만");
   addPenalty(result, hasMojibake(`${post.title}\n${post.excerpt ?? ""}\n${content}`), 30, "문자 깨짐 의심");
 
   return { score: Math.max(0, result.score), issues: result.issues };
@@ -138,6 +133,19 @@ const collectDuplicateValues = (values: string[]) => {
 const findFirstFutureSlug = (posts: PostRecord[]) =>
   posts.find((post) => new Date(post.published_at ?? 0) > new Date())?.slug;
 
+const getSpacingIssues = (posts: PostRecord[]) => {
+  const issues: string[] = [];
+  for (let index = 1; index < posts.length; index += 1) {
+    const prev = new Date(posts[index - 1].published_at ?? 0).getTime();
+    const current = new Date(posts[index].published_at ?? 0).getTime();
+    const diffHours = (current - prev) / 1000 / 60 / 60;
+    if (diffHours < 4 || diffHours > 6.1) {
+      issues.push(`${posts[index].slug}: ${diffHours.toFixed(2)}시간 간격`);
+    }
+  }
+  return issues;
+};
+
 async function main() {
   validateEnv(["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]);
 
@@ -147,16 +155,12 @@ async function main() {
   const duplicateTitles = collectDuplicateTitles(posts);
   const duplicateSlugs = collectDuplicateValues(posts.map((post) => post.slug));
   const duplicatePublishTimes = collectDuplicateValues(scheduledPosts.map((post) => post.published_at ?? ""));
+  const spacingIssues = getSpacingIssues(scheduledPosts);
   const failedItems = scheduledPosts
     .map((post) => {
       const result = scorePost(post, duplicateTitles, getNearestSimilarity(post, posts));
       addPenalty(result, duplicateSlugs.has(post.slug), 40, "slug 중복");
-      addPenalty(
-        result,
-        Boolean(post.published_at && duplicatePublishTimes.has(post.published_at)),
-        12,
-        "예약 시각 중복"
-      );
+      addPenalty(result, Boolean(post.published_at && duplicatePublishTimes.has(post.published_at)), 12, "예약 시각 중복");
       return { slug: post.slug, title: post.title, score: result.score, issues: result.issues };
     })
     .filter((item) => item.score < MIN_SCORE);
@@ -168,6 +172,7 @@ async function main() {
         audited: scheduledPosts.length,
         minimumScore: MIN_SCORE,
         failures: failedItems.length,
+        spacingIssues: spacingIssues.slice(0, 20),
         firstPublishAt: scheduledPosts[0]?.published_at,
         lastPublishAt: scheduledPosts.at(-1)?.published_at,
         futureHiddenCheckUrl: firstFutureSlug ? buildCanonicalUrl(`/blog/${firstFutureSlug}`) : null,
@@ -178,7 +183,7 @@ async function main() {
     )
   );
 
-  if (scheduledPosts.length !== batchSize || failedItems.length > 0) {
+  if (scheduledPosts.length !== batchSize || failedItems.length > 0 || spacingIssues.length > 0) {
     process.exit(1);
   }
 }
