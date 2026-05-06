@@ -50,6 +50,19 @@ jobs:
           npm run db:init:turso
           npm run fetch:startup
 
+      - name: Fetch Youth Policies
+        continue-on-error: true
+        env:
+          YOUTHCENTER_API_KEY: ${{ secrets.YOUTHCENTER_API_KEY }}
+          YOUTHCENTER_PAGE_SIZE: ${{ secrets.YOUTHCENTER_PAGE_SIZE || '100' }}
+          YOUTHCENTER_MAX_PAGES: ${{ secrets.YOUTHCENTER_MAX_PAGES || '30' }}
+          YOUTHCENTER_DELAY_MS: ${{ secrets.YOUTHCENTER_DELAY_MS || '400' }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: npm run fetch:youth
+
   generate-gemini:
     name: Generate Gemini Summaries
     runs-on: ubuntu-latest
