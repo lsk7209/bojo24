@@ -58,15 +58,36 @@ export function ReadableContent({
 }
 
 export function getReadablePreview(content: string, maxLength = 300) {
-  const compact = stripMarker(content)
+  const chunks = normalizeKoreanAutoText(stripMarker(content))
     .replace(/\s+/g, " ")
-    .split(/【\s*지원\s*(?:대상|내용)\s*】|[□■●◆◇▶▷]|\[\d+기\]/)[0]
-    .trim();
-  const preview = compact || stripMarker(content).replace(/\s+/g, " ").trim();
+    .split(/【\s*지원\s*(?:대상|내용)\s*】|[□■●◆◇▶▷]|\[\d+기\]/)
+    .flatMap((chunk) => chunk.split(/\s(?=신청자격|신청방법|모집기간|운영기간|추천대상|[1-9]\.\s)/))
+    .map((chunk) => stripMarker(chunk).replace(/\s+-\s+/g, " ").replace(/\s+-\s*$/g, "").trim())
+    .filter(Boolean);
+  const firstChunk = chunks[0] ?? "";
+  const contentChunk = chunks.find((chunk, index) => index > 0 && chunk.length > 24) ?? chunks[1] ?? "";
+  const preview = firstChunk.length < 45 && contentChunk
+    ? `${firstChunk} ${contentChunk}`
+    : firstChunk || normalizeKoreanAutoText(stripMarker(content)).replace(/\s+/g, " ").trim();
 
   if (preview.length <= maxLength) return preview;
 
   return `${preview.slice(0, maxLength).replace(/[,\s]+$/g, "")}...`;
+}
+
+export function normalizeKoreanAutoText(text: string) {
+  return text
+    .replace(/([가-힣A-Za-z0-9)]+)은\(는\)/g, (_, word: string) => `${word}${hasBatchim(word) ? "은" : "는"}`)
+    .replace(/([가-힣A-Za-z0-9)]+)을\(를\)/g, (_, word: string) => `${word}${hasBatchim(word) ? "을" : "를"}`)
+    .replace(/([가-힣A-Za-z0-9)]+)이\(가\)/g, (_, word: string) => `${word}${hasBatchim(word) ? "이" : "가"}`)
+    .replace(/([가-힣A-Za-z0-9)]+)와\(과\)/g, (_, word: string) => `${word}${hasBatchim(word) ? "과" : "와"}`)
+    .replace(/([가-힣]+)은(?=\s+(누가|어떻게|언제|어디|신청|관련|받을|정해져|상시))/g, (_, word: string) => `${word}${hasBatchim(word) ? "은" : "는"}`)
+    .replace(/([.!?。])을\(를\)\s+목적으로 합니다\./g, "$1")
+    .replace(/다\.\s*입니다\./g, "다.")
+    .replace(/입니다\.\s*입니다\./g, "입니다.")
+    .replace(/합니다\.\s*합니다\./g, "합니다.")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function ReadableSegment({ segment }: { segment: Segment }) {
@@ -218,4 +239,14 @@ function stripMarker(text: string) {
 
 function isLongContent(content: string) {
   return content.length > LONG_CONTENT_LENGTH || /【|\[\d+기\]|[□■●◆◇▶▷]| - /.test(content);
+}
+
+function hasBatchim(word: string) {
+  const last = word.trim().at(-1);
+  if (!last) return false;
+
+  const code = last.charCodeAt(0);
+  if (code < 0xac00 || code > 0xd7a3) return false;
+
+  return (code - 0xac00) % 28 !== 0;
 }

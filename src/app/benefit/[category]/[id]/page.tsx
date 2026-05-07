@@ -5,7 +5,7 @@ import { AD_SLOTS } from "@lib/ads";
 import { getServiceClient } from "@lib/supabaseClient";
 import { formatMarkdown } from "@lib/formatMarkdown";
 import { cleanMarkdown } from "@lib/cleanMarkdown";
-import { ReadableContent, getReadablePreview } from "@components/readable-content";
+import { ReadableContent, getReadablePreview, normalizeKoreanAutoText } from "@components/readable-content";
 import { buildStructuredAnswers } from "@lib/zeroClickOptimization";
 import { optimizeBenefitContent, generateSummary } from "@lib/benefitContentOptimizer";
 import { resolveSiteUrl } from "@lib/site";
@@ -462,7 +462,7 @@ export default async function BenefitDetailPage({ params }: PageParams) {
           />
           <Card className="bg-gradient-to-br from-purple-50 via-purple-50/30 to-white border-2 border-purple-200 shadow-md">
             <div className="text-base text-slate-900 leading-relaxed mb-6" itemProp="articleBody">
-              {optimizedContent.sections.analysis.content}
+              {normalizeKoreanAutoText(optimizedContent.sections.analysis.content)}
             </div>
             {optimizedContent.sections.analysis.insights && optimizedContent.sections.analysis.insights.length > 0 && (
               <div className="mt-6 pt-6 border-t-2 border-purple-200">
@@ -474,7 +474,7 @@ export default async function BenefitDetailPage({ params }: PageParams) {
                   {optimizedContent.sections.analysis.insights.map((insight, idx) => (
                     <li key={idx} className="flex items-start gap-3 p-3 bg-white rounded-lg border border-purple-100">
                       <span className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500 text-white flex items-center justify-center text-xs font-bold mt-0.5">✓</span>
-                      <span className="text-base text-slate-800 leading-relaxed">{insight}</span>
+                      <span className="text-base text-slate-800 leading-relaxed">{normalizeKoreanAutoText(insight)}</span>
                     </li>
                   ))}
                 </ul>
@@ -568,7 +568,7 @@ export default async function BenefitDetailPage({ params }: PageParams) {
                   itemProp="name"
                 >
                   <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-sm font-bold">Q</span>
-                  <span className="pt-1">{item.question}</span>
+                  <span className="pt-1">{normalizeKoreanAutoText(item.question)}</span>
                 </h4>
                 <div 
                   className="ml-11 text-base text-slate-800 leading-relaxed pl-4 border-l-2 border-blue-100"
@@ -576,7 +576,9 @@ export default async function BenefitDetailPage({ params }: PageParams) {
                   itemScope
                   itemType="https://schema.org/Answer"
                 >
-                  <p itemProp="text" className="font-medium">{cleanMarkdown(item.answer)}</p>
+                  <p itemProp="text" className="font-medium">
+                    {getReadablePreview(cleanMarkdown(item.answer), 220)}
+                  </p>
                 </div>
               </div>
             ))}
