@@ -5,6 +5,7 @@
 
 import { Card } from "@components/ui";
 import { SectionHeader } from "@components/section-header";
+import { ReadableContent } from "@components/readable-content";
 import type { ContentSection, SectionType } from "@lib/contentTemplate";
 
 interface BenefitContentSectionsProps {
@@ -121,9 +122,7 @@ export function BenefitContentSections({ sections, detail }: BenefitContentSecti
 /**
  * 기본 데이터 폴백 섹션 (고유 컨텐츠가 없을 때)
  */
-import { formatDescription } from "@lib/formattext";
-
-export function FallbackSection({ 
+export function FallbackSection({
   type, 
   content 
 }: { 
@@ -140,7 +139,7 @@ export function FallbackSection({
       </h3>
       <Card className="bg-slate-50/50">
         <div className="text-sm text-slate-700 leading-relaxed">
-          {content ? formatDescription(content) : <span className="text-slate-400">상세 정보 없음</span>}
+          <ReadableContent content={content} />
         </div>
       </Card>
     </section>

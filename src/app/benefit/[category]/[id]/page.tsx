@@ -3,9 +3,9 @@ import { FloatingActionButton } from "@components/fab-button";
 import { buildAllStructuredData } from "./schema";
 import { AD_SLOTS } from "@lib/ads";
 import { getServiceClient } from "@lib/supabaseClient";
-import { formatDescription } from "@lib/formattext";
 import { formatMarkdown } from "@lib/formatMarkdown";
 import { cleanMarkdown } from "@lib/cleanMarkdown";
+import { ReadableContent, getReadablePreview } from "@components/readable-content";
 import { buildStructuredAnswers } from "@lib/zeroClickOptimization";
 import { optimizeBenefitContent, generateSummary } from "@lib/benefitContentOptimizer";
 import { resolveSiteUrl } from "@lib/site";
@@ -283,7 +283,7 @@ export default async function BenefitDetailPage({ params }: PageParams) {
             className="text-base sm:text-lg leading-relaxed text-slate-900 whitespace-pre-line break-words"
             itemProp="text"
           >
-            {cleanMarkdown(optimizedContent.summary)}
+            {getReadablePreview(cleanMarkdown(optimizedContent.summary))}
           </div>
           <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-blue-200 pt-4">
             <div className="flex items-center gap-2 text-xs text-blue-600 font-semibold">
@@ -327,17 +327,16 @@ export default async function BenefitDetailPage({ params }: PageParams) {
                 <div itemProp="text">
                   {/* Gemini 보완된 내용은 마크다운 형식, 공공데이터는 일반 형식 */}
                   {optimizedContent.sections.target.content.includes("**") || 
-                   optimizedContent.sections.target.content.includes("- ") ||
-                   optimizedContent.sections.target.content.includes("•") 
+                   optimizedContent.sections.target.content.includes("|")
                     ? formatMarkdown(optimizedContent.sections.target.content)
-                    : formatDescription(optimizedContent.sections.target.content)}
+                    : <ReadableContent content={optimizedContent.sections.target.content} />}
                 </div>
               </div>
               {optimizedContent.sections.target.criteria && (
                 <div className="mt-5 pt-5 border-t-2 border-slate-200">
                   <strong className="block text-slate-900 mb-2 text-lg font-semibold">📋 선정 기준</strong>
                   <div className="text-slate-700">
-                    {formatDescription(optimizedContent.sections.target.criteria)}
+                    <ReadableContent content={optimizedContent.sections.target.criteria} />
                   </div>
                 </div>
               )}
@@ -357,10 +356,9 @@ export default async function BenefitDetailPage({ params }: PageParams) {
                 <div itemProp="text">
                   {/* Gemini 보완된 내용은 마크다운 형식, 공공데이터는 일반 형식 */}
                   {optimizedContent.sections.benefit.content.includes("**") || 
-                   optimizedContent.sections.benefit.content.includes("- ") ||
-                   optimizedContent.sections.benefit.content.includes("•") 
+                   optimizedContent.sections.benefit.content.includes("|")
                     ? formatMarkdown(optimizedContent.sections.benefit.content)
-                    : formatDescription(optimizedContent.sections.benefit.content)}
+                    : <ReadableContent content={optimizedContent.sections.benefit.content} />}
                 </div>
               </div>
               {(optimizedContent.sections.benefit.amount || optimizedContent.sections.benefit.type) && (
@@ -388,10 +386,10 @@ export default async function BenefitDetailPage({ params }: PageParams) {
           {/* 신청 방법 설명 */}
           {optimizedContent.sections.apply.method && (
             <div 
-              className="text-slate-800 leading-relaxed whitespace-pre-wrap mb-6"
+              className="text-slate-800 leading-relaxed mb-6"
               itemProp="description"
             >
-              {formatDescription(optimizedContent.sections.apply.method)}
+              <ReadableContent content={optimizedContent.sections.apply.method} />
             </div>
           )}
           
