@@ -116,7 +116,7 @@ export const generateMetadata = async ({
   const answerSnippet = snippet; // 구글 스니펫에 표시될 답변
 
   return {
-    title: `${titleBase} | ${category} | ${org}`,
+    title: `${titleBase} 신청 방법·자격 | ${category}`,
     description,
     keywords: keywords.join(", "),
     alternates: {
@@ -602,9 +602,8 @@ export default async function BenefitDetailPage({ params }: PageParams) {
         />
       ))}
       
-      {/* Zero-click 스니펫 메타 태그 */}
+      {/* Zero-click 스니펫 메타 (speakable 힌트용, description은 metadata에서 관리) */}
       <meta name="answer" content={structuredAnswers.zeroClickAnswer} />
-      <meta name="description" content={structuredAnswers.zeroClickAnswer} />
     </main>
   );
 }
