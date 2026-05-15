@@ -1,0 +1,83 @@
+name: Bulk Article Generation (300)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "생성 목표 글 수"
+        required: false
+        default: "300"
+      batch:
+        description: "배치 크기"
+        required: false
+        default: "5"
+      min_quality:
+        description: "최소 품질 점수 (0-100)"
+        required: false
+        default: "90"
+      delay_ms:
+        description: "Gemini 호출 간 딜레이 (ms)"
+        required: false
+        default: "3000"
+
+jobs:
+  generate:
+    name: Generate Blog Articles
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create cache directory
+        run: mkdir -p .article-cache
+
+      - name: Restore progress cache
+        uses: actions/cache@v4
+        with:
+          path: .article-cache/bulk-progress.json
+          key: bulk-progress-${{ github.run_id }}
+          restore-keys: |
+            bulk-progress-
+
+      - name: Run Bulk Generation
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEN_TARGET: ${{ github.event.inputs.target || '300' }}
+          GEN_BATCH: ${{ github.event.inputs.batch || '5' }}
+          GEN_MIN_QUALITY: ${{ github.event.inputs.min_quality || '90' }}
+          GEN_DELAY_MS: ${{ github.event.inputs.delay_ms || '3000' }}
+        run: npx tsx src/scripts/bulkGenerate300.ts --target ${{ github.event.inputs.target || 300 }} --batch ${{ github.event.inputs.batch || 5 }}
+
+      - name: Save progress artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bulk-progress-${{ github.run_id }}
+          path: .article-cache/bulk-progress.json
+          if-no-files-found: ignore
+
+      - name: Ping IndexNow + submit sitemap to GSC
+        if: success()
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          NEXT_PUBLIC_SITE_URL: https://www.bojo24.kr
+          NOTIFY_DUE_POSTS_LOOKBACK_HOURS: "2"
+        run: npm run content:notify-due || echo "Search engine ping failed (non-fatal)"

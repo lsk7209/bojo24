@@ -26,7 +26,9 @@
     "check:data": "tsx src/scripts/checkDataStatus.ts",
     "test:gemini": "tsx src/scripts/testGeminiEnhancement.ts",
     "test:single": "tsx src/scripts/testSingleBenefit.ts",
-    "regenerate:benefits": "tsx src/scripts/regenerateBenefits.ts"
+    "regenerate:benefits": "tsx src/scripts/regenerateBenefits.ts",
+    "bulk:generate": "tsx src/scripts/bulkGenerate300.ts",
+    "insert:articles": "tsx src/scripts/insertArticles.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.11.5",
