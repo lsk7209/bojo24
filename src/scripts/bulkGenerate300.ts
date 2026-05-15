@@ -175,6 +175,43 @@ AI 요약: ${benefit.gemini_summary || "없음"}
 }`;
 }
 
+// ── 누락 요소 자동 보정 ──────────────────────────────────────────────────────
+function patchContent(content: string, benefit: BenefitRow, research: ResearchResult): string {
+  let patched = content;
+
+  // 1. 표가 없으면 핵심 정보 요약표 자동 삽입 (첫 번째 H2 바로 뒤)
+  if (!patched.includes("|---") && !patched.includes("| ---")) {
+    const tableBlock = `
+| 항목 | 내용 |
+|------|------|
+| 지원 대상 | ${research.target_audience.slice(0, 40)} |
+| 지원 내용 | ${research.amount_or_scope.slice(0, 40)} |
+| 신청 방법 | ${research.application_steps[0]?.slice(0, 40) || "공식 채널 신청"} |
+| 문의처 | ${(benefit.detail_json as Record<string, Record<string, string>>)?.detail?.["문의처"] || (benefit.detail_json as Record<string, Record<string, string>>)?.list?.["문의처"] || "주민센터 또는 해당 기관"} |
+
+`;
+    const h2Match = patched.match(/\n## .+\n/);
+    if (h2Match?.index !== undefined) {
+      const insertAt = h2Match.index + h2Match[0].length;
+      patched = patched.slice(0, insertAt) + tableBlock + patched.slice(insertAt);
+    } else {
+      patched = tableBlock + patched;
+    }
+  }
+
+  // 2. YMYL 면책 문구 없으면 맨 끝에 추가
+  if (!/⚠️/.test(patched) && !/면책/.test(patched)) {
+    patched += `\n\n⚠️ 이 글은 공개된 공공데이터를 바탕으로 정리한 안내 자료입니다. 수급 자격의 최종 확인은 해당 기관 공식 공고 또는 주민센터 문의를 우선하세요.`;
+  }
+
+  // 3. AI 공개 문구 없으면 추가
+  if (!/이 글은 AI 도구/.test(patched)) {
+    patched += `\n\n*이 글은 AI 도구를 활용해 공개된 정부 자료·공공데이터를 정리·요약한 결과입니다. 최신 공고는 출처 링크 원문을 우선 확인하세요.*`;
+  }
+
+  return patched;
+}
+
 // ── 글 생성 프롬프트 ──────────────────────────────────────────────────────────
 function buildWritePrompt(
   benefit: BenefitRow,
@@ -183,10 +220,10 @@ function buildWritePrompt(
 ): string {
   const macroDesc: Record<string, string> = {
     A: "포괄 가이드 (H2 5~7개, 카테고리별 정리, FAQ 포함)",
-    B: "즉답형 Q&A (첫 문단에 직접 답, H2 3~4개, FAQ 포함)",
+    B: "즉답형 Q&A (첫 문단에 직접 답, H2 4~5개, FAQ 포함)",
     C: "통계 중심 (첫 문단에 수치, 비교표 필수, H2 4~5개)",
     E: "비교형 (비교표 필수, 각 옵션 H2, 선택 가이드 H2)",
-    F: "절차형 HowTo (H2가 '1단계. 행동' 형식, 3~7단계)",
+    F: "절차형 HowTo (H2가 '1단계. 행동' 형식, 5~7단계)",
   };
   const hookDesc: Record<string, string> = {
     H1: "직접 질문으로 시작 (물음표 끝, 컨텍스트, 약속)",
@@ -225,21 +262,21 @@ Outro: ${slots.outro} — ${outroDesc[slots.outro]}
 FAQ:
 ${research.faq.map((f) => `Q: ${f.q}\nA: ${f.a}`).join("\n")}
 
-[작성 규칙 — 반드시 준수]
-1. 매크로 골격 그대로 따를 것 (${slots.macro})
-2. 첫 단락: ${hookDesc[slots.hook]}
-3. H2 제목은 구체적이고 키워드 포함
-4. 비교표 또는 핵심 수치 박스 최소 1개 (마크다운 표 사용)
-5. FAQ 섹션: **Q1. 질문?** 형식으로 3개 이상
-6. 마지막 단락: ${outroDesc[slots.outro]}
-7. YMYL 면책 문구 맨 마지막에 한 줄 (⚠️ 로 시작)
-8. AI 도구 활용 공개 문구 마지막에 한 줄 (*이 글은 AI 도구를... 로 시작)
-9. 길이: 최소 1,800자 이상
-10. 클리셰 금지: "여러분 안녕하세요", "도움이 되셨길 바랍니다", "끝까지 읽어주셔서 감사합니다", "이상으로 마치겠습니다", "정말 중요한", "꼭 기억해야" 등 절대 사용 금지
-11. 확정 표현 금지: "반드시 받을 수 있습니다", "보장됩니다", "확실히 해당됩니다"
-12. 공식 출처 인용 최소 3회 이상 (복지로, 보건복지부, 고용노동부 등)
+━━━ 절대 준수 체크리스트 (누락 시 재작성) ━━━
 
-마크다운 형식으로 작성하세요. H1 제목(#)은 포함하지 마세요.`;
+✅ [필수1] H2 섹션 최소 5개 이상
+✅ [필수2] 마크다운 표(|헤더|헤더|\n|---|---|) 최소 1개 — 신청 자격·지원 내용·서류 비교에 사용
+✅ [필수3] ## 자주 묻는 질문 섹션, **Q1. 질문?** 형식 3개 이상
+✅ [필수4] 공식 출처 언급 4회 이상: "복지로 공식 안내에 따르면", "보건복지부 기준으로", "고용노동부 고시에 의하면", "정부24에서 확인" 등
+✅ [필수5] 마지막 줄: ⚠️ 로 시작하는 면책 문구 (수급 자격 최종 확인은 공식 공고 참조)
+✅ [필수6] 그 다음 줄: *이 글은 AI 도구를 활용해... 로 시작하는 AI 공개 문구
+✅ [필수7] 전체 길이 2,000자 이상 (각 H2 섹션을 3~5문단씩 충분히 작성)
+
+❌ [금지1] "여러분 안녕하세요", "도움이 되셨길 바랍니다", "끝까지 읽어주셔서 감사합니다"
+❌ [금지2] "반드시 받을 수 있습니다", "보장됩니다", "확실히 해당됩니다"
+❌ [금지3] H1 제목(# 한 개만 사용하는 것) 포함 금지 — ## 부터 시작
+
+마크다운 형식으로만 작성하세요.`;
 }
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
@@ -319,7 +356,7 @@ async function main() {
   console.log(`   후보 benefits: ${benefits.length}개 (전체 ${benefitRows.length}개 중 미처리)`);
 
   let idx = 0;
-  let consecutiveFails = 0;
+  let consecutiveApiErrors = 0; // API 오류만 카운트 (품질 미달은 제외)
 
   while (progress.generated < TARGET && idx < benefits.length) {
     const batch = benefits.slice(idx, idx + BATCH);
@@ -327,8 +364,8 @@ async function main() {
 
     for (const benefit of batch) {
       if (progress.generated >= TARGET) break;
-      if (consecutiveFails >= 10) {
-        console.error("연속 실패 10회 → 중단");
+      if (consecutiveApiErrors >= 10) {
+        console.error("연속 API 오류 10회 → 중단");
         saveProgress(progress);
         process.exit(1);
       }
@@ -377,24 +414,27 @@ async function main() {
         const writePrompt = buildWritePrompt(benefit, research, slots);
 
         const writeResult = await model.generateContent(writePrompt);
-        const content = writeResult.response.text().trim();
+        let content = writeResult.response.text().trim();
+
+        // ── Step 3: 누락 요소 자동 보정 ─────────────────────────────────────
+        content = patchContent(content, benefit, research);
 
         await sleep(DELAY_MS);
 
-        // ── Step 3: 품질 체크 ─────────────────────────────────────────────────
+        // ── Step 4: 품질 체크 ─────────────────────────────────────────────────
         const quality = scoreQuality(content, title);
         console.log(`  품질 점수: ${quality}점`);
 
         if (quality < MIN_QUALITY) {
-          console.warn(`  ⚠️ 품질 미달(${quality}점 < ${MIN_QUALITY}점) — 스킵`);
+          console.warn(`  ⚠️ 품질 미달(${quality}점 < ${MIN_QUALITY}점) — 스킵 (API 오류 아님)`);
           progress.skipped++;
           progress.processedIds.push(benefit.id);
           saveProgress(progress);
-          consecutiveFails++;
+          // 품질 미달은 consecutiveApiErrors에 포함하지 않음
           continue;
         }
 
-        // ── Step 4: Turso 삽입 ────────────────────────────────────────────────
+        // ── Step 5: Turso 삽입 ────────────────────────────────────────────────
         const slug = `${benefit.id.slice(0, 8)}-${Date.now().toString(36)}-${crypto.randomBytes(3).toString("hex")}`;
         const excerpt = content.replace(/[#*`>\-|]/g, "").replace(/\s+/g, " ").slice(0, 140).trim() + "…";
         const tags = JSON.stringify([benefit.category, "정부지원금", "2026정책"].filter(Boolean));
@@ -407,13 +447,13 @@ async function main() {
 
         progress.generated++;
         progress.processedIds.push(benefit.id);
-        consecutiveFails = 0;
+        consecutiveApiErrors = 0;
         console.log(`  ✅ 저장 완료 [${progress.generated}/${TARGET}]`);
         saveProgress(progress);
       } catch (err) {
-        console.error(`  ❌ 오류:`, err instanceof Error ? err.message : String(err));
+        console.error(`  ❌ API 오류:`, err instanceof Error ? err.message : String(err));
         progress.failed++;
-        consecutiveFails++;
+        consecutiveApiErrors++;
         progress.processedIds.push(benefit.id);
         saveProgress(progress);
         await sleep(DELAY_MS * 2);
