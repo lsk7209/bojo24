@@ -25,13 +25,13 @@ const siteUrl = resolveSiteUrl();
 
 export const metadata: Metadata = {
   title: "창업지원 공고",
-  description: "K-Startup과 중소벤처기업부 창업·사업공고 정보를 한곳에서 확인합니다.",
+  description: "K-Startup·중소벤처기업부·기업마당 2026 창업지원 공고를 한곳에서 확인하세요. 창업 자금·육성 프로그램·정부 지원 사업 신청 정보를 정리합니다.",
   alternates: {
     canonical: buildCanonicalUrl("/startup"),
   },
   openGraph: {
     title: `창업지원 공고 | ${SITE_NAME}`,
-    description: "K-Startup과 중소벤처기업부 창업·사업공고 정보를 한곳에서 확인합니다.",
+    description: "K-Startup·중소벤처기업부·기업마당 2026 창업지원 공고를 한곳에서 확인하세요.",
     url: buildCanonicalUrl("/startup"),
     locale: "ko_KR",
     type: "website",
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: `창업지원 공고 | ${SITE_NAME}`,
-    description: "K-Startup과 중소벤처기업부 창업·사업공고 정보를 한곳에서 확인합니다.",
+    description: "K-Startup·중소벤처기업부·기업마당 2026 창업지원 공고를 한곳에서 확인하세요.",
   },
 };
 
