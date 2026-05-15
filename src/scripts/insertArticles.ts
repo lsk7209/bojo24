@@ -957,8 +957,10 @@ HRD-Net에 등록된 자격증 준비 과정이라면 지원 가능하다. 단, 
 
 // ── 삽입 ─────────────────────────────────────────────────────────────────────
 async function main() {
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error("SUPABASE_URL 또는 SUPABASE_SERVICE_ROLE_KEY 환경 변수가 없습니다.");
+  const hasTurso = process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN;
+  const hasSupabase = process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!hasTurso && !hasSupabase) {
+    throw new Error("TURSO_DATABASE_URL/TURSO_AUTH_TOKEN 또는 SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY 환경 변수가 필요합니다.");
   }
 
   const { getServiceClient } = await import("@lib/supabaseClient");
