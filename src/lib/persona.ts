@@ -66,6 +66,17 @@ export const SITE_PERSONA = {
       "신청 가능 여부 확정적 단언",
     ],
   },
+
+  /**
+   * P4 — AI 공개 패턴 (Google Scaled Content Abuse 정책 대응)
+   * 모든 AI 생성 글 하단에 명시 필수.
+   */
+  P4: {
+    name: "AI 공개",
+    disclosure: "이 글은 AI 도구를 활용해 공개된 정부 자료·공공데이터를 정리·요약한 결과입니다. 최신 공고는 출처 링크 원문을 우선 확인하세요.",
+    placement: "footer",
+    required: true,
+  },
 } as const;
 
 /**

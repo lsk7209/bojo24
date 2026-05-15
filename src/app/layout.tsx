@@ -56,7 +56,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: siteUrl,
     types: {
-      "application/rss+xml": [{ url: `${siteUrl}/rss.xml`, title: `${siteName} RSS` }],
+      "application/rss+xml": [{ url: `${siteUrl}/rss.xml`, title: `${siteName} 정보마당 RSS` }],
     },
   },
   icons: {
@@ -93,6 +93,12 @@ export default function RootLayout({
   return (
     <html lang="ko" className={notoSansKr.className}>
       <head>
+        {/* preconnect: 핵심 외부 도메인 DNS+TLS 선점 */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
+        <link rel="dns-prefetch" href="https://clarity.ms" />
         <GoogleAnalytics />
         <MicrosoftClarity />
         {/* AdSense: afterInteractive 전략으로 렌더링 블로킹 방지 */}

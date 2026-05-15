@@ -34,7 +34,7 @@ const nextConfig = {
   
   // 실험적 기능
   experimental: {
-    optimizePackageImports: ['@supabase/supabase-js', '@google/generative-ai'],
+    optimizePackageImports: ['@supabase/supabase-js', '@google/generative-ai', 'react-markdown', '@libsql/client'],
   },
 
   // Turbopack 루트 명시 (workspace root 자동감지 오류 방지)
@@ -42,28 +42,38 @@ const nextConfig = {
     root: __dirname,
   },
   
-  // 헤더 설정 (보안)
+  // 헤더 설정 (보안 + 캐시)
   async headers() {
     return [
       {
         source: '/:path*',
         headers: [
-          {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'on'
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN'
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
-          },
+          { key: 'X-DNS-Prefetch-Control', value: 'on' },
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+      // 정적 자산 장기 캐시 (Next.js _next/static은 이미 immutable이지만 명시)
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      // 폰트/이미지
+      {
+        source: '/_next/image',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' },
+        ],
+      },
+      // sitemap/robots: 1시간 캐시
+      {
+        source: '/(sitemap.xml|robots.txt)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=3600, stale-while-revalidate=86400' },
         ],
       },
     ];

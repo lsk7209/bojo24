@@ -4,7 +4,7 @@ import { publicEnv } from "@lib/env";
 import { buildPostPath } from "@lib/postRouting";
 
 const BASE_URL = publicEnv.NEXT_PUBLIC_SITE_URL || "https://www.bojo24.kr";
-const UPDATED_AT = "2026-05-15";
+const UPDATED_AT = new Date().toISOString().slice(0, 10);
 
 export const revalidate = 3600;
 
