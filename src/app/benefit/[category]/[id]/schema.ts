@@ -192,62 +192,32 @@ export const buildQAPageJsonLd = (benefit: BenefitRecord) => {
 };
 
 /**
- * Person Schema 생성 (GEO - Expertise)
- * 전문가 정보 표시
+ * GovernmentService Schema 생성 (GEO - Authoritativeness)
+ * 정부 서비스 정보를 GovernmentService 타입으로 표현
  */
-export const buildPersonJsonLd = () => {
-  return JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "Person",
-    "name": "보조24",
-    "jobTitle": "정부 보조금 분석 전문가",
-    "description": "행정안전부 보조24 공공데이터를 분석하여 시민들에게 쉽고 정확한 정보를 제공합니다.",
-    "knowsAbout": [
-      "정부 보조금",
-      "공공서비스",
-      "지원금 신청",
-      "정책 분석"
-    ],
-    "memberOf": {
-      "@type": "Organization",
-      "name": "보조24"
-    }
-  });
-};
-
-/**
- * Review/Rating Schema 생성 (GEO - Trustworthiness)
- * 신뢰성 표시
- */
-export const buildReviewJsonLd = (benefit: BenefitRecord) => {
+export const buildGovernmentServiceJsonLd = (benefit: BenefitRecord) => {
   const detail = benefit.detail_json as {
     list?: Record<string, string>;
     detail?: Record<string, string>;
   } | undefined;
 
+  const d = detail?.detail || detail?.list || {};
+
   return JSON.stringify({
     "@context": "https://schema.org",
-    "@type": "Review",
-    "itemReviewed": {
-      "@type": "Service",
-      "name": benefit.name,
-      "provider": {
-        "@type": "Organization",
-        "name": benefit.governing_org || "정부 기관"
-      }
+    "@type": "GovernmentService",
+    "name": benefit.name,
+    "description": benefit.gemini_summary || d["서비스목적요약"] || "",
+    "provider": {
+      "@type": "GovernmentOrganization",
+      "name": benefit.governing_org || "정부 기관"
     },
-    "author": {
-      "@type": "Organization",
-      "name": "보조24"
+    "serviceType": benefit.category || "정부 지원금",
+    "areaServed": {
+      "@type": "Country",
+      "name": "대한민국"
     },
-    "reviewBody": benefit.gemini_summary || detail?.list?.["서비스목적요약"] || "",
-    "datePublished": benefit.last_updated_at || new Date().toISOString(),
-    "reviewRating": {
-      "@type": "Rating",
-      "ratingValue": "5",
-      "bestRating": "5",
-      "worstRating": "1"
-    }
+    ...(d["신청기간"] ? { "availabilityStarts": d["신청기간"] } : {}),
   });
 };
 
@@ -306,7 +276,7 @@ export const buildOptimizedFaqJsonLd = (faqs: Array<{ question: string; answer: 
  * 모든 구조화 데이터 통합 (GEO + AEO 최적화)
  */
 export const buildAllStructuredData = (
-  benefit: BenefitRecord, 
+  benefit: BenefitRecord,
   category: string,
   optimizedFaqs?: Array<{ question: string; answer: string }>
 ) => {
@@ -314,9 +284,8 @@ export const buildAllStructuredData = (
     buildArticleJsonLd(benefit, category),
     buildBreadcrumbJsonLd(category, benefit.name, benefit.id),
     buildOrganizationJsonLd(),
-    buildPersonJsonLd(), // GEO - Expertise
-    buildDatasetJsonLd(benefit), // GEO - Authoritativeness
-    buildReviewJsonLd(benefit) // GEO - Trustworthiness
+    buildGovernmentServiceJsonLd(benefit), // GEO - Authoritativeness
+    buildDatasetJsonLd(benefit),
   ];
 
   // 공공데이터 기반 FAQ 우선 (AEO 최적화)
