@@ -69,6 +69,16 @@ jobs:
           path: .article-cache/bulk-progress.json
           if-no-files-found: ignore
 
+      - name: Quality Audit (90점 미달 unpublish)
+        if: success()
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          AUDIT_HOURS: "3"
+          AUDIT_MIN_SCORE: "90"
+          AUDIT_DELETE: "true"
+        run: npm run audit:posts -- --hours 3 --min-score 90 --delete || echo "Audit warning (non-fatal)"
+
       - name: Ping IndexNow + submit sitemap to GSC
         if: success()
         env:
