@@ -94,3 +94,13 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: npm run gen:gemini
 
+      - name: Ping IndexNow + submit sitemap to GSC
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          NEXT_PUBLIC_SITE_URL: https://www.bojo24.kr
+          NOTIFY_DUE_POSTS_LOOKBACK_HOURS: "25"
+        run: npm run content:notify-due || echo "Search engine ping failed (non-fatal)"
+

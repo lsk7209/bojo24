@@ -36,6 +36,11 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['@supabase/supabase-js', '@google/generative-ai'],
   },
+
+  // Turbopack 루트 명시 (workspace root 자동감지 오류 방지)
+  turbopack: {
+    root: __dirname,
+  },
   
   // 헤더 설정 (보안)
   async headers() {

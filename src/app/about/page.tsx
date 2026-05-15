@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Card } from "@components/ui";
 import { SectionHeader } from "@components/section-header";
-import { SITE_NAME, buildCanonicalUrl } from "@lib/site";
+import { SITE_NAME, buildCanonicalUrl, resolveSiteUrl } from "@lib/site";
 
 const strengths = [
   "정책명만 보여주지 않고 신청 대상과 준비 사항을 본문 중심으로 다시 설명합니다.",
@@ -16,11 +16,26 @@ const workflow = [
   "정확한 신청은 기관 공지를 우선하도록 공식 링크와 문의처를 함께 노출합니다.",
 ] as const;
 
+const siteUrl = resolveSiteUrl();
+
 export const metadata: Metadata = {
   title: "서비스 소개",
-  description: "보조24가 어떤 기준으로 정부 지원금 정보를 정리하는지 소개합니다.",
+  description: "보조24가 어떤 기준으로 정부 지원금 정보를 정리하는지 소개합니다. 공공데이터 기반 편집 원칙과 운영 방식을 확인하세요.",
   alternates: {
     canonical: buildCanonicalUrl("/about"),
+  },
+  openGraph: {
+    title: `서비스 소개 | ${SITE_NAME}`,
+    description: "보조24가 어떤 기준으로 정부 지원금 정보를 정리하는지 소개합니다.",
+    url: buildCanonicalUrl("/about"),
+    locale: "ko_KR",
+    type: "website",
+    images: [{ url: `${siteUrl}/opengraph-image`, width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `서비스 소개 | ${SITE_NAME}`,
+    description: "보조24가 어떤 기준으로 정부 지원금 정보를 정리하는지 소개합니다.",
   },
 };
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Badge, Card } from "@components/ui";
 import { SectionHeader } from "@components/section-header";
-import { buildCanonicalUrl, SITE_DESCRIPTION, SITE_NAME } from "@lib/site";
+import { buildCanonicalUrl, SITE_DESCRIPTION, SITE_NAME, resolveSiteUrl } from "@lib/site";
 import {
   faqItems,
   popularCategories,
@@ -10,6 +10,8 @@ import {
   qualityPrinciples,
   userCases,
 } from "@lib/home-content";
+
+const siteUrl = resolveSiteUrl();
 
 export const metadata: Metadata = {
   title: "정부 지원금 찾기",
@@ -23,6 +25,13 @@ export const metadata: Metadata = {
     url: buildCanonicalUrl("/"),
     locale: "ko_KR",
     type: "website",
+    images: [{ url: `${siteUrl}/opengraph-image`, width: 1200, height: 630, alt: `${SITE_NAME} - 정부 지원금 찾기` }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE_NAME} - 정부 지원금 찾기`,
+    description: SITE_DESCRIPTION,
+    images: [`${siteUrl}/opengraph-image`],
   },
 };
 

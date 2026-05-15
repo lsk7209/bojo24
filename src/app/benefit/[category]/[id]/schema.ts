@@ -74,7 +74,7 @@ export const buildArticleJsonLd = (benefit: BenefitRecord, category: string) => 
 /**
  * BreadcrumbList 구조화 데이터 생성
  */
-export const buildBreadcrumbJsonLd = (category: string, benefitName: string) => {
+export const buildBreadcrumbJsonLd = (category: string, benefitName: string, benefitId: string) => {
   return JSON.stringify({
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -101,7 +101,7 @@ export const buildBreadcrumbJsonLd = (category: string, benefitName: string) => 
         "@type": "ListItem",
         "position": 4,
         "name": benefitName,
-        "item": `${BASE_URL}/benefit/${encodeURIComponent(category)}`
+        "item": `${BASE_URL}/benefit/${encodeURIComponent(category)}/${encodeURIComponent(benefitId)}`
       }
     ]
   });
@@ -312,7 +312,7 @@ export const buildAllStructuredData = (
 ) => {
   const data = [
     buildArticleJsonLd(benefit, category),
-    buildBreadcrumbJsonLd(category, benefit.name),
+    buildBreadcrumbJsonLd(category, benefit.name, benefit.id),
     buildOrganizationJsonLd(),
     buildPersonJsonLd(), // GEO - Expertise
     buildDatasetJsonLd(benefit), // GEO - Authoritativeness

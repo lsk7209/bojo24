@@ -2,15 +2,30 @@ import { getAnonClient } from "@lib/supabaseClient";
 import Link from "next/link";
 import { Badge, Card } from "@components/ui";
 import { SectionHeader } from "@components/section-header";
-import { buildCanonicalUrl } from "@lib/site";
+import { buildCanonicalUrl, SITE_NAME, resolveSiteUrl } from "@lib/site";
 import { buildPostPath } from "@lib/postRouting";
 import type { Metadata } from "next";
 
+const siteUrl = resolveSiteUrl();
+
 export const metadata: Metadata = {
     title: "정보마당",
-    description: "정부 혜택과 관련된 유용한 정보와 신청 전 확인할 내용을 살펴보세요.",
+    description: "정부 혜택과 관련된 유용한 정보와 신청 전 확인할 내용을 살펴보세요. 지원금 신청 팁·FAQ·안내 자료를 한곳에서 읽어보세요.",
     alternates: {
         canonical: buildCanonicalUrl("/blog"),
+    },
+    openGraph: {
+        title: `정보마당 | ${SITE_NAME}`,
+        description: "정부 혜택과 관련된 유용한 정보와 신청 전 확인할 내용을 살펴보세요.",
+        url: buildCanonicalUrl("/blog"),
+        locale: "ko_KR",
+        type: "website",
+        images: [{ url: `${siteUrl}/opengraph-image`, width: 1200, height: 630 }],
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: `정보마당 | ${SITE_NAME}`,
+        description: "정부 혜택과 관련된 유용한 정보와 신청 전 확인할 내용을 살펴보세요.",
     },
 };
 

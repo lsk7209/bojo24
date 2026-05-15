@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getAnonClient } from "@lib/supabaseClient";
-import { buildCanonicalUrl } from "@lib/site";
+import { buildCanonicalUrl, SITE_NAME, resolveSiteUrl } from "@lib/site";
 import { buildStartupPath, formatStartupDate, latestStartupDate, sourceLabel } from "@lib/startup";
 import { Badge, Card } from "@components/ui";
 import type { StartupItem, StartupSource } from "@/types/startup";
@@ -21,11 +21,26 @@ const SOURCES: { value: "all" | StartupSource; label: string }[] = [
   { value: "kstartup_statistics", label: "K-Startup 통계" },
 ];
 
+const siteUrl = resolveSiteUrl();
+
 export const metadata: Metadata = {
   title: "창업지원 공고",
   description: "K-Startup과 중소벤처기업부 창업·사업공고 정보를 한곳에서 확인합니다.",
   alternates: {
     canonical: buildCanonicalUrl("/startup"),
+  },
+  openGraph: {
+    title: `창업지원 공고 | ${SITE_NAME}`,
+    description: "K-Startup과 중소벤처기업부 창업·사업공고 정보를 한곳에서 확인합니다.",
+    url: buildCanonicalUrl("/startup"),
+    locale: "ko_KR",
+    type: "website",
+    images: [{ url: `${siteUrl}/opengraph-image`, width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `창업지원 공고 | ${SITE_NAME}`,
+    description: "K-Startup과 중소벤처기업부 창업·사업공고 정보를 한곳에서 확인합니다.",
   },
 };
 

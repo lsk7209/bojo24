@@ -4,7 +4,7 @@ import { Button, Card } from "@components/ui";
 import { InlineAd } from "@components/adsense-ad";
 import { AD_SLOTS } from "@lib/ads";
 import { BenefitListClient } from "@components/benefit-list-client";
-import { buildCanonicalUrl } from "@lib/site";
+import { buildCanonicalUrl, SITE_NAME, resolveSiteUrl } from "@lib/site";
 import Link from "next/link";
 import type { Metadata } from "next";
 import type { BenefitListItem } from "@components/benefit-list-types";
@@ -50,11 +50,26 @@ const fetchBenefits = async ({
 };
 
 
+const siteUrl = resolveSiteUrl();
+
 export const metadata: Metadata = {
   title: "지원금 목록",
-  description: "수집된 보조24 지원금 목록을 한눈에 확인하세요.",
+  description: "생활안정·임신출산·보육교육·주거자립 등 분야별 정부 지원금을 검색하고 신청 자격을 확인하세요.",
   alternates: {
     canonical: buildCanonicalUrl("/benefit"),
+  },
+  openGraph: {
+    title: `지원금 목록 | ${SITE_NAME}`,
+    description: "생활안정·임신출산·보육교육·주거자립 등 분야별 정부 지원금을 검색하고 신청 자격을 확인하세요.",
+    url: buildCanonicalUrl("/benefit"),
+    locale: "ko_KR",
+    type: "website",
+    images: [{ url: `${siteUrl}/opengraph-image`, width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `지원금 목록 | ${SITE_NAME}`,
+    description: "생활안정·임신출산·보육교육·주거자립 등 분야별 정부 지원금을 검색하고 신청 자격을 확인하세요.",
   },
 };
 

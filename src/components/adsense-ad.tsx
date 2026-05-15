@@ -95,13 +95,14 @@ export function ResponsiveAd({ adSlot, className = "" }: AdSlotWrapperProps) {
 }
 
 export function InlineAd({ adSlot, className = "" }: AdSlotWrapperProps) {
+  if (!normalizeAdSlot(adSlot)) return null;
   return (
-    <div className={`my-8 flex justify-center ${className}`}>
+    <div className={`my-8 flex justify-center min-h-[280px] ${className}`}>
       <AdSenseAd
         adSlot={adSlot}
         format="horizontal"
         responsive={true}
-        className="min-h-[250px] max-w-full"
+        className="min-h-[250px] max-w-full w-full"
         label="인라인 광고"
       />
     </div>
