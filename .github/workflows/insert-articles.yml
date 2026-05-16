@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       batch:
-        description: "실행할 배치 (1=insertArticles, 2=insertArticles2, 3=insertArticles3, 4=insertArticles4, 5=insertArticles5, all=전체)"
+        description: "실행할 배치 (1=insertArticles, 2=insertArticles2, 3=insertArticles3, 4=insertArticles4, 5=insertArticles5, 6=insertArticles6, all=전체)"
         required: false
         default: "all"
 
@@ -61,6 +61,14 @@ jobs:
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
           SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH5 }}
         run: npm run insert:articles5
+
+      - name: Insert articles batch 6 (긴급복지·장기요양·주거급여 등 10개)
+        if: ${{ github.event.inputs.batch == '6' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH6 }}
+        run: npm run insert:articles6
 
       - name: Reschedule all art* posts at 5-hour intervals
         if: ${{ github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
