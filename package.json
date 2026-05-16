@@ -50,6 +50,16 @@
     "insert:articles19": "tsx src/scripts/insertArticles19.ts",
     "insert:articles20": "tsx src/scripts/insertArticles20.ts",
     "insert:articles21": "tsx src/scripts/insertArticles21.ts",
+    "insert:articles22": "tsx src/scripts/insertArticles22.ts",
+    "insert:articles23": "tsx src/scripts/insertArticles23.ts",
+    "insert:articles24": "tsx src/scripts/insertArticles24.ts",
+    "insert:articles25": "tsx src/scripts/insertArticles25.ts",
+    "insert:articles26": "tsx src/scripts/insertArticles26.ts",
+    "insert:articles27": "tsx src/scripts/insertArticles27.ts",
+    "insert:articles28": "tsx src/scripts/insertArticles28.ts",
+    "insert:articles29": "tsx src/scripts/insertArticles29.ts",
+    "insert:articles30": "tsx src/scripts/insertArticles30.ts",
+    "insert:articles31": "tsx src/scripts/insertArticles31.ts",
     "reschedule:articles": "tsx src/scripts/rescheduleArticles.ts"
   },
   "dependencies": {
