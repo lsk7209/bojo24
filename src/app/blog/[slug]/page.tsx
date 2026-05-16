@@ -9,6 +9,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 type PageParams = {
   params: Promise<{ slug: string }>;
@@ -240,6 +241,7 @@ export default async function BlogPostPage({ params }: PageParams) {
 
         <div className="leading-8 text-slate-700">
           <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
             components={{
               h2: ({ node: _node, ...props }) => (
                 <h2

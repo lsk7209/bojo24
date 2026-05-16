@@ -35,6 +35,7 @@
     "insert:articles5": "tsx src/scripts/insertArticles5.ts",
     "audit:posts": "tsx src/scripts/auditGeneratedPosts.ts",
     "insert:articles6": "tsx src/scripts/insertArticles6.ts",
+    "insert:articles7": "tsx src/scripts/insertArticles7.ts",
     "reschedule:articles": "tsx src/scripts/rescheduleArticles.ts"
   },
   "dependencies": {
@@ -48,6 +49,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "tailwind-merge": "^2.6.1"
   },
   "devDependencies": {
