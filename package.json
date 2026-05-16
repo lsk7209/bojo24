@@ -29,6 +29,10 @@
     "regenerate:benefits": "tsx src/scripts/regenerateBenefits.ts",
     "bulk:generate": "tsx src/scripts/bulkGenerate300.ts",
     "insert:articles": "tsx src/scripts/insertArticles.ts",
+    "insert:articles2": "tsx src/scripts/insertArticles2.ts",
+    "insert:articles3": "tsx src/scripts/insertArticles3.ts",
+    "insert:articles4": "tsx src/scripts/insertArticles4.ts",
+    "insert:articles5": "tsx src/scripts/insertArticles5.ts",
     "audit:posts": "tsx src/scripts/auditGeneratedPosts.ts"
   },
   "dependencies": {

@@ -2,10 +2,15 @@ name: Insert Pre-written Articles
 
 on:
   workflow_dispatch:
+    inputs:
+      batch:
+        description: "실행할 배치 (1=insertArticles, 2=insertArticles2, 3=insertArticles3, 4=insertArticles4, 5=insertArticles5, all=전체)"
+        required: false
+        default: "all"
 
 jobs:
   insert:
-    name: Insert 10 Blog Articles
+    name: Insert Blog Articles
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -20,11 +25,42 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Insert articles into DB
+      - name: Insert articles batch 1 (10개)
+        if: ${{ github.event.inputs.batch == '1' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: npm run insert:articles
+
+      - name: Insert articles batch 2 (기초연금·근로장려금 등 10개)
+        if: ${{ github.event.inputs.batch == '2' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: npm run insert:articles2
+
+      - name: Insert articles batch 3 (차상위·노인일자리 등 10개)
+        if: ${{ github.event.inputs.batch == '3' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: npm run insert:articles3
+
+      - name: Insert articles batch 4 (장애인활동지원·산재보험 등 10개)
+        if: ${{ github.event.inputs.batch == '4' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH4 }}
+        run: npm run insert:articles4
+
+      - name: Insert articles batch 5 (출산휴가·교육급여 등 10개)
+        if: ${{ github.event.inputs.batch == '5' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH5 }}
+        run: npm run insert:articles5
 
       - name: Ping IndexNow + submit sitemap to GSC
         env:
