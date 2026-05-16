@@ -62,6 +62,14 @@ jobs:
           SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH5 }}
         run: npm run insert:articles5
 
+      - name: Reschedule all art* posts at 5-hour intervals
+        if: ${{ github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH2 }}
+        run: npm run reschedule:articles
+
       - name: Ping IndexNow + submit sitemap to GSC
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}

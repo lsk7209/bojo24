@@ -4,7 +4,7 @@ import { CONTACT_EMAIL, SITE_NAME, SITE_TAGLINE } from "@lib/site";
 const navItems = [
   { href: "/benefit", label: "지원금 찾기" },
   { href: "/startup", label: "창업지원" },
-  { href: "/blog", label: "정보마당" },
+  { href: "/blog", label: "블로그" },
   { href: "/about", label: "서비스 소개" },
   { href: "/contact", label: "문의" },
 ] as const;

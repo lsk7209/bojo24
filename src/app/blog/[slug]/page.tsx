@@ -3,6 +3,7 @@ import { Badge, Button, Card } from "@components/ui";
 import { AD_SLOTS } from "@lib/ads";
 import { buildPostPath, parsePostRouteSlug } from "@lib/postRouting";
 import { buildCanonicalUrl, SITE_NAME } from "@lib/site";
+import { createTursoCompatClient } from "@lib/tursoClient";
 import { getAnonClient } from "@lib/supabaseClient";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -60,10 +61,10 @@ const extractFaqItems = (content: string) => {
 };
 
 const fetchPost = async (routeSlug: string) => {
-  const supabase = getAnonClient();
+  const db = createTursoCompatClient();
   const now = new Date().toISOString();
   const parsed = parsePostRouteSlug(routeSlug);
-  const query = supabase
+  const query = db
     .from("posts")
     .select("*")
     .eq("is_published", true)

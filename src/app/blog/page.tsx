@@ -1,4 +1,4 @@
-import { getAnonClient } from "@lib/supabaseClient";
+import { createTursoCompatClient } from "@lib/tursoClient";
 import Link from "next/link";
 import { Badge, Card } from "@components/ui";
 import { SectionHeader } from "@components/section-header";
@@ -44,10 +44,10 @@ type SearchParams = { page?: string };
 
 const fetchPosts = async (page: number) => {
     try {
-        const supabase = getAnonClient();
+        const db = createTursoCompatClient();
         const now = new Date().toISOString();
         const offset = (page - 1) * PAGE_SIZE;
-        const { data, error, count } = await supabase
+        const { data, error, count } = await db
             .from("posts")
             .select("id, title, slug, excerpt, tags, created_at, published_at", { count: "exact" })
             .eq("is_published", true)

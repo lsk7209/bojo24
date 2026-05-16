@@ -33,7 +33,8 @@
     "insert:articles3": "tsx src/scripts/insertArticles3.ts",
     "insert:articles4": "tsx src/scripts/insertArticles4.ts",
     "insert:articles5": "tsx src/scripts/insertArticles5.ts",
-    "audit:posts": "tsx src/scripts/auditGeneratedPosts.ts"
+    "audit:posts": "tsx src/scripts/auditGeneratedPosts.ts",
+    "reschedule:articles": "tsx src/scripts/rescheduleArticles.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.11.5",

@@ -1,4 +1,5 @@
 import { getAnonClient } from "@lib/supabaseClient";
+import { createTursoCompatClient } from "@lib/tursoClient";
 import { MetadataRoute } from "next";
 import { publicEnv } from "@lib/env";
 import { buildPostPath } from "@lib/postRouting";
@@ -29,22 +30,23 @@ type StartupSitemapRow = {
 
 const fetchSitemapRows = async () => {
     try {
-        const db = getAnonClient();
+        const supabase = getAnonClient();
+        const turso = createTursoCompatClient();
         const now = new Date().toISOString();
 
         const [{ data: benefits }, { data: posts }, { data: startupItems }] = await Promise.all([
-            db
+            supabase
                 .from("benefits")
                 .select("id, category, last_updated_at", { count: "exact" })
                 .order("last_updated_at", { ascending: false })
                 .limit(10000),
-            db
+            turso
                 .from("posts")
                 .select("id, slug, created_at, published_at")
                 .eq("is_published", true)
                 .or(`published_at.is.null,published_at.lte.${now}`)
                 .order("published_at", { ascending: false, nullsFirst: false }),
-            db
+            supabase
                 .from("startup_items")
                 .select("id, updated_at, published_at")
                 .order("updated_at", { ascending: false, nullsFirst: false })
