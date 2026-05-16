@@ -94,6 +94,38 @@ jobs:
           SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH9 }}
         run: npm run insert:articles9
 
+      - name: Insert articles batch 11 (고용장려금·새일센터·내일배움카드·장년재취업 등 10개)
+        if: ${{ github.event.inputs.batch == '11' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH11 }}
+        run: npm run insert:articles11
+
+      - name: Insert articles batch 12 (노인교통비·주거·급식·보청기·돌봄 등 10개)
+        if: ${{ github.event.inputs.batch == '12' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH12 }}
+        run: npm run insert:articles12
+
+      - name: Insert articles batch 13 (장애인자동차세·통신요금·주간활동·청각시각 등 10개)
+        if: ${{ github.event.inputs.batch == '13' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH13 }}
+        run: npm run insert:articles13
+
+      - name: Insert articles batch 14 (예방접종·급식카드·청소년심리상담·보호종료아동 등 10개)
+        if: ${{ github.event.inputs.batch == '14' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH14 }}
+        run: npm run insert:articles14
+
       - name: Insert articles batch 10 (공공임대·전세보증·보금자리론·신혼특공·확정일자 등 10개)
         if: ${{ github.event.inputs.batch == '10' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
         env:
@@ -101,6 +133,14 @@ jobs:
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
           SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH10 }}
         run: npm run insert:articles10
+
+      - name: Insert articles batch 17 (국가장학금·학자금대출·내일배움카드·귀농교육 등 10개)
+        if: ${{ github.event.inputs.batch == '17' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH17 }}
+        run: npm run insert:articles17
 
       - name: Reschedule all art* posts at 5-hour intervals
         if: ${{ github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
