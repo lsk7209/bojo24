@@ -38,6 +38,7 @@
     "insert:articles7": "tsx src/scripts/insertArticles7.ts",
     "insert:articles8": "tsx src/scripts/insertArticles8.ts",
     "insert:articles9": "tsx src/scripts/insertArticles9.ts",
+    "insert:articles10": "tsx src/scripts/insertArticles10.ts",
     "reschedule:articles": "tsx src/scripts/rescheduleArticles.ts"
   },
   "dependencies": {
