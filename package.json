@@ -36,6 +36,7 @@
     "audit:posts": "tsx src/scripts/auditGeneratedPosts.ts",
     "insert:articles6": "tsx src/scripts/insertArticles6.ts",
     "insert:articles7": "tsx src/scripts/insertArticles7.ts",
+    "insert:articles8": "tsx src/scripts/insertArticles8.ts",
     "reschedule:articles": "tsx src/scripts/rescheduleArticles.ts"
   },
   "dependencies": {
