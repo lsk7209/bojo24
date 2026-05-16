@@ -158,6 +158,38 @@ jobs:
           SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH17 }}
         run: npm run insert:articles17
 
+      - name: Insert articles batch 18 (소상공인확인서·노란우산공제·손실보상·재창업 등 10개)
+        if: ${{ github.event.inputs.batch == '18' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH18 }}
+        run: npm run insert:articles18
+
+      - name: Insert articles batch 19 (근로소득세환급·햇살론·채무조정·임금체불 등 10개)
+        if: ${{ github.event.inputs.batch == '19' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH19 }}
+        run: npm run insert:articles19
+
+      - name: Insert articles batch 20 (농업직불금·재해보험·농지연금·청년창업농 등 10개)
+        if: ${{ github.event.inputs.batch == '20' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH20 }}
+        run: npm run insert:articles20
+
+      - name: Insert articles batch 21 (여행바우처·공공체육·박물관무료·도서관디지털 등 10개)
+        if: ${{ github.event.inputs.batch == '21' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH21 }}
+        run: npm run insert:articles21
+
       - name: Reschedule all art* posts at 5-hour intervals
         if: ${{ github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
         env:

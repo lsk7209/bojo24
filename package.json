@@ -46,6 +46,10 @@
     "insert:articles15": "tsx src/scripts/insertArticles15.ts",
     "insert:articles16": "tsx src/scripts/insertArticles16.ts",
     "insert:articles17": "tsx src/scripts/insertArticles17.ts",
+    "insert:articles18": "tsx src/scripts/insertArticles18.ts",
+    "insert:articles19": "tsx src/scripts/insertArticles19.ts",
+    "insert:articles20": "tsx src/scripts/insertArticles20.ts",
+    "insert:articles21": "tsx src/scripts/insertArticles21.ts",
     "reschedule:articles": "tsx src/scripts/rescheduleArticles.ts"
   },
   "dependencies": {
