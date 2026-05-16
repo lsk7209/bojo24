@@ -134,6 +134,22 @@ jobs:
           SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH10 }}
         run: npm run insert:articles10
 
+      - name: Insert articles batch 15 (여성폭력지원·한부모주거·임산부바우처·양육비이행 등 10개)
+        if: ${{ github.event.inputs.batch == '15' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH15 }}
+        run: npm run insert:articles15
+
+      - name: Insert articles batch 16 (건강보험피부양자·금연치료·정신건강·외국인건강 등 10개)
+        if: ${{ github.event.inputs.batch == '16' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH16 }}
+        run: npm run insert:articles16
+
       - name: Insert articles batch 17 (국가장학금·학자금대출·내일배움카드·귀농교육 등 10개)
         if: ${{ github.event.inputs.batch == '17' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
         env:

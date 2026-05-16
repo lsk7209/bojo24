@@ -43,6 +43,8 @@
     "insert:articles12": "tsx src/scripts/insertArticles12.ts",
     "insert:articles13": "tsx src/scripts/insertArticles13.ts",
     "insert:articles14": "tsx src/scripts/insertArticles14.ts",
+    "insert:articles15": "tsx src/scripts/insertArticles15.ts",
+    "insert:articles16": "tsx src/scripts/insertArticles16.ts",
     "insert:articles17": "tsx src/scripts/insertArticles17.ts",
     "reschedule:articles": "tsx src/scripts/rescheduleArticles.ts"
   },
