@@ -59,6 +59,8 @@ jobs:
           GEN_BATCH: ${{ github.event.inputs.batch || '5' }}
           GEN_MIN_QUALITY: ${{ github.event.inputs.min_quality || '90' }}
           GEN_DELAY_MS: ${{ github.event.inputs.delay_ms || '3000' }}
+          SCHEDULE_INTERVAL_HOURS: ${{ vars.SCHEDULE_INTERVAL_HOURS || '5' }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BULK || '' }}
         run: npx tsx src/scripts/bulkGenerate300.ts --target ${{ github.event.inputs.target || 300 }} --batch ${{ github.event.inputs.batch || 5 }}
 
       - name: Save progress artifact

@@ -22,6 +22,8 @@ const TARGET = Number(args[args.indexOf("--target") + 1] || process.env.GEN_TARG
 const BATCH = Number(args[args.indexOf("--batch") + 1] || process.env.GEN_BATCH || 5);
 const DELAY_MS = Number(process.env.GEN_DELAY_MS || 3000);
 const MIN_QUALITY = Number(process.env.GEN_MIN_QUALITY || 90);
+const SCHEDULE_INTERVAL_HOURS = Number(process.env.SCHEDULE_INTERVAL_HOURS || 5);
+const SCHEDULE_BASE_TIME = process.env.SCHEDULE_BASE_TIME || ""; // ISO 8601, 비어 있으면 DB max+5h 사용
 const PROGRESS_FILE = path.join(process.cwd(), ".article-cache", "bulk-progress.json");
 
 // ── 매크로/슬롯 결정 (seed.py 인라인 구현) ───────────────────────────────────
@@ -324,7 +326,22 @@ async function main() {
 
   const progress = loadProgress();
   console.log(`\n🚀 300개 글 생성 시작 (목표: ${TARGET}개, 이미 생성: ${progress.generated}개)`);
-  console.log(`   배치: ${BATCH}, 딜레이: ${DELAY_MS}ms, 최소 품질: ${MIN_QUALITY}점\n`);
+  console.log(`   배치: ${BATCH}, 딜레이: ${DELAY_MS}ms, 최소 품질: ${MIN_QUALITY}점`);
+
+  // 예약 발행 기준 시점 계산: 기존 글 중 가장 늦은 published_at + 5시간부터 시작
+  let scheduleCursor: Date;
+  if (SCHEDULE_BASE_TIME) {
+    scheduleCursor = new Date(SCHEDULE_BASE_TIME);
+  } else {
+    const { rows: maxRows } = await db.execute(
+      "SELECT MAX(published_at) AS max_at FROM posts WHERE is_published = 1"
+    );
+    const maxAt = maxRows[0]?.max_at as string | null;
+    scheduleCursor = maxAt
+      ? new Date(new Date(maxAt).getTime() + SCHEDULE_INTERVAL_HOURS * 3600 * 1000)
+      : new Date(Date.now() + SCHEDULE_INTERVAL_HOURS * 3600 * 1000);
+  }
+  console.log(`   예약 시작: ${scheduleCursor.toISOString()} (간격 ${SCHEDULE_INTERVAL_HOURS}시간)\n`);
 
   if (progress.generated >= TARGET) {
     console.log("✅ 이미 목표 달성!");
@@ -434,16 +451,18 @@ async function main() {
           continue;
         }
 
-        // ── Step 5: Turso 삽입 ────────────────────────────────────────────────
+        // ── Step 5: Turso 삽입 (5시간 간격 예약 발행) ─────────────────────────
         const slug = `${benefit.id.slice(0, 8)}-${Date.now().toString(36)}-${crypto.randomBytes(3).toString("hex")}`;
         const excerpt = content.replace(/[#*`>\-|]/g, "").replace(/\s+/g, " ").slice(0, 140).trim() + "…";
         const tags = JSON.stringify([benefit.category, "정부지원금", "2026정책"].filter(Boolean));
+        const scheduledAt = new Date(scheduleCursor.getTime() + progress.generated * SCHEDULE_INTERVAL_HOURS * 3600 * 1000).toISOString();
 
         await db.execute({
           sql: `INSERT INTO posts (slug, title, content, excerpt, tags, is_published, published_at, benefit_id)
                 VALUES (?, ?, ?, ?, ?, 1, ?, ?)`,
-          args: [slug, title, content, excerpt, tags, new Date().toISOString(), benefit.id],
+          args: [slug, title, content, excerpt, tags, scheduledAt, benefit.id],
         });
+        console.log(`  📅 예약 발행: ${scheduledAt}`);
 
         progress.generated++;
         progress.processedIds.push(benefit.id);
