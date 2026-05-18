@@ -865,7 +865,7 @@ async function main() {
   if (!url) throw new Error("TURSO_DATABASE_URL is not set");
   const db = createClient({ url, authToken });
 
-  const baseTimeStr = process.env.SCHEDULE_BASE_TIME ?? "2026-08-30T10:18:32Z";
+  const baseTimeStr = process.env.SCHEDULE_BASE_TIME || "2026-08-30T10:18:32Z";
   const baseMs = new Date(baseTimeStr).getTime();
   const INTERVAL_MS = 5 * 60 * 60 * 1000; // 5시간
 
