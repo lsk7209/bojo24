@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       batch:
-        description: "실행할 배치 (1~7, all=전체)"
+        description: "실행할 배치 (1~44, all=전체)"
         required: false
         default: "all"
 
@@ -269,6 +269,110 @@ jobs:
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
           SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH31 }}
         run: npm run insert:articles31
+
+      - name: Insert articles batch 32 (군인·보훈 10개)
+        if: ${{ github.event.inputs.batch == '32' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH32 }}
+        run: npm run insert:articles32
+
+      - name: Insert articles batch 33 (서울·경기 지역특화 10개)
+        if: ${{ github.event.inputs.batch == '33' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH33 }}
+        run: npm run insert:articles33
+
+      - name: Insert articles batch 34 (부산·인천·대구 지역특화 10개)
+        if: ${{ github.event.inputs.batch == '34' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH34 }}
+        run: npm run insert:articles34
+
+      - name: Insert articles batch 35 (발달장애 심화 10개)
+        if: ${{ github.event.inputs.batch == '35' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH35 }}
+        run: npm run insert:articles35
+
+      - name: Insert articles batch 36 (암·중증질환 10개)
+        if: ${{ github.event.inputs.batch == '36' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH36 }}
+        run: npm run insert:articles36
+
+      - name: Insert articles batch 37 (청소년 위기·자립 10개)
+        if: ${{ github.event.inputs.batch == '37' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH37 }}
+        run: npm run insert:articles37
+
+      - name: Insert articles batch 38 (사회적기업·협동조합 10개)
+        if: ${{ github.event.inputs.batch == '38' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH38 }}
+        run: npm run insert:articles38
+
+      - name: Insert articles batch 39 (중장년 재취업 심화 10개)
+        if: ${{ github.event.inputs.batch == '39' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH39 }}
+        run: npm run insert:articles39
+
+      - name: Insert articles batch 40 (자활·탈수급 10개)
+        if: ${{ github.event.inputs.batch == '40' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH40 }}
+        run: npm run insert:articles40
+
+      - name: Insert articles batch 41 (농업법인·영농조합 10개)
+        if: ${{ github.event.inputs.batch == '41' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH41 }}
+        run: npm run insert:articles41
+
+      - name: Insert articles batch 42 (지역상권·골목상권 10개)
+        if: ${{ github.event.inputs.batch == '42' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH42 }}
+        run: npm run insert:articles42
+
+      - name: Insert articles batch 43 (국민연금 심화 9개)
+        if: ${{ github.event.inputs.batch == '43' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH43 }}
+        run: npm run insert:articles43
+
+      - name: Insert articles batch 44 (건강보험 환급·이의신청 8개)
+        if: ${{ github.event.inputs.batch == '44' || github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SCHEDULE_BASE_TIME: ${{ vars.SCHEDULE_BASE_TIME_BATCH44 }}
+        run: npm run insert:articles44
 
       - name: Reschedule all art* posts at 5-hour intervals
         if: ${{ github.event.inputs.batch == 'all' || github.event.inputs.batch == '' }}
