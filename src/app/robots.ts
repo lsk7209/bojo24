@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 import { publicEnv } from "@lib/env";
+import { sitemapUrls } from "@lib/sitemapRoutes";
 
 export default function robots(): MetadataRoute.Robots {
     const baseUrl = publicEnv.NEXT_PUBLIC_SITE_URL || "https://www.bojo24.kr";
@@ -32,6 +33,6 @@ export default function robots(): MetadataRoute.Robots {
                 disallow: "/",
             },
         ],
-        sitemap: [`${baseUrl}/sitemap.xml`, `${baseUrl}/rss.xml`],
+        sitemap: [...sitemapUrls(), `${baseUrl}/rss.xml`],
     };
 }
