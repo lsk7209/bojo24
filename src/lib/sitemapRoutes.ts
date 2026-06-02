@@ -40,7 +40,11 @@ export function normalizeLastModified(
     const normalized = yyyymmdd
         ? `${yyyymmdd[1]}-${yyyymmdd[2]}-${yyyymmdd[3]}`
         : raw;
-    const parsed = Date.parse(normalized);
+    const parseable = normalized.replace(
+        /^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})$/,
+        "$1T$2",
+    );
+    const parsed = Date.parse(parseable);
     if (Number.isNaN(parsed)) {
         return fallback;
     }
@@ -48,10 +52,10 @@ export function normalizeLastModified(
     const now = new Date();
     const date = new Date(parsed);
     if (date > now) {
-        return now.toISOString();
+        return now.toISOString().slice(0, 10);
     }
 
-    return normalized;
+    return date.toISOString().slice(0, 10);
 }
 
 export function getStaticSitemapRoutes(): MetadataRoute.Sitemap {
@@ -148,4 +152,3 @@ export function sitemapUrls(): string[] {
         `${SITEMAP_BASE_URL}/blog/sitemap.xml`,
     ];
 }
-
