@@ -63,6 +63,29 @@ const fetchSitemapRows = async () => {
     }
 };
 
+function normalizeLastModified(
+    value: string | null | undefined,
+    fallback = UPDATED_AT,
+): string {
+    const raw = value?.trim() || fallback;
+    const yyyymmdd = raw.match(/^(\d{4})(\d{2})(\d{2})$/);
+    const normalized = yyyymmdd
+        ? `${yyyymmdd[1]}-${yyyymmdd[2]}-${yyyymmdd[3]}`
+        : raw;
+    const parsed = Date.parse(normalized);
+    if (Number.isNaN(parsed)) {
+        return fallback;
+    }
+
+    const now = new Date();
+    const date = new Date(parsed);
+    if (date > now) {
+        return now.toISOString();
+    }
+
+    return normalized;
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // 1. 정적 페이지 (필수 페이지)
     const staticRoutes = [
@@ -88,7 +111,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const benefitRoutes =
         benefits.map((item) => ({
             url: `${BASE_URL}/benefit/${encodeURIComponent(item.category || "기타")}/${item.id}`,
-            lastModified: item.last_updated_at || new Date().toISOString(),
+            lastModified: normalizeLastModified(item.last_updated_at),
             changeFrequency: "weekly" as const,
             priority: 0.8,
         }));
@@ -97,7 +120,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .filter((post) => post.id && post.slug)
         .map((post) => ({
             url: `${BASE_URL}${buildPostPath(post)}`,
-            lastModified: post.published_at || post.created_at || UPDATED_AT,
+            lastModified: normalizeLastModified(post.published_at || post.created_at),
             changeFrequency: "monthly" as const,
             priority: 0.7,
         }));
@@ -106,7 +129,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .filter((item) => item.id)
         .map((item) => ({
             url: `${BASE_URL}/startup/${encodeURIComponent(item.id)}`,
-            lastModified: item.updated_at || item.published_at || UPDATED_AT,
+            lastModified: normalizeLastModified(item.updated_at || item.published_at),
             changeFrequency: "daily" as const,
             priority: 0.75,
         }));
