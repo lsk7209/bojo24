@@ -77,6 +77,31 @@ const createHeadingIdFactory = () => {
   };
 };
 
+const MarkdownImage = ({
+  alt,
+  src,
+  title,
+  fallbackAlt,
+}: {
+  alt?: string;
+  src?: string;
+  title?: string;
+  fallbackAlt: string;
+}) => {
+  if (!src) return null;
+
+  return React.createElement("img", {
+    src,
+    alt: alt || fallbackAlt,
+    title,
+    loading: "lazy",
+    decoding: "async",
+    width: 1200,
+    height: 675,
+    className: "my-8 h-auto w-full rounded-xl border border-slate-200 object-cover shadow-sm",
+  });
+};
+
 const extractTocItems = (content: string) =>
   (() => {
     const headingId = createHeadingIdFactory();
@@ -327,9 +352,8 @@ export default async function BlogPostPage({ params }: PageParams) {
                 </h3>
               ),
               p: ({ node: _node, ...props }) => <p className="mb-6 whitespace-pre-line" {...props} />,
-              img: ({ node: _node, alt, ...props }) => (
-                // Markdown 이미지에 alt가 비어 있으면 제목 기반 대체 텍스트를 보강한다.
-                <img alt={alt || post.title} loading="lazy" decoding="async" {...props} />
+              img: ({ node: _node, alt, src, title }) => (
+                <MarkdownImage alt={alt} src={src} title={title} fallbackAlt={post.title} />
               ),
               blockquote: ({ node: _node, children }) => (
                 <div className="my-8 rounded-r-lg border-l-4 border-blue-500 bg-blue-50 p-5 text-slate-700 shadow-sm">

@@ -2,6 +2,8 @@
  * Reschedule all art*-prefixed posts at 5-hour intervals in slug order.
  * Usage: SCHEDULE_BASE_TIME=2026-05-16T10:00:00Z tsx src/scripts/rescheduleArticles.ts
  */
+/* eslint-disable no-console */
+
 import { createClient } from "@libsql/client";
 import * as dotenv from "dotenv";
 
