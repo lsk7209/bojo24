@@ -8,6 +8,12 @@ import type { Metadata } from "next";
 
 const siteUrl = resolveSiteUrl();
 const PAGE_SIZE = 24;
+const BLOG_META_TITLE =
+    "\uc815\ubd80 \uc9c0\uc6d0\uae08 \uc2e0\uccad \ubc29\ubc95\u00b7\ubcf5\uc9c0 \ud61c\ud0dd \ube14\ub85c\uadf8";
+const BLOG_META_DESCRIPTION =
+    "\uc815\ubd80 \uc9c0\uc6d0\uae08 \uc2e0\uccad \ubc29\ubc95, \ubcf5\uc9c0 \ud61c\ud0dd, \ubcf4\uc870\uae08 \uc790\uaca9 \uc870\uac74\uacfc \uc900\ube44\uc11c\ub958\ub97c \uacf5\uc2dd \ucd9c\ucc98 \uae30\ubc18\uc73c\ub85c \uc815\ub9ac\ud55c \ubcf4\uc87024 \ube14\ub85c\uadf8\uc785\ub2c8\ub2e4";
+const BLOG_HEADER_DESCRIPTION =
+    "\ubcf4\uc870\uae08 \uc790\uaca9 \uc870\uac74, \uc2e0\uccad \ubc29\ubc95, \uc900\ube44\uc11c\ub958\ub97c \uacf5\uc2dd \ucd9c\ucc98 \uae30\uc900\uc73c\ub85c \uc27d\uac8c \uc815\ub9ac\ud569\ub2c8\ub2e4.";
 
 export const metadata: Metadata = {
     title: "정보마당",
@@ -29,6 +35,21 @@ export const metadata: Metadata = {
         description: "정부 지원금 신청 팁, 복지 혜택 FAQ, 보조금 안내 자료를 한곳에서 읽어보세요.",
     },
 };
+
+Object.assign(metadata, {
+    title: BLOG_META_TITLE,
+    description: BLOG_META_DESCRIPTION,
+    openGraph: {
+        ...metadata.openGraph,
+        title: `${BLOG_META_TITLE} | ${SITE_NAME}`,
+        description: BLOG_META_DESCRIPTION,
+    },
+    twitter: {
+        ...metadata.twitter,
+        title: `${BLOG_META_TITLE} | ${SITE_NAME}`,
+        description: BLOG_META_DESCRIPTION,
+    },
+});
 
 type BlogPost = {
     id: string;
@@ -99,8 +120,8 @@ export default async function BlogListPage({
             <SectionHeader
                 eyebrow="BLOG"
                 as="h1"
-                title="정보마당"
-                description="놓치기 쉬운 혜택 정보, 알기 쉽게 정리해드립니다."
+                title={BLOG_META_TITLE}
+                description={BLOG_HEADER_DESCRIPTION}
             />
 
             {posts.length === 0 ? (

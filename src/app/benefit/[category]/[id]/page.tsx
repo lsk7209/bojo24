@@ -312,13 +312,13 @@ export default async function BenefitDetailPage({ params }: PageParams) {
 
 
       {/* 주요 정보 그리드 (구글 검색 최적화 구조) */}
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         {/* 지원 대상 섹션 */}
         <section aria-label={optimizedContent.sections.target.title} itemScope itemType="https://schema.org/Question">
-          <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 flex items-center gap-3">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 flex items-center gap-3">
             <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-2xl">🎯</span>
             <span itemProp="name">{optimizedContent.sections.target.title}</span>
-          </h3>
+          </h2>
           <Card className="h-full bg-gradient-to-br from-slate-50 to-white border-2 border-slate-200 hover:border-blue-300 transition-colors">
             <div className="space-y-4 text-base text-slate-800 leading-relaxed">
               <div itemProp="acceptedAnswer" itemScope itemType="https://schema.org/Answer">
@@ -344,10 +344,10 @@ export default async function BenefitDetailPage({ params }: PageParams) {
 
         {/* 지원 내용 섹션 */}
         <section aria-label={optimizedContent.sections.benefit.title} itemScope itemType="https://schema.org/Question">
-          <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 flex items-center gap-3">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 flex items-center gap-3">
             <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-2xl">🎁</span>
             <span itemProp="name">{optimizedContent.sections.benefit.title}</span>
-          </h3>
+          </h2>
           <Card className="h-full bg-gradient-to-br from-green-50/30 to-white border-2 border-green-200 hover:border-green-400 transition-colors">
             <div className="text-base text-slate-800 leading-relaxed">
               <div itemProp="acceptedAnswer" itemScope itemType="https://schema.org/Answer">
