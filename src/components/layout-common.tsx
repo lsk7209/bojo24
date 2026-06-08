@@ -22,16 +22,16 @@ const footerLinks = [
 export const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 md:px-6">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="text-xl font-bold text-blue-600">{SITE_NAME}</span>
+      <div className="mx-auto flex min-h-16 max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3 md:flex-nowrap md:px-6">
+        <Link href="/" className="flex min-w-0 items-center gap-2">
+          <span className="shrink-0 text-xl font-bold text-blue-600">{SITE_NAME}</span>
           <span className="hidden text-sm font-medium text-slate-600 sm:inline-block">
             {SITE_TAGLINE}
           </span>
         </Link>
-        <nav className="flex items-center gap-4 text-sm font-medium text-slate-600 sm:gap-6">
+        <nav className="-mx-1 flex w-full items-center gap-4 overflow-x-auto px-1 pb-1 text-sm font-medium text-slate-600 sm:gap-6 md:w-auto md:overflow-visible md:pb-0">
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href} className="transition-colors hover:text-blue-600">
+            <Link key={item.href} href={item.href} className="shrink-0 transition-colors hover:text-blue-600">
               {item.label}
             </Link>
           ))}

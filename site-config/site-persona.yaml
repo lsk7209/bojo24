@@ -3,7 +3,7 @@
 
 site:
   name: "보조24"
-  domain: "https://www.bojo24.kr"
+  domain: "https://bojo24.kr"
   primary_topic: "정부 지원금·복지 혜택 정보 큐레이션"
   language: ko
   is_ymyl_domain: true

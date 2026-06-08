@@ -3,7 +3,7 @@ import { publicEnv } from "@lib/env";
 
 export const dynamic = "force-dynamic";
 
-const BASE_URL = publicEnv.NEXT_PUBLIC_SITE_URL || "https://www.bojo24.kr";
+const BASE_URL = publicEnv.NEXT_PUBLIC_SITE_URL || "https://bojo24.kr";
 
 // IndexNow 지원 엔진 (Google은 자체 크롤 일정으로 동작, IndexNow 미지원)
 const INDEXNOW_ENDPOINTS = [

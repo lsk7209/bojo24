@@ -1,7 +1,9 @@
 import { resolveSiteUrl } from "@lib/site";
+import { sitemapUrls } from "@lib/sitemapRoutes";
 import crypto from "crypto";
 
 const SITE_URL = resolveSiteUrl();
+const GSC_SITE_URL = process.env.GSC_SITE_URL?.trim() || SITE_URL.replace(/\/$/, "");
 
 const INDEXNOW_ENDPOINTS = [
   "https://www.bing.com/indexnow",
@@ -85,14 +87,29 @@ async function getGoogleAccessToken(keyJson: string): Promise<string | null> {
   }
 }
 
-export async function submitSitemapToGSC(sitemapUrl: string): Promise<{ ok: boolean; reason?: string }> {
+type GscSitemapStatus = {
+  ok: boolean;
+  path: string;
+  isPending?: boolean;
+  isSitemapsIndex?: boolean;
+  lastSubmitted?: string;
+  lastDownloaded?: string;
+  warnings?: string;
+  errors?: string;
+  reason?: string;
+};
+
+async function getGscAccessToken(): Promise<string | null> {
   const keyJson = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-  if (!keyJson) return { ok: false, reason: "GOOGLE_SERVICE_ACCOUNT_KEY not set" };
+  if (!keyJson) return null;
+  return getGoogleAccessToken(keyJson);
+}
 
-  const accessToken = await getGoogleAccessToken(keyJson);
-  if (!accessToken) return { ok: false, reason: "failed to get access token" };
+export async function submitSitemapToGSC(sitemapUrl: string): Promise<{ ok: boolean; reason?: string }> {
+  const accessToken = await getGscAccessToken();
+  if (!accessToken) return { ok: false, reason: "GOOGLE_SERVICE_ACCOUNT_KEY not set or invalid" };
 
-  const encodedSite = encodeURIComponent(SITE_URL.replace(/\/$/, ""));
+  const encodedSite = encodeURIComponent(GSC_SITE_URL);
   const encodedSitemap = encodeURIComponent(sitemapUrl);
   try {
     const res = await fetch(
@@ -107,6 +124,50 @@ export async function submitSitemapToGSC(sitemapUrl: string): Promise<{ ok: bool
   }
 }
 
+export async function getSitemapFromGSC(sitemapUrl: string): Promise<GscSitemapStatus> {
+  const accessToken = await getGscAccessToken();
+  if (!accessToken) {
+    return { ok: false, path: sitemapUrl, reason: "GOOGLE_SERVICE_ACCOUNT_KEY not set or invalid" };
+  }
+
+  const encodedSite = encodeURIComponent(GSC_SITE_URL);
+  const encodedSitemap = encodeURIComponent(sitemapUrl);
+  try {
+    const res = await fetch(
+      `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodedSite}/sitemaps/${encodedSitemap}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    const data = (await res.json().catch(() => ({}))) as Partial<GscSitemapStatus> & {
+      path?: string;
+      contents?: Array<{ type?: string; submitted?: string; indexed?: string }>;
+    };
+
+    if (!res.ok) {
+      return { ok: false, path: sitemapUrl, reason: `GSC API ${res.status}` };
+    }
+
+    return {
+      ok: true,
+      path: data.path || sitemapUrl,
+      isPending: data.isPending,
+      isSitemapsIndex: data.isSitemapsIndex,
+      lastSubmitted: data.lastSubmitted,
+      lastDownloaded: data.lastDownloaded,
+      warnings: data.warnings,
+      errors: data.errors,
+    };
+  } catch (e) {
+    return { ok: false, path: sitemapUrl, reason: String(e) };
+  }
+}
+
+export async function submitAllSitemapsToGSC(): Promise<GscSitemapStatus[]> {
+  const urls = sitemapUrls();
+
+  await Promise.all(urls.map((url) => submitSitemapToGSC(url)));
+  return Promise.all(urls.map((url) => getSitemapFromGSC(url)));
+}
+
 // ── Combined helper ────────────────────────────────────────────────────────
 export async function notifySearchEngines(
   urls: string[]
@@ -118,10 +179,19 @@ export async function notifySearchEngines(
     return { submitted: [], skippedReason: "INDEXNOW_KEY 또는 제출 URL이 없습니다." };
   }
 
-  const [submitted, gsc] = await Promise.all([
+  const [submitted, gscStatuses] = await Promise.all([
     notifyIndexNow(normalizedUrls),
-    submitSitemapToGSC(`${SITE_URL}/sitemap.xml`),
+    submitAllSitemapsToGSC(),
   ]);
 
-  return { submitted, gsc };
+  return {
+    submitted,
+    gsc: {
+      ok: gscStatuses.every((status) => status.ok && status.errors !== "1"),
+      reason: gscStatuses
+        .filter((status) => !status.ok || status.errors === "1")
+        .map((status) => `${status.path}: ${status.reason || `${status.errors} errors`}`)
+        .join("; ") || undefined,
+    },
+  };
 }

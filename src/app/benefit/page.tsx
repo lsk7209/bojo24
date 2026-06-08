@@ -1,8 +1,6 @@
 import { getAnonClient } from "@lib/supabaseClient";
 import { SectionHeader } from "@components/section-header";
 import { Button, Card } from "@components/ui";
-import { InlineAd } from "@components/adsense-ad";
-import { AD_SLOTS } from "@lib/ads";
 import { BenefitListClient } from "@components/benefit-list-client";
 import { buildCanonicalUrl, SITE_NAME, resolveSiteUrl } from "@lib/site";
 import Link from "next/link";
@@ -149,10 +147,6 @@ export default async function BenefitListPage({
       </div>
 
       {/* 인라인 광고 (검색 결과 상단) */}
-      {hasData && (
-        <InlineAd adSlot={AD_SLOTS.benefitListInline} className="mb-6" />
-      )}
-
       {/* 리스트 영역 */}
       {!hasData ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 py-20 text-center">

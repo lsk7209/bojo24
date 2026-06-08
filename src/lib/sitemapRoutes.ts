@@ -8,7 +8,7 @@ const UPDATED_AT = new Date().toISOString().slice(0, 10);
 
 export const SITEMAP_REVALIDATE_SECONDS = 3600;
 export const SITEMAP_BASE_URL =
-    publicEnv.NEXT_PUBLIC_SITE_URL || "https://www.bojo24.kr";
+    publicEnv.NEXT_PUBLIC_SITE_URL || "https://bojo24.kr";
 
 type SitemapEntry = MetadataRoute.Sitemap[number];
 

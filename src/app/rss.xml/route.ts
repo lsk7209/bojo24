@@ -2,7 +2,7 @@ import { getAnonClient } from "@lib/supabaseClient";
 import { publicEnv } from "@lib/env";
 import { buildPostPath } from "@lib/postRouting";
 
-const BASE_URL = publicEnv.NEXT_PUBLIC_SITE_URL || "https://www.bojo24.kr";
+const BASE_URL = publicEnv.NEXT_PUBLIC_SITE_URL || "https://bojo24.kr";
 
 type RssPost = {
     id: string;

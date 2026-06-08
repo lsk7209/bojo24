@@ -1,6 +1,4 @@
-import { InlineAd } from "@components/adsense-ad";
 import { Badge, Button, Card } from "@components/ui";
-import { AD_SLOTS } from "@lib/ads";
 import { buildPostPath, parsePostRouteSlug } from "@lib/postRouting";
 import { buildCanonicalUrl, SITE_NAME } from "@lib/site";
 import { createTursoCompatClient } from "@lib/tursoClient";
@@ -8,6 +6,7 @@ import { getAnonClient } from "@lib/supabaseClient";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -46,6 +45,52 @@ const buildDescription = (content: string) => {
 
 const estimateReadMinutes = (content: string) =>
   Math.max(3, Math.ceil(stripMarkdown(content).length / 650));
+
+const getHeadingText = (children: React.ReactNode): string =>
+  React.Children.toArray(children)
+    .map((child) => {
+      if (typeof child === "string" || typeof child === "number") return String(child);
+      if (React.isValidElement<{ children?: React.ReactNode }>(child)) {
+        return getHeadingText(child.props.children);
+      }
+      return "";
+    })
+    .join("")
+    .trim();
+
+const buildHeadingId = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}\s-]/gu, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .slice(0, 80);
+
+const createHeadingIdFactory = () => {
+  const seen = new Map<string, number>();
+
+  return (text: string) => {
+    const baseId = buildHeadingId(text) || "section";
+    const count = seen.get(baseId) ?? 0;
+    seen.set(baseId, count + 1);
+    return count === 0 ? baseId : `${baseId}-${count + 1}`;
+  };
+};
+
+const extractTocItems = (content: string) =>
+  (() => {
+    const headingId = createHeadingIdFactory();
+    return [...content.matchAll(/^(##|###)\s+(.+)$/gm)].map((match) => {
+      const text = stripMarkdown(match[2] ?? "");
+      return {
+        id: headingId(text),
+        level: match[1] === "###" ? 3 : 2,
+        text,
+      };
+    });
+  })()
+    .filter((item) => item.id && item.text)
+    .slice(0, 12);
 
 const extractFaqItems = (content: string) => {
   const faqSection =
@@ -143,6 +188,8 @@ export default async function BlogPostPage({ params }: PageParams) {
   const canonicalUrl = buildCanonicalUrl(buildPostPath(post));
   const publishedAt = post.published_at || post.created_at;
   const readMinutes = estimateReadMinutes(post.content);
+  const tocItems = extractTocItems(post.content);
+  const headingId = createHeadingIdFactory();
   const imageUrl = buildCanonicalUrl(`${buildPostPath(post)}/opengraph-image`);
   const articleJsonLd = {
     "@context": "https://schema.org",
@@ -212,7 +259,7 @@ export default async function BlogPostPage({ params }: PageParams) {
         <span className="line-clamp-1 text-slate-900">{post.title}</span>
       </nav>
 
-      <article className="prose prose-slate prose-lg max-w-none">
+      <article className="prose prose-slate prose-lg max-w-none prose-img:rounded-xl prose-img:border prose-img:border-slate-200 prose-img:shadow-sm prose-a:break-words prose-table:text-sm">
         <header className="not-prose mb-10">
           <div className="mb-4 flex flex-wrap gap-2">
             {post.tags?.map((tag) => (
@@ -239,18 +286,51 @@ export default async function BlogPostPage({ params }: PageParams) {
           </div>
         </header>
 
+        {tocItems.length >= 3 && (
+          <nav
+            aria-label="글 목차"
+            className="not-prose mb-10 rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+          >
+            <h2 className="text-base font-bold text-slate-900">목차</h2>
+            <ol className="mt-4 space-y-2 text-sm leading-6">
+              {tocItems.map((item) => (
+                <li key={`${item.level}-${item.id}`} className={item.level === 3 ? "pl-4" : ""}>
+                  <a className="text-slate-600 hover:text-blue-700" href={`#${item.id}`}>
+                    {item.text}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )}
+
         <div className="leading-8 text-slate-700">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
-              h2: ({ node: _node, ...props }) => (
+              h2: ({ node: _node, children, ...props }) => (
                 <h2
-                  className="mt-12 border-b-2 border-slate-100 pb-3 text-2xl font-bold text-slate-900"
+                  id={headingId(getHeadingText(children))}
+                  className="mt-12 scroll-mt-24 border-b-2 border-slate-100 pb-3 text-2xl font-bold text-slate-900"
                   {...props}
-                />
+                >
+                  {children}
+                </h2>
               ),
-              h3: ({ node: _node, ...props }) => <h3 className="mb-4 mt-8 text-xl font-bold text-slate-800" {...props} />,
+              h3: ({ node: _node, children, ...props }) => (
+                <h3
+                  id={headingId(getHeadingText(children))}
+                  className="mb-4 mt-8 scroll-mt-24 text-xl font-bold text-slate-800"
+                  {...props}
+                >
+                  {children}
+                </h3>
+              ),
               p: ({ node: _node, ...props }) => <p className="mb-6 whitespace-pre-line" {...props} />,
+              img: ({ node: _node, alt, ...props }) => (
+                // Markdown 이미지에 alt가 비어 있으면 제목 기반 대체 텍스트를 보강한다.
+                <img alt={alt || post.title} loading="lazy" decoding="async" {...props} />
+              ),
               blockquote: ({ node: _node, children }) => (
                 <div className="my-8 rounded-r-lg border-l-4 border-blue-500 bg-blue-50 p-5 text-slate-700 shadow-sm">
                   {children}
@@ -288,10 +368,6 @@ export default async function BlogPostPage({ params }: PageParams) {
           </ReactMarkdown>
         </div>
       </article>
-
-      <div className="my-12">
-        <InlineAd adSlot={AD_SLOTS.blogInline} />
-      </div>
 
       {post.benefit_id && (
         <section className="mt-10 rounded-lg bg-gradient-to-r from-blue-100 to-indigo-100 p-1">

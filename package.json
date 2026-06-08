@@ -22,6 +22,7 @@
     "content:schedule": "tsx src/scripts/planScheduledPosts.ts --posts 200 --interval-hours 5",
     "content:audit": "tsx src/scripts/auditScheduledPosts.ts --posts 200",
     "content:notify-due": "tsx src/scripts/notifyDuePosts.ts",
+    "gsc:submit-sitemaps": "tsx src/scripts/submitGscSitemaps.ts",
     "validate-env": "tsx src/scripts/validateEnv.ts",
     "check:data": "tsx src/scripts/checkDataStatus.ts",
     "test:gemini": "tsx src/scripts/testGeminiEnhancement.ts",
