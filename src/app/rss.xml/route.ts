@@ -1,8 +1,14 @@
-import { getAnonClient } from "@lib/supabaseClient";
 import { publicEnv } from "@lib/env";
 import { buildPostPath } from "@lib/postRouting";
+import { getAnonClient } from "@lib/supabaseClient";
 
 const BASE_URL = publicEnv.NEXT_PUBLIC_SITE_URL || "https://bojo24.kr";
+const RSS_TITLE = "\ubcf4\uc87024 - \uc815\ubd80 \uc9c0\uc6d0\uae08\u00b7\ubcf5\uc9c0 \ud61c\ud0dd \uc815\ubcf4";
+const RSS_DESCRIPTION =
+    "\uc815\ubd80 \uc9c0\uc6d0\uae08, \ubcf5\uc9c0 \ud61c\ud0dd, \ubcf4\uc870\uae08 \uc790\uaca9 \uc870\uac74\uacfc \uc2e0\uccad \ubc29\ubc95\uc744 \uacf5\uc2dd \ucd9c\ucc98 \uae30\ubc18\uc73c\ub85c \uc815\ub9ac\ud55c \ubcf4\uc87024 RSS \ud53c\ub4dc\uc785\ub2c8\ub2e4.";
+const BLOG_CATEGORY = "\ube14\ub85c\uadf8";
+const DEFAULT_CATEGORY = "\uae30\ud0c0";
+const BENEFIT_SUFFIX = "\ubcf4\uc870\uae08";
 
 type RssPost = {
     id: string;
@@ -60,30 +66,29 @@ export async function GET() {
     const { posts, recentBenefits } = await fetchRssRows();
     const buildDate = new Date().toUTCString();
 
-    // XML 헤더
     const xmlHeader = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>보조24 - 정부 혜택 정보</title>
+    <title>${toCdata(RSS_TITLE)}</title>
     <link>${BASE_URL}</link>
-    <description>행정안전부 보조24 공공데이터를 분석하여 쉽고 정확한 정보를 제공하는 플랫폼입니다. 최신 보조금 정보와 신청 가이드를 제공합니다.</description>
+    <description>${toCdata(RSS_DESCRIPTION)}</description>
     <language>ko-KR</language>
     <lastBuildDate>${buildDate}</lastBuildDate>
     <pubDate>${buildDate}</pubDate>
     <generator>Next.js RSS Generator</generator>
-    <webMaster>contact@bojo24.kr (보조24)</webMaster>
-    <managingEditor>contact@bojo24.kr (보조24)</managingEditor>
+    <webMaster>contact@bojo24.kr (bojo24)</webMaster>
+    <managingEditor>contact@bojo24.kr (bojo24)</managingEditor>
     <atom:link href="${BASE_URL}/rss.xml" rel="self" type="application/rss+xml" />
     <image>
       <url>${BASE_URL}/favicon.svg</url>
-      <title>보조24</title>
+      <title>${toCdata("bojo24")}</title>
       <link>${BASE_URL}</link>
     </image>`;
 
-    // 블로그 포스트 아이템 생성
     const postItems = posts.map((post) => {
         const pubDate = post.published_at || post.created_at;
         const postUrl = `${BASE_URL}${buildPostPath(post)}`;
+
         return `
     <item>
       <title>${toCdata(post.title)}</title>
@@ -91,18 +96,18 @@ export async function GET() {
       <guid isPermaLink="true">${postUrl}</guid>
       <description>${toCdata(post.excerpt || "")}</description>
       <pubDate>${toRssDate(pubDate)}</pubDate>
-      <category>블로그</category>
+      <category>${toCdata(BLOG_CATEGORY)}</category>
     </item>`;
     }).join("");
 
-    // 보조금 아이템 생성
     const benefitItems = recentBenefits.map((benefit) => {
-        const category = benefit.category || "기타";
-        const description = `${benefit.name} - ${category} 분야의 정부 지원금 정보를 확인하세요.`;
+        const category = benefit.category || DEFAULT_CATEGORY;
+        const description = `${benefit.name} - ${category} \ubd84\uc57c\uc758 \uc815\ubd80 \uc9c0\uc6d0\uae08 \uc815\ubcf4\uc640 \uc2e0\uccad \uc870\uac74\uc744 \ud655\uc778\ud558\uc138\uc694.`;
         const benefitUrl = `${BASE_URL}/benefit/${encodeURIComponent(category)}/${benefit.id}`;
+
         return `
     <item>
-      <title>${toCdata(`${benefit.name} - ${category} 보조금`)}</title>
+      <title>${toCdata(`${benefit.name} - ${category} ${BENEFIT_SUFFIX}`)}</title>
       <link>${benefitUrl}</link>
       <guid isPermaLink="true">${benefitUrl}</guid>
       <description>${toCdata(description)}</description>
@@ -111,7 +116,6 @@ export async function GET() {
     </item>`;
     }).join("");
 
-    // XML 푸터
     const xmlFooter = `
   </channel>
 </rss>`;
@@ -119,7 +123,7 @@ export async function GET() {
     return new Response(xmlHeader + postItems + benefitItems + xmlFooter, {
         headers: {
             "Content-Type": "text/xml; charset=utf-8",
-            "Cache-Control": "s-maxage=3600, stale-while-revalidate", // 1시간 캐시
+            "Cache-Control": "s-maxage=3600, stale-while-revalidate=86400",
         },
     });
 }
