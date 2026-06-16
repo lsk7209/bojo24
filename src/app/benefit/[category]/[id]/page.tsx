@@ -544,7 +544,7 @@ export default async function BenefitDetailPage({ params }: PageParams) {
         <section 
           aria-label="자주 묻는 질문"
           itemScope
-          itemType="https://schema.org/QAPage"
+          itemType="https://schema.org/FAQPage"
         >
           <SectionHeader
             eyebrow="FAQ"
@@ -556,6 +556,7 @@ export default async function BenefitDetailPage({ params }: PageParams) {
               <div
                 key={`faq-${idx}`}
                 className="rounded-xl border-2 border-slate-200 bg-white p-6 transition-all hover:shadow-lg hover:border-blue-300"
+                itemProp="mainEntity"
                 itemScope
                 itemType="https://schema.org/Question"
               >

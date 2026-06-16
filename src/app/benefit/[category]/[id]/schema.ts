@@ -168,30 +168,6 @@ export const buildHowToJsonLd = (benefit: BenefitRecord) => {
 };
 
 /**
- * QAPage 구조화 데이터 생성 (AEO 최적화)
- * 자연어 질문에 대한 답변 최적화
- */
-export const buildQAPageJsonLd = (benefit: BenefitRecord) => {
-  const faqs = (benefit.gemini_faq_json as { q: string; a: string }[] | null) || [];
-  if (faqs.length === 0) return null;
-
-  const mainEntity = faqs.map((faq) => ({
-    "@type": "Question",
-    "name": faq.q,
-    "acceptedAnswer": {
-      "@type": "Answer",
-      "text": faq.a
-    }
-  }));
-
-  return JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "QAPage",
-    "mainEntity": mainEntity
-  });
-};
-
-/**
  * GovernmentService Schema 생성 (GEO - Authoritativeness)
  * 정부 서비스 정보를 GovernmentService 타입으로 표현
  */
@@ -300,12 +276,6 @@ export const buildAllStructuredData = (
     if (faqData) {
       data.push(faqData);
     }
-  }
-
-  // QAPage (AEO 최적화)
-  const qaPageData = buildQAPageJsonLd(benefit);
-  if (qaPageData) {
-    data.push(qaPageData);
   }
 
   // HowTo (AEO 최적화)
