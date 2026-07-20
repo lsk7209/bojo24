@@ -51,4 +51,5 @@ next-env.d.ts
 # Misc
 *.pem
 .cache
+.goal-harness/snapshots/
 
