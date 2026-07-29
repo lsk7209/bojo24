@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Noto_Sans_KR } from "next/font/google";
 import { Header, Footer } from "@components/layout-common";
 import { AnalyticsTracker } from "@components/analytics-tracker";
+import { AdSenseLoader } from "@components/adsense-loader";
 import { DynamicHead } from "@components/dynamic-head";
 import { GoogleAnalytics } from "@components/google-analytics";
 import { MicrosoftClarity } from "@components/microsoft-clarity";
@@ -97,18 +97,10 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://www.googletagmanager.com" />
-        <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
         <link rel="dns-prefetch" href="https://clarity.ms" />
         <GoogleAnalytics />
         <MicrosoftClarity />
         {/* AdSense: afterInteractive 전략으로 렌더링 블로킹 방지 */}
-        <Script
-          id="adsense-loader"
-          async
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
         {/* Organization 구조화 데이터 (전 페이지 공통) */}
         <script
           type="application/ld+json"
@@ -118,6 +110,7 @@ export default function RootLayout({
         <DynamicHead />
       </head>
       <body className="flex min-h-screen flex-col bg-slate-50 text-slate-900 antialiased selection:bg-blue-100 selection:text-blue-900">
+        <AdSenseLoader publisherId={ADSENSE_CLIENT} />
         <Header />
         <div className="flex-1 w-full mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-12">
           {children}
