@@ -9,6 +9,7 @@ const UPDATED_AT = new Date().toISOString().slice(0, 10);
 export const SITEMAP_REVALIDATE_SECONDS = 3600;
 export const SITEMAP_BASE_URL =
     publicEnv.NEXT_PUBLIC_SITE_URL || "https://bojo24.kr";
+export const BENEFIT_SITEMAP_PAGE_SIZE = 1000;
 
 type SitemapEntry = MetadataRoute.Sitemap[number];
 
@@ -81,13 +82,26 @@ export function getStaticSitemapRoutes(): MetadataRoute.Sitemap {
 export async function getBenefitSitemapRoutes(): Promise<MetadataRoute.Sitemap> {
     try {
         const supabase = getAnonClient();
-        const { data } = await supabase
-            .from("benefits")
-            .select("id, category, last_updated_at", { count: "exact" })
-            .order("last_updated_at", { ascending: false })
-            .limit(10000);
+        const rows: BenefitSitemapRow[] = [];
 
-        return ((data ?? []) as BenefitSitemapRow[]).map((item) => ({
+        // Supabase's default row cap is commonly 1,000. Fetch in bounded pages
+        // so the sitemap does not silently stop at the first 10,000 benefits.
+        for (let offset = 0; ; offset += BENEFIT_SITEMAP_PAGE_SIZE) {
+            const { data, error } = await supabase
+                .from("benefits")
+                .select("id, category, last_updated_at")
+                .order("last_updated_at", { ascending: false })
+                .order("id", { ascending: true })
+                .range(offset, offset + BENEFIT_SITEMAP_PAGE_SIZE - 1);
+
+            if (error) throw error;
+
+            const page = (data ?? []) as BenefitSitemapRow[];
+            rows.push(...page);
+            if (page.length < BENEFIT_SITEMAP_PAGE_SIZE) break;
+        }
+
+        return rows.map((item) => ({
             url: `${SITEMAP_BASE_URL}/benefit/${encodeURIComponent(item.category || "기타")}/${item.id}`,
             lastModified: normalizeLastModified(item.last_updated_at),
             changeFrequency: "weekly" as const,
