@@ -2,11 +2,9 @@ import type { Metadata } from "next";
 import { Noto_Sans_KR } from "next/font/google";
 import { Header, Footer } from "@components/layout-common";
 import { AnalyticsTracker } from "@components/analytics-tracker";
-import { AdSenseLoader } from "@components/adsense-loader";
 import { DynamicHead } from "@components/dynamic-head";
 import { GoogleAnalytics } from "@components/google-analytics";
 import { MicrosoftClarity } from "@components/microsoft-clarity";
-import { ADSENSE_CLIENT } from "@lib/ads";
 import { SITE_DESCRIPTION, SITE_NAME, resolveSiteUrl } from "@lib/site";
 import "./globals.css";
 
@@ -110,7 +108,6 @@ export default function RootLayout({
         <DynamicHead />
       </head>
       <body className="flex min-h-screen flex-col bg-slate-50 text-slate-900 antialiased selection:bg-blue-100 selection:text-blue-900">
-        <AdSenseLoader publisherId={ADSENSE_CLIENT} />
         <Header />
         <div className="flex-1 w-full mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-12">
           {children}
