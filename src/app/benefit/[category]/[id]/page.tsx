@@ -310,6 +310,32 @@ export default async function BenefitDetailPage({ params }: PageParams) {
       </section>
       
 
+      {officialUrl !== "#" && (
+        <section aria-label="공식 확인 경로">
+          <SectionHeader
+            eyebrow="OFFICIAL SOURCE"
+            title="공식 확인 경로"
+            description="신청 조건과 최신 일정은 원문을 기준으로 확인하세요."
+          />
+          <Card className="border-2 border-indigo-100 bg-indigo-50/40">
+            <p className="text-sm leading-relaxed text-slate-700">
+              보조24에 수집된 신청·상세 정보로 연결됩니다. 접수 기간, 대상 조건,
+              제출 서류와 실제 신청 가능 여부는 연결된 기관의 최신 안내가 우선합니다.
+            </p>
+            <a
+              className="mt-4 inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
+              href={officialUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              공식 신청·상세 정보 확인
+              <span aria-hidden="true" className="ml-2">↗</span>
+            </a>
+          </Card>
+        </section>
+      )}
+
+
 
       {/* 주요 정보 그리드 (구글 검색 최적화 구조) */}
       <div className="grid gap-6 lg:grid-cols-2">
