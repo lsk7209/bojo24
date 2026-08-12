@@ -102,9 +102,9 @@ export function BenefitListClient({ initialBenefits, initialSearchParams }: Bene
               <div className="flex items-start justify-between mb-3">
                 <Badge tone="muted">{item.category || "기타"}</Badge>
               </div>
-              <h3 className="line-clamp-2 text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+              <h2 className="line-clamp-2 text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
                 {item.name}
-              </h3>
+              </h2>
               <p className="mt-2 text-sm text-slate-500 font-medium">
                 {item.governing_org || "기관 정보 없음"}
               </p>
