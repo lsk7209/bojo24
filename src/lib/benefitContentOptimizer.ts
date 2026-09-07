@@ -440,25 +440,14 @@ function extractBenefitType(content: string): string | null {
 /**
  * 신청 단계 파싱
  */
-function parseApplySteps(method: string): string[] {
-  if (!method) return [];
-  
-  // 번호로 시작하는 단계 추출
-  const stepPattern = /[①-⑳1-9][\.\)]\s*([^①-⑳1-9\n]+)/g;
-  const steps: string[] = [];
-  let match;
-  
-  while ((match = stepPattern.exec(method)) !== null) {
-    steps.push(match[1].trim());
-  }
-  
-  // 번호가 없으면 줄바꿈으로 분리
-  if (steps.length === 0) {
-    const lines = method.split(/[\.\n]/).map(l => l.trim()).filter(l => l.length > 10);
-    return lines.slice(0, 5); // 최대 5단계
-  }
-  
-  return steps;
+export function parseApplySteps(method: string): string[] {
+  if (!method || method.trim() === '정보 없음') return [];
+  // Only explicit line boundaries define separate instructions. Splitting at
+  // periods or digits corrupts domains, dates, amounts and contact numbers.
+  // Preserve short instructions and every source line rather than truncating.
+  return method.split(/\r\n|\r|\n/)
+    .map(line => line.trim().replace(/^(?:\d{1,2}[.)]\s+|[①-⑳][.)]?\s*)/, '').trim())
+    .filter(Boolean);
 }
 
 /**

@@ -1,5 +1,6 @@
 import type { BenefitRecord } from "@/types/benefit";
 import { resolveSiteUrl } from "@lib/site";
+import { parseApplySteps } from "@lib/benefitContentOptimizer";
 
 const BASE_URL = resolveSiteUrl();
 
@@ -134,15 +135,12 @@ export const buildHowToJsonLd = (benefit: BenefitRecord) => {
     detail?: Record<string, string>;
   } | undefined;
 
-  const applyMethod = detail?.detail?.["신청방법"] || detail?.list?.["신청방법"] || "";
+  const detailData = detail?.detail || detail?.list || {};
+  const applyMethod = detailData["신청방법"] || detailData["신청 방법"] || "";
   if (!applyMethod) return null;
 
   // 신청 방법을 단계로 분리
-  const steps = applyMethod
-    .split(/[\.\n]/)
-    .map(s => s.trim())
-    .filter(s => s.length > 0)
-    .slice(0, 10) // 최대 10단계
+  const steps = parseApplySteps(applyMethod)
     .map((step, index) => ({
       "@type": "HowToStep",
       "position": index + 1,
@@ -157,13 +155,7 @@ export const buildHowToJsonLd = (benefit: BenefitRecord) => {
     "@type": "HowTo",
     "name": `${benefit.name} 신청 방법`,
     "description": `${benefit.name}을 신청하는 단계별 가이드입니다.`,
-    "step": steps,
-    "totalTime": "PT30M", // 예상 소요 시간
-    "estimatedCost": {
-      "@type": "MonetaryAmount",
-      "currency": "KRW",
-      "value": "0"
-    }
+    "step": steps
   });
 };
 

@@ -594,7 +594,7 @@ export default async function BenefitDetailPage({ params }: PageParams) {
                   <span className="pt-1">{normalizeKoreanAutoText(item.question)}</span>
                 </h4>
                 <div 
-                  className="ml-11 text-base text-slate-800 leading-relaxed pl-4 border-l-2 border-blue-100"
+                  className="ml-11 text-base text-slate-800 leading-relaxed pl-4 border-l-2 border-blue-100 [overflow-wrap:anywhere]"
                   itemProp="acceptedAnswer"
                   itemScope
                   itemType="https://schema.org/Answer"
