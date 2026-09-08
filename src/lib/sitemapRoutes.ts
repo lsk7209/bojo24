@@ -61,19 +61,19 @@ export function normalizeLastModified(
 
 export function getStaticSitemapRoutes(): MetadataRoute.Sitemap {
     return [
-        { path: "", lastModified: UPDATED_AT, priority: 1.0, changeFrequency: "daily" as const },
-        { path: "/benefit", lastModified: UPDATED_AT, priority: 0.9, changeFrequency: "daily" as const },
-        { path: "/startup", lastModified: UPDATED_AT, priority: 0.85, changeFrequency: "daily" as const },
-        { path: "/blog", lastModified: UPDATED_AT, priority: 0.9, changeFrequency: "daily" as const },
+        { path: "", priority: 1.0, changeFrequency: "daily" as const },
+        { path: "/benefit", priority: 0.9, changeFrequency: "daily" as const },
+        { path: "/startup", priority: 0.85, changeFrequency: "daily" as const },
+        { path: "/blog", priority: 0.9, changeFrequency: "daily" as const },
         { path: "/about", lastModified: "2026-05-05", priority: 0.6, changeFrequency: "monthly" as const },
         { path: "/contact", lastModified: "2026-05-05", priority: 0.5, changeFrequency: "monthly" as const },
         { path: "/editorial-policy", lastModified: "2026-05-05", priority: 0.5, changeFrequency: "monthly" as const },
-        { path: "/disclaimer", lastModified: UPDATED_AT, priority: 0.4, changeFrequency: "yearly" as const },
+        { path: "/disclaimer", priority: 0.4, changeFrequency: "yearly" as const },
         { path: "/privacy", lastModified: "2026-05-05", priority: 0.3, changeFrequency: "yearly" as const },
         { path: "/terms", lastModified: "2026-05-05", priority: 0.3, changeFrequency: "yearly" as const },
     ].map((route) => ({
         url: `${SITEMAP_BASE_URL}${route.path}`,
-        lastModified: route.lastModified,
+        ...("lastModified" in route ? { lastModified: route.lastModified } : {}),
         changeFrequency: route.changeFrequency,
         priority: route.priority,
     }));

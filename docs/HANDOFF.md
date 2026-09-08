@@ -1,5 +1,17 @@
 # Bojo24 AdSense quality repair — 2026-09-07
 
+## Static sitemap lastmod repair — 2026-09-08 KST
+
+- User goal: continue improving only AdSense non-READY sites in current DAU order; Bojo24 is rank 13 at DAU 6 and `GETTING_READY`.
+- Current source: isolated clone of canonical `lsk7209/bojo24` `main` at `2055e2974a01f39b12e9cdef7fa5a6836381fdb2`; exact prior Production deployment `6309046441` is successful. Dirty/untracked primary artifacts were preserved.
+- Completed locally: `getStaticSitemapRoutes()` no longer assigns the generation date to home, benefit/startup/blog hubs, or disclaimer. Trust pages retain their recorded `2026-05-05` dates, and record-backed benefit/blog/startup route logic is unchanged. Added a pure route-level regression test.
+- Fresh validation: new test failed before the patch and passes after it; existing seven application-parser/HowTo tests pass; typecheck, scoped ESLint, 21-page production build, and diff check pass.
+- Side effects/rollback: isolated clone and dependencies only at this checkpoint; no production mutation. Revert the eventual focused commit to roll back.
+- Deliberately not run: no DB read/write or sync, content generation/publication, AdSense/CMP/account action, GSC/IndexNow request, or direct Vercel mutation.
+- Next step: independent diff review, exact three-file allowlist commit/push, Git-connected deployment, and public sitemap proof.
+
+---
+
 - Goal: improve actual user value for one of the locked top-ten unapproved sites; no approval probability or AdSense submission.
 - Source: fetched and fast-forwarded c848abc to origin/main1aee79029840ddacf895f8ab7bf09fe627daca7c. GitHub Vercel status success verified. Preserved existing untracked feed/.goal-harness/.omx/.playwright-cli.
 - Confirmed parser defect: old parseApplySteps turns full 고용24(www.work24.go.kr) instruction into go.kr fragment, destroys dates/phone numbers, drops short instructions and truncates beyond5steps. Four regression fixtures failed before repair.
