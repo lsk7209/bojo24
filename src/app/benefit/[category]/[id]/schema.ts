@@ -1,6 +1,7 @@
 import type { BenefitRecord } from "@/types/benefit";
 import { resolveSiteUrl } from "@lib/site";
 import { parseApplySteps } from "@lib/benefitContentOptimizer";
+import { toJsonLdString } from "@lib/jsonLd";
 
 const BASE_URL = resolveSiteUrl();
 
@@ -22,7 +23,7 @@ export const buildFaqJsonLd = (benefit: BenefitRecord | null) => {
       }
     }))
   };
-  return JSON.stringify(jsonLd);
+  return toJsonLdString(jsonLd);
 };
 
 /**
@@ -35,7 +36,7 @@ export const buildArticleJsonLd = (benefit: BenefitRecord, category: string) => 
     detail?: Record<string, string>;
   } | undefined;
 
-  return JSON.stringify({
+  return toJsonLdString({
     "@context": "https://schema.org",
     "@type": "Article",
     "headline": benefit.name,
@@ -76,7 +77,7 @@ export const buildArticleJsonLd = (benefit: BenefitRecord, category: string) => 
  * BreadcrumbList 구조화 데이터 생성
  */
 export const buildBreadcrumbJsonLd = (category: string, benefitName: string, benefitId: string) => {
-  return JSON.stringify({
+  return toJsonLdString({
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
@@ -112,7 +113,7 @@ export const buildBreadcrumbJsonLd = (category: string, benefitName: string, ben
  * Organization 구조화 데이터 생성
  */
 export const buildOrganizationJsonLd = () => {
-  return JSON.stringify({
+  return toJsonLdString({
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "보조24",
@@ -150,7 +151,7 @@ export const buildHowToJsonLd = (benefit: BenefitRecord) => {
 
   if (steps.length === 0) return null;
 
-  return JSON.stringify({
+  return toJsonLdString({
     "@context": "https://schema.org",
     "@type": "HowTo",
     "name": `${benefit.name} 신청 방법`,
@@ -171,7 +172,7 @@ export const buildGovernmentServiceJsonLd = (benefit: BenefitRecord) => {
 
   const d = detail?.detail || detail?.list || {};
 
-  return JSON.stringify({
+  return toJsonLdString({
     "@context": "https://schema.org",
     "@type": "GovernmentService",
     "name": benefit.name,
@@ -194,7 +195,7 @@ export const buildGovernmentServiceJsonLd = (benefit: BenefitRecord) => {
  * 공식 데이터 출처 명시
  */
 export const buildDatasetJsonLd = (benefit: BenefitRecord) => {
-  return JSON.stringify({
+  return toJsonLdString({
     "@context": "https://schema.org",
     "@type": "Dataset",
     "name": `${benefit.name} 정보`,
@@ -237,7 +238,7 @@ export const buildOptimizedFaqJsonLd = (faqs: Array<{ question: string; answer: 
       }
     }))
   };
-  return JSON.stringify(jsonLd);
+  return toJsonLdString(jsonLd);
 };
 
 /**

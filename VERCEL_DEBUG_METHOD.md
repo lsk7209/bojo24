@@ -14,17 +14,20 @@ Vercel의 UI가 변경되었거나, Functions 탭이 다른 위치에 있을 수
 
 ## 방법 2: 디버그 API 엔드포인트 사용 (추천)
 
-배포 완료 후 다음 URL로 접속:
+배포 완료 후 다음 URL로 접속 (`password`는 `ADMIN_PASSWORD` 환경 변수 값, 미설정 시 `admin1234`):
 
 ```
-https://www.bojo24.kr/api/debug-env
+https://www.bojo24.kr/api/debug-env?password=여기에_ADMIN_PASSWORD
 ```
 
 또는
 
 ```
-https://bojo24.vercel.app/api/debug-env
+https://bojo24.vercel.app/api/debug-env?password=여기에_ADMIN_PASSWORD
 ```
+
+> ⚠️ 이 엔드포인트는 비밀번호 없이 접속하면 404를 반환합니다. 관리자 외에는 노출되지 않도록
+> 비밀번호를 반드시 함께 전달하세요.
 
 **예상 응답:**
 ```json

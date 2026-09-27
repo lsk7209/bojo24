@@ -2,12 +2,17 @@
  * 환경 변수 디버깅용 API 엔드포인트
  * 프로덕션에서 환경 변수가 제대로 설정되었는지 확인
  */
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "edge";
 
-export async function GET() {
-  const allowedIds = process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS 
+export async function GET(request: NextRequest) {
+  const password = request.nextUrl.searchParams.get("password");
+  if (password !== (process.env.ADMIN_PASSWORD || "admin1234")) {
+    return NextResponse.json({ error: "Not Found" }, { status: 404 });
+  }
+
+  const allowedIds = process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS
     ? process.env.GEMINI_ENHANCEMENT_ALLOWED_IDS.split(",").map(id => id.trim())
     : [];
   

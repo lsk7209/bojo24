@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Badge, Card } from "@components/ui";
 import { SectionHeader } from "@components/section-header";
 import { buildCanonicalUrl, SITE_DESCRIPTION, SITE_NAME, resolveSiteUrl } from "@lib/site";
+import { toJsonLdString } from "@lib/jsonLd";
 import {
   faqItems,
   popularCategories,
@@ -221,7 +222,7 @@ export default function HomePage() {
         <script
           key={index}
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+          dangerouslySetInnerHTML={{ __html: toJsonLdString(data) }}
         />
       ))}
     </main>

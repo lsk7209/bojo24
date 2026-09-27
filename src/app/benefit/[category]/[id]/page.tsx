@@ -103,11 +103,6 @@ export const generateMetadata = async ({
   // Zero-click 답변을 위한 요약 (구글 스니펫 타겟팅)
   const snippet = optimizedContent.summary.split('\n')[0] || optimizedContent.summary.substring(0, 100);
 
-  const detail = benefit.detail_json as {
-    list?: Record<string, string>;
-    detail?: Record<string, string>;
-  } | undefined;
-
   const ogImage = `${BASE_URL}/opengraph-image`;
 
   // Zero-click 스니펫을 위한 추가 메타데이터
