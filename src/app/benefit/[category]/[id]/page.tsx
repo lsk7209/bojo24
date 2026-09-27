@@ -1,7 +1,7 @@
 import { FloatingActionButton } from "@components/fab-button";
 import { AdSlot } from "@components/ad-slot";
 import { buildAllStructuredData } from "./schema";
-import { getServiceClient } from "@lib/supabaseClient";
+import { getAnonClient } from "@lib/supabaseClient";
 import { formatMarkdown } from "@lib/formatMarkdown";
 import { cleanMarkdown } from "@lib/cleanMarkdown";
 import { ReadableContent, getReadablePreview, normalizeKoreanAutoText } from "@components/readable-content";
@@ -23,7 +23,7 @@ type PageParams = {
 export const revalidate = 86400;
 
 const fetchBenefit = unstable_cache(async (id: string) => {
-  const supabase = getServiceClient();
+  const supabase = getAnonClient();
   const { data } = await supabase
     .from("benefits")
     .select("*")
