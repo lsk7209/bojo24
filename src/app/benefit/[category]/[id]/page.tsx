@@ -1,4 +1,5 @@
 import { FloatingActionButton } from "@components/fab-button";
+import { AdSlot } from "@components/ad-slot";
 import { buildAllStructuredData } from "./schema";
 import { getServiceClient } from "@lib/supabaseClient";
 import { formatMarkdown } from "@lib/formatMarkdown";
@@ -335,7 +336,7 @@ export default async function BenefitDetailPage({ params }: PageParams) {
         </section>
       )}
 
-
+      <AdSlot />
 
       {/* 주요 정보 그리드 (구글 검색 최적화 구조) */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -473,6 +474,8 @@ export default async function BenefitDetailPage({ params }: PageParams) {
           )}
         </Card>
       </section>
+
+      <AdSlot />
 
       {/* 정책 분석 섹션 (고유 컨텐츠 - 전문성 강조) */}
       {optimizedContent.sections.analysis && (

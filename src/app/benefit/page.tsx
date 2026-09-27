@@ -5,6 +5,7 @@ import { BenefitListClient } from "@components/benefit-list-client";
 import { buildCanonicalUrl, SITE_NAME, resolveSiteUrl } from "@lib/site";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import type { BenefitListItem } from "@components/benefit-list-types";
 
 const CATEGORIES = [
@@ -47,6 +48,9 @@ const fetchBenefits = async ({
   }
 };
 
+const getCachedBenefits = unstable_cache(fetchBenefits, ["benefit-list"], {
+  revalidate: 300,
+});
 
 const siteUrl = resolveSiteUrl();
 
@@ -79,7 +83,7 @@ export default async function BenefitListPage({
   const resolvedSearchParams = await searchParams;
   const q = resolvedSearchParams.q || "";
   const category = resolvedSearchParams.category || "all";
-  const benefits = await fetchBenefits({ q, category });
+  const benefits = await getCachedBenefits({ q, category });
   const hasData = benefits.length > 0;
 
   return (

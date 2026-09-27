@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import { getAnonClient } from "@lib/supabaseClient";
 import { buildCanonicalUrl, SITE_NAME, resolveSiteUrl } from "@lib/site";
 import { buildStartupPath, formatStartupDate, latestStartupDate, sourceLabel } from "@lib/startup";
@@ -66,6 +67,10 @@ const fetchStartupItems = async ({ q, source }: SearchParams): Promise<StartupIt
   }
 };
 
+const getCachedStartupItems = unstable_cache(fetchStartupItems, ["startup-list"], {
+  revalidate: 300,
+});
+
 export default async function StartupPage({
   searchParams,
 }: {
@@ -74,7 +79,7 @@ export default async function StartupPage({
   const resolvedSearchParams = await searchParams;
   const q = resolvedSearchParams.q || "";
   const source = resolvedSearchParams.source || "all";
-  const items = await fetchStartupItems({ q, source });
+  const items = await getCachedStartupItems({ q, source });
 
   return (
     <main className="flex flex-col gap-8 pb-12">

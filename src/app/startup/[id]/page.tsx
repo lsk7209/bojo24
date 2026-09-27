@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import { getAnonClient } from "@lib/supabaseClient";
 import { buildCanonicalUrl } from "@lib/site";
 import { cleanStartupText, formatStartupDate, latestStartupDate, sourceLabel } from "@lib/startup";
@@ -21,6 +22,8 @@ const decodeRouteId = (id: string) => {
   }
 };
 
+export const revalidate = 86400;
+
 const fetchStartupItem = async (id: string) => {
   const db = getAnonClient();
   const { data, error } = await db
@@ -33,9 +36,13 @@ const fetchStartupItem = async (id: string) => {
   return data as StartupItem | null;
 };
 
+const getCachedStartupItem = unstable_cache(fetchStartupItem, ["startup-detail"], {
+  revalidate: 86400,
+});
+
 export async function generateMetadata({ params }: RouteParams): Promise<Metadata> {
   const { id } = await params;
-  const item = await fetchStartupItem(decodeRouteId(id)).catch(() => null);
+  const item = await getCachedStartupItem(decodeRouteId(id)).catch(() => null);
   if (!item) {
     return {
       title: "창업지원 공고",
@@ -88,7 +95,7 @@ const detailRows = (item: StartupItem) => {
 
 export default async function StartupDetailPage({ params }: RouteParams) {
   const { id } = await params;
-  const item = await fetchStartupItem(decodeRouteId(id)).catch(() => null);
+  const item = await getCachedStartupItem(decodeRouteId(id)).catch(() => null);
   if (!item) notFound();
 
   const dates = [

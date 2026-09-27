@@ -1,4 +1,5 @@
 import { createTursoCompatClient } from "@lib/tursoClient";
+import { unstable_cache } from "next/cache";
 import Link from "next/link";
 import { Badge, Card } from "@components/ui";
 import { SectionHeader } from "@components/section-header";
@@ -87,6 +88,10 @@ const fetchPosts = async (page: number) => {
     }
 };
 
+const getCachedPosts = unstable_cache(fetchPosts, ["blog-list"], {
+    revalidate: 300,
+});
+
 export default async function BlogListPage({
     searchParams,
 }: {
@@ -94,7 +99,7 @@ export default async function BlogListPage({
 }) {
     const resolved = await searchParams;
     const page = Math.max(1, Number(resolved.page) || 1);
-    const { posts, total } = await fetchPosts(page);
+    const { posts, total } = await getCachedPosts(page);
     const totalPages = Math.ceil(total / PAGE_SIZE);
 
     const itemListJsonLd = posts.length > 0 ? {

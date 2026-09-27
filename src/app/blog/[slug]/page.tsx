@@ -1,4 +1,5 @@
 import { Badge, Button, Card } from "@components/ui";
+import { AdSlot } from "@components/ad-slot";
 import { buildPostPath, parsePostRouteSlug } from "@lib/postRouting";
 import { buildCanonicalUrl, SITE_NAME } from "@lib/site";
 import { createTursoCompatClient } from "@lib/tursoClient";
@@ -6,6 +7,7 @@ import { getAnonClient } from "@lib/supabaseClient";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -148,6 +150,10 @@ const fetchPost = async (routeSlug: string) => {
   return data as BlogPostDetail | null;
 };
 
+const getCachedPost = unstable_cache(fetchPost, ["blog-post-detail"], {
+  revalidate: 3600,
+});
+
 const fetchRelatedBenefit = async (id: string): Promise<RelatedBenefit | null> => {
   const supabase = getAnonClient();
   const { data } = await supabase
@@ -160,7 +166,7 @@ const fetchRelatedBenefit = async (id: string): Promise<RelatedBenefit | null> =
 
 export const generateMetadata = async ({ params }: PageParams): Promise<Metadata> => {
   const { slug } = await params;
-  const post = await fetchPost(slug);
+  const post = await getCachedPost(slug);
   if (!post) return {};
 
   const canonicalUrl = buildCanonicalUrl(buildPostPath(post));
@@ -203,7 +209,7 @@ export const generateMetadata = async ({ params }: PageParams): Promise<Metadata
 
 export default async function BlogPostPage({ params }: PageParams) {
   const { slug } = await params;
-  const post = await fetchPost(slug);
+  const post = await getCachedPost(slug);
   if (!post) notFound();
 
   const relatedBenefit = post.benefit_id ? await fetchRelatedBenefit(post.benefit_id) : null;
@@ -329,6 +335,10 @@ export default async function BlogPostPage({ params }: PageParams) {
           </nav>
         )}
 
+        <div className="not-prose my-8">
+          <AdSlot />
+        </div>
+
         <div className="leading-8 text-slate-700">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
@@ -392,6 +402,10 @@ export default async function BlogPostPage({ params }: PageParams) {
           </ReactMarkdown>
         </div>
       </article>
+
+      <div className="my-8">
+        <AdSlot />
+      </div>
 
       {post.benefit_id && (
         <section className="mt-10 rounded-lg bg-gradient-to-r from-blue-100 to-indigo-100 p-1">

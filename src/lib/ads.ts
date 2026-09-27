@@ -1,2 +1,4 @@
 export const ADSENSE_CLIENT =
   process.env.NEXT_PUBLIC_ADSENSE_CLIENT || "ca-pub-3050601904412736";
+
+export const ADSENSE_SLOT_INLINE = process.env.NEXT_PUBLIC_ADSENSE_SLOT_INLINE || "";
