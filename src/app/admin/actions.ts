@@ -2,20 +2,64 @@
 
 import { getServiceClient } from "@lib/supabaseClient";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import {
+    ADMIN_SESSION_COOKIE,
+    createAdminSessionToken,
+    isAdminPasswordConfigured,
+    verifyAdminSessionToken,
+} from "@lib/adminAuth";
 
 // Gemini API 설정
 const EXTERNAL_GENERATION_DISABLED_MESSAGE =
-    "\uc678\ubd80 API \uae30\ubc18 \uae00\uc0dd\uc131\uc740 \ube44\ud65c\uc131\ud654\ub418\uc5c8\uc2b5\ub2c8\ub2e4. Codex/persona-writer \uc6cc\ud06c\ud50c\ub85c\uc6b0\uc5d0\uc11c \uc9c1\uc811 \uc791\uc131\ud55c \uae00\ub9cc \uc800\uc7a5\ud558\uc138\uc694.";
+    "외부 API 기반 글생성은 비활성화되었습니다. Codex/persona-writer 워크플로우에서 직접 작성한 글만 저장하세요.";
 
-export async function generateSinglePost(password: string) {
-    if (password !== (process.env.ADMIN_PASSWORD || "admin1234")) {
-        return { success: false, message: "Auth Failed" };
+async function requireAdminSession(): Promise<void> {
+    const store = await cookies();
+    const token = store.get(ADMIN_SESSION_COOKIE)?.value;
+    const valid = await verifyAdminSessionToken(token);
+    if (!valid) {
+        throw new Error("Unauthorized");
+    }
+}
+
+// 0. 로그인 / 로그아웃
+export async function loginAdmin(password: string): Promise<{ success: boolean; message: string }> {
+    if (!isAdminPasswordConfigured()) {
+        return { success: false, message: "관리자 비밀번호가 설정되지 않았습니다." };
+    }
+    if (password !== process.env.ADMIN_PASSWORD) {
+        return { success: false, message: "비밀번호가 틀렸습니다." };
     }
 
+    const token = await createAdminSessionToken();
+    const store = await cookies();
+    store.set(ADMIN_SESSION_COOKIE, token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+        path: "/admin",
+        maxAge: 8 * 60 * 60,
+    });
+
+    return { success: true, message: "로그인되었습니다." };
+}
+
+export async function logoutAdmin(): Promise<void> {
+    const store = await cookies();
+    store.delete(ADMIN_SESSION_COOKIE);
+}
+
+// 1. AI 블로그 포스팅 생성 (현재 비활성화)
+export async function generateSinglePost() {
+    await requireAdminSession();
     return { success: false, message: EXTERNAL_GENERATION_DISABLED_MESSAGE };
 }
 
+// 2. 대시보드 통계
 export async function getDashboardStats() {
+    await requireAdminSession();
+
     const supabase = getServiceClient();
     const { count: benefitCount } = await supabase.from("benefits").select("*", { count: 'exact', head: true });
     const { count: postCount } = await supabase.from("posts").select("*", { count: 'exact', head: true });
@@ -53,8 +97,8 @@ export async function getDashboardStats() {
 }
 
 // 3. Head 스크립트 저장
-export async function saveHeadScript(password: string, script: string) {
-    if (password !== (process.env.ADMIN_PASSWORD || "admin1234")) return { success: false, message: "Auth Failed" };
+export async function saveHeadScript(script: string) {
+    await requireAdminSession();
 
     const supabase = getServiceClient();
     const { error } = await supabase
@@ -69,6 +113,8 @@ export async function saveHeadScript(password: string, script: string) {
 
 // 4. Head 스크립트 불러오기
 export async function getHeadScript() {
+    await requireAdminSession();
+
     const supabase = getServiceClient();
     const { data } = await supabase
         .from("admin_settings")

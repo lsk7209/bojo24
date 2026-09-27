@@ -53,9 +53,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "INDEXNOW_KEY not configured" }, { status: 503 });
   }
 
-  const authHeader = request.headers.get("authorization");
   const expectedToken = process.env.INDEXNOW_PING_SECRET;
-  if (expectedToken && authHeader !== `Bearer ${expectedToken}`) {
+  if (!expectedToken) {
+    return NextResponse.json({ error: "INDEXNOW_PING_SECRET not configured" }, { status: 401 });
+  }
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${expectedToken}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -93,6 +96,15 @@ export async function GET(request: Request) {
   const key = process.env.INDEXNOW_KEY?.trim();
   if (!key) {
     return NextResponse.json({ error: "INDEXNOW_KEY not configured" }, { status: 503 });
+  }
+
+  const expectedToken = process.env.INDEXNOW_PING_SECRET;
+  if (!expectedToken) {
+    return NextResponse.json({ error: "INDEXNOW_PING_SECRET not configured" }, { status: 401 });
+  }
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${expectedToken}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { searchParams } = new URL(request.url);

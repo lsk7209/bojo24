@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { generateSinglePost, getDashboardStats, saveHeadScript, getHeadScript } from "./actions";
+import { useState } from "react";
+import { generateSinglePost, getDashboardStats, saveHeadScript, getHeadScript, loginAdmin, logoutAdmin } from "./actions";
 import { Card, Button, Badge } from "@components/ui";
 
 export default function AdminPage() {
@@ -15,35 +15,55 @@ export default function AdminPage() {
     const [headScript, setHeadScript] = useState("");
     const [logs, setLogs] = useState<string[]>([]);
 
-    const checkAuth = () => {
-        if (password === "admin1234") {
+    const checkAuth = async () => {
+        const res = await loginAdmin(password);
+        if (res.success) {
+            setPassword("");
             setIsAuthorized(true);
             loadAllData();
         } else {
-            alert("비밀번호가 틀렸습니다.");
+            alert(res.message);
         }
     };
 
     const loadAllData = async () => {
-        const s = await getDashboardStats();
-        setStats(s);
+        try {
+            const [s, hs] = await Promise.all([getDashboardStats(), getHeadScript()]);
+            setStats(s);
+            setHeadScript(hs);
+        } catch {
+            alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+            setIsAuthorized(false);
+        }
+    };
 
-        const hs = await getHeadScript();
-        setHeadScript(hs);
+    const handleLogout = async () => {
+        await logoutAdmin();
+        setIsAuthorized(false);
     };
 
     const handleGenerate = async () => {
         setLoading(true);
         setLogs(prev => ["생성 시작...", ...prev]);
-        const res = await generateSinglePost(password);
-        setLogs(prev => [res.success ? `✅ ${res.message}` : `❌ ${res.message}`, ...prev]);
-        loadAllData();
+        try {
+            const res = await generateSinglePost();
+            setLogs(prev => [res.success ? `✅ ${res.message}` : `❌ ${res.message}`, ...prev]);
+            loadAllData();
+        } catch {
+            setLogs(prev => [`❌ 세션이 만료되었습니다.`, ...prev]);
+            setIsAuthorized(false);
+        }
         setLoading(false);
     };
 
     const handleSaveScript = async () => {
-        const res = await saveHeadScript(password, headScript);
-        alert(res.message);
+        try {
+            const res = await saveHeadScript(headScript);
+            alert(res.message);
+        } catch {
+            alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+            setIsAuthorized(false);
+        }
     };
 
     if (!isAuthorized) {
@@ -72,7 +92,7 @@ export default function AdminPage() {
                 <div className="flex gap-2">
                     <Button variant={activeTab === "dashboard" ? "primary" : "ghost"} onClick={() => setActiveTab("dashboard")}>대시보드</Button>
                     <Button variant={activeTab === "settings" ? "primary" : "ghost"} onClick={() => setActiveTab("settings")}>설정관리</Button>
-                    <Button variant="ghost" onClick={() => setIsAuthorized(false)} className="text-red-500">로그아웃</Button>
+                    <Button variant="ghost" onClick={handleLogout} className="text-red-500">로그아웃</Button>
                 </div>
             </header>
 
