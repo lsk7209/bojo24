@@ -4,6 +4,7 @@ import { Badge, Card } from "@components/ui";
 import { SectionHeader } from "@components/section-header";
 import { buildCanonicalUrl, SITE_NAME, resolveSiteUrl } from "@lib/site";
 import { buildPostPath } from "@lib/postRouting";
+import { toJsonLdString } from "@lib/jsonLd";
 import type { Metadata } from "next";
 
 const siteUrl = resolveSiteUrl();
@@ -203,7 +204,7 @@ export default async function BlogListPage({
             {itemListJsonLd && (
                 <script
                     type="application/ld+json"
-                    dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+                    dangerouslySetInnerHTML={{ __html: toJsonLdString(itemListJsonLd) }}
                 />
             )}
         </main>

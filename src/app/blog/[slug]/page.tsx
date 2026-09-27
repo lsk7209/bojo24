@@ -3,6 +3,7 @@ import { buildPostPath, parsePostRouteSlug } from "@lib/postRouting";
 import { buildCanonicalUrl, SITE_NAME } from "@lib/site";
 import { createTursoCompatClient } from "@lib/tursoClient";
 import { getAnonClient } from "@lib/supabaseClient";
+import { toJsonLdString } from "@lib/jsonLd";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -426,7 +427,7 @@ export default async function BlogPostPage({ params }: PageParams) {
         <script
           key={index}
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+          dangerouslySetInnerHTML={{ __html: toJsonLdString(data) }}
         />
       ))}
     </main>

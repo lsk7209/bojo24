@@ -6,6 +6,7 @@ import { DynamicHead } from "@components/dynamic-head";
 import { GoogleAnalytics } from "@components/google-analytics";
 import { MicrosoftClarity } from "@components/microsoft-clarity";
 import { SITE_DESCRIPTION, SITE_NAME, resolveSiteUrl } from "@lib/site";
+import { toJsonLdString } from "@lib/jsonLd";
 import "./globals.css";
 
 // 불필요한 weight 제거: 100·300·900 → 필수 3종만 로드
@@ -102,7 +103,7 @@ export default function RootLayout({
         {/* Organization 구조화 데이터 (전 페이지 공통) */}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: toJsonLdString(organizationJsonLd) }}
         />
         {/* 관리자 설정 동적 스크립트 */}
         <DynamicHead />

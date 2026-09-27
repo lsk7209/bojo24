@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Card } from "@components/ui";
 import { SectionHeader } from "@components/section-header";
 import { SITE_NAME, buildCanonicalUrl, resolveSiteUrl, CONTACT_EMAIL } from "@lib/site";
+import { toJsonLdString } from "@lib/jsonLd";
 
 const siteUrl = resolveSiteUrl();
 
@@ -191,11 +192,11 @@ export default function AboutPage() {
 
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: toJsonLdString(organizationJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: toJsonLdString(webPageJsonLd) }}
       />
     </main>
   );
