@@ -86,19 +86,24 @@ export async function getBenefitSitemapRoutes(): Promise<MetadataRoute.Sitemap> 
 
         // Supabase's default row cap is commonly 1,000. Fetch in bounded pages
         // so the sitemap does not silently stop at the first 10,000 benefits.
-        for (let offset = 0; ; offset += BENEFIT_SITEMAP_PAGE_SIZE) {
-            const { data, error } = await supabase
+        let lastId: string | null = null;
+        for (;;) {
+            let query = supabase
                 .from("benefits")
                 .select("id, category, last_updated_at")
-                .order("last_updated_at", { ascending: false })
                 .order("id", { ascending: true })
-                .range(offset, offset + BENEFIT_SITEMAP_PAGE_SIZE - 1);
+                .limit(BENEFIT_SITEMAP_PAGE_SIZE);
+            if (lastId !== null) query = query.gt("id", lastId);
+            const { data, error } = await query;
 
             if (error) throw error;
 
             const page = (data ?? []) as BenefitSitemapRow[];
             rows.push(...page);
             if (page.length < BENEFIT_SITEMAP_PAGE_SIZE) break;
+            const nextId = page[page.length - 1]?.id;
+            if (!nextId || nextId === lastId) throw new Error("Sitemap cursor did not advance");
+            lastId = nextId;
         }
 
         return rows.map((item) => ({
