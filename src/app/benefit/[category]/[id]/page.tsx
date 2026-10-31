@@ -14,6 +14,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { SectionHeader } from "@components/section-header";
+import { parseApplicationStatus } from "@lib/applicationStatus";
+import { ShareButtons } from "@components/share-buttons";
+import type { BenefitListItem } from "@components/benefit-list-types";
 import { unstable_cache } from "next/cache";
 
 type PageParams = {
@@ -31,6 +34,25 @@ const fetchBenefit = unstable_cache(async (id: string) => {
     .maybeSingle();
   return data as BenefitRecord | null;
 }, ["benefit-detail"], { revalidate: 86400 });
+
+const fetchRelatedBenefits = unstable_cache(
+  async (category: string, currentId: string) => {
+    try {
+      const supabase = getAnonClient();
+      const { data } = await supabase
+        .from("benefits")
+        .select("id, name, category, governing_org, last_updated_at")
+        .eq("category", category)
+        .neq("id", currentId)
+        .limit(4);
+      return (data || []) as BenefitListItem[];
+    } catch {
+      return [];
+    }
+  },
+  ["benefit-related-items"],
+  { revalidate: 86400 }
+);
 
 const getOptimizedContent = unstable_cache(optimizeBenefitContent, ["benefit-optimized-content"], {
   revalidate: 86400,
@@ -216,6 +238,14 @@ export default async function BenefitDetailPage({ params }: PageParams) {
     "";
 
   // Gemini FAQ 제거, 공공데이터 기반 FAQ만 사용
+  const deadlineText =
+    detail?.detail?.["신청기간"] ||
+    detail?.detail?.["접수기간"] ||
+    detail?.detail?.["신청 기간"] ||
+    detail?.list?.["신청기간"] ||
+    optimizedContent.sections.apply.deadline;
+  const applicationStatus = parseApplicationStatus(deadlineText);
+  const relatedBenefits = await fetchRelatedBenefits(benefit.category || "", benefit.id);
 
   return (
     <main className="mx-auto flex max-w-4xl flex-col gap-6 pb-24 sm:pb-32">
@@ -234,6 +264,9 @@ export default async function BenefitDetailPage({ params }: PageParams) {
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone="primary">{benefit.category}</Badge>
             <Badge tone="muted">{benefit.governing_org}</Badge>
+            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs border ${applicationStatus.badgeClass}`}>
+              {applicationStatus.label}
+            </span>
             {benefit.last_updated_at && (
               <time 
                 className="text-xs text-slate-400 ml-auto"
@@ -247,6 +280,7 @@ export default async function BenefitDetailPage({ params }: PageParams) {
           <h1 className="text-3xl sm:text-4xl font-extrabold leading-tight text-slate-900 mb-4" itemProp="headline">
             {benefit.name}
           </h1>
+          <ShareButtons title={benefit.name} />
           {purpose && (
             <p className="text-base sm:text-lg text-slate-700 leading-relaxed bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-xl border-2 border-blue-100 font-medium">
               <span className="inline-block mr-2 text-xl">💡</span>
@@ -607,6 +641,41 @@ export default async function BenefitDetailPage({ params }: PageParams) {
                   </p>
                 </div>
               </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 함께 많이 찾는 연관 지원금 */}
+      {relatedBenefits.length > 0 && (
+        <section aria-label="연관 지원금" className="mt-8 pt-8 border-t-2 border-slate-200">
+          <SectionHeader
+            eyebrow="RECOMMEND"
+            title="함께 많이 찾는 지원금"
+            description={`${benefit.category || "동일 분야"}에서 신청 가능한 다른 정부 지원금입니다.`}
+          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            {relatedBenefits.map((item) => (
+              <Link
+                key={item.id}
+                href={`/benefit/${encodeURIComponent(item.category || "기타")}/${item.id}`}
+                className="group"
+              >
+                <Card className="h-full border-slate-200 bg-white transition group-hover:border-blue-400 group-hover:shadow-md p-5 flex flex-col justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                      {item.category || "지원금"}
+                    </span>
+                    <h3 className="mt-2 text-base font-bold text-slate-900 group-hover:text-blue-700 line-clamp-2">
+                      {item.name}
+                    </h3>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between text-xs text-slate-500 pt-3 border-t border-slate-100">
+                    <span className="line-clamp-1">{item.governing_org}</span>
+                    <span className="shrink-0 font-medium text-blue-600 group-hover:underline">자세히 보기 →</span>
+                  </div>
+                </Card>
+              </Link>
             ))}
           </div>
         </section>

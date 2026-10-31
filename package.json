@@ -24,6 +24,7 @@
     "content:future-schedule:plan": "tsx src/scripts/migrateFutureSchedule.ts --dry-run",
     "content:future-schedule:apply": "tsx src/scripts/migrateFutureSchedule.ts --apply",
     "content:notify-due": "tsx src/scripts/notifyDuePosts.ts",
+    "content:daemon": "tsx src/scripts/daemonContentImprovement.ts",
     "gsc:submit-sitemaps": "tsx src/scripts/submitGscSitemaps.ts",
     "validate-env": "tsx src/scripts/validateEnv.ts",
     "check:data": "tsx src/scripts/checkDataStatus.ts",
