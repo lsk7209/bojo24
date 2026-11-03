@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Noto_Sans_KR } from "next/font/google";
 import { Header, Footer } from "@components/layout-common";
 import { AnalyticsTracker } from "@components/analytics-tracker";
@@ -108,6 +109,7 @@ export default function RootLayout({
         <DynamicHead />
       </head>
       <body className="flex min-h-screen flex-col bg-slate-50 text-slate-900 antialiased selection:bg-blue-100 selection:text-blue-900">
+        <Script src="https://multi-dashboard-one.vercel.app/fleet-widget.js" id="affiliate-os-fleet" strategy="afterInteractive" />
         <Header />
         <div className="flex-1 w-full mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-12">
           {children}
