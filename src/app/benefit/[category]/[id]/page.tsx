@@ -240,9 +240,12 @@ export default async function BenefitDetailPage({ params }: PageParams) {
   // Gemini FAQ 제거, 공공데이터 기반 FAQ만 사용
   const deadlineText =
     detail?.detail?.["신청기간"] ||
+    detail?.detail?.["신청기한"] ||
     detail?.detail?.["접수기간"] ||
     detail?.detail?.["신청 기간"] ||
+    detail?.detail?.["사업기간"] ||
     detail?.list?.["신청기간"] ||
+    detail?.list?.["신청기한"] ||
     optimizedContent.sections.apply.deadline;
   const applicationStatus = parseApplicationStatus(deadlineText);
   const relatedBenefits = await fetchRelatedBenefits(benefit.category || "", benefit.id);

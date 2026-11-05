@@ -127,12 +127,23 @@ async function main() {
     } else if (benefits && benefits.length > 0) {
       auditedBenefitsCount = benefits.length;
       for (const item of benefits) {
-        const detail = (item.detail_json as {
-          detail?: Record<string, string>;
-          list?: Record<string, string>;
-        }) || {};
-        const detailData = detail.detail || detail.list || {};
-        const deadlineText = detailData["신청기간"] || detailData["접수기간"] || detailData["신청 기간"] || "";
+        let detail = item.detail_json as any;
+        if (typeof detail === "string") {
+          try {
+            detail = JSON.parse(detail);
+          } catch {
+            detail = {};
+          }
+        }
+        detail = detail || {};
+        const detailData = detail.detail || detail.list || detail || {};
+        const deadlineText =
+          detailData["신청기간"] ||
+          detailData["신청기한"] ||
+          detailData["접수기간"] ||
+          detailData["신청 기간"] ||
+          detailData["사업기간"] ||
+          "";
         const parsed = parseApplicationStatus(deadlineText);
 
         statusStats[parsed.status] = (statusStats[parsed.status] || 0) + 1;
